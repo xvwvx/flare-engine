@@ -22,6 +22,7 @@ namespace FlareEngine
         public const int R = 21;
         public const int S = 22;
         public const int W = 26;
+        public const int X = 27;
         public const int Digit1 = 30;
         public const int Digit2 = 31;
         public const int Digit3 = 32;
@@ -293,6 +294,9 @@ namespace FlareEngine
         void GameControllerRumble(SdlGameControllerHandle? gamepad, ushort lowFreq, ushort highFreq, uint duration);
         int GameControllerHasLed(SdlGameControllerHandle? gamepad);
         void GameControllerSetLed(SdlGameControllerHandle? gamepad, byte r, byte g, byte b);
+        string? GetClipboardText();
+        void SetClipboardText(string text);
+        bool IsKeyPressed(int scancode);
     }
 
     /// <summary>

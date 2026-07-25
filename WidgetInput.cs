@@ -34,6 +34,84 @@ namespace FlareEngine
         private WidgetTooltip _oskTip = new WidgetTooltip();
         private string _fontName;
         private SoundID _soundActivate;
+        private bool _ctrlCUsed;     // prevent repeated Ctrl+C
+        private bool _ctrlVUsed;     // prevent repeated Ctrl+V
+        private bool _ctrlXUsed;     // prevent repeated Ctrl+X cut
+        private bool _ctrlAUsed;     // prevent repeated Ctrl+A select all
+        private int _selStart = -1;  // selection start (char index, -1 = no selection)
+        private int _selEnd = -1;    // selection end (char index, exclusive)
+        private bool _showCursor = true;   // cursor blink visibility
+        private int _cursorBlinkTimer;     // frame counter for blink
+        private int _cursorPixelX;         // pixel X position for drawn cursor
+        private int _displayedTextStart;   // start index in _text of the displayed _trimmedText
+        private int _mouseDragAnchor = -1; // cursor position where mouse drag started (-1 = not dragging)
+
+        /// <summary>Returns true if there is an active selection.</summary>
+        private bool HasSelection() => _selStart >= 0 && _selEnd >= 0 && _selEnd != _selStart;
+
+        /// <summary>Returns selection range as (startInclusive, endExclusive), clamping to text bounds.</summary>
+        private (int start, int end) GetSelectionRange()
+        {
+            int s = Math.Max(0, _selStart);
+            int e = Math.Min(_text.Length, _selEnd);
+            if (s > e) (s, e) = (e, s);
+            return (s, e);
+        }
+
+        /// <summary>Clears the current selection.</summary>
+        private void ClearSelection()
+        {
+            _selStart = -1;
+            _selEnd = -1;
+        }
+
+        /// <summary>Converts a mouse pixel X coordinate to a cursor position in _text.</summary>
+        private int PixelToCursorPos(int mouseX)
+        {
+            int relX = mouseX - _fontPos.X;
+            if (relX <= 0)
+                return _displayedTextStart;
+
+            int cumulative = 0;
+            for (int i = 0; i < _trimmedText.Length; i++)
+            {
+                int charLen = 1;
+                if (char.IsHighSurrogate(_trimmedText[i]) && i + 1 < _trimmedText.Length)
+                    charLen = 2;
+                int charW = SharedResources.Font!.CalcSize(_trimmedText.Substring(i, charLen)).X;
+                if (cumulative + charW / 2 >= relX)
+                    return _displayedTextStart + i;
+                cumulative += charW;
+                i += charLen - 1;
+            }
+            return _displayedTextStart + _trimmedText.Length;
+        }
+
+        /// <summary>Deletes the selected text and returns it (for clipboard), or deletes single char at cursor.</summary>
+        private string DeleteSelectionOrChar()
+        {
+            if (HasSelection())
+            {
+                var (s, e) = GetSelectionRange();
+                string deleted = _text.Substring(s, e - s);
+                _text = _text.Remove(s, e - s);
+                _cursorPos = s;
+                ClearSelection();
+                TrimText();
+                return deleted;
+            }
+            else if (_cursorPos > 0)
+            {
+                int n = _cursorPos - 1;
+                while (n > 0 && char.IsLowSurrogate(_text[n])) n--;
+                string deleted = _text.Substring(n, _cursorPos - n);
+                _text = _text.Remove(n, _cursorPos - n);
+                _cursorPos = n;
+                TrimText();
+                return deleted;
+            }
+            return "";
+        }
 
         public WidgetInput(string filename)
         {
@@ -43,6 +121,12 @@ namespace FlareEngine
             _cursorPos = 0;
             _fontName = "font_regular";
             _soundActivate = 0;
+            _ctrlCUsed = false;
+            _ctrlVUsed = false;
+            _ctrlXUsed = false;
+            _ctrlAUsed = false;
+            _selStart = -1;
+            _selEnd = -1;
             EditMode = false;
             MaxLength = 0;
             OnlyNumbers = false;
@@ -102,16 +186,41 @@ namespace FlareEngine
             }
         }
 
-        protected void TrimText()
+        /// <param name="resetBlink">true for user actions (always show cursor and reset blink timer).
+        /// false for blink-driven updates (respects _showCursor state).</param>
+        protected void TrimText(bool resetBlink = true)
         {
-            string textWithCursor = _text;
-            textWithCursor = textWithCursor.Insert(_cursorPos, "|");
+            if (resetBlink)
+            {
+                _showCursor = true;
+                _cursorBlinkTimer = 0;
+            }
 
             int padding = SharedResources.Font!.GetFontHeight();
-            _trimmedText = SharedResources.Font.TrimTextToWidth(_text, Pos.Width - padding, !FontEngine.UseEllipsis, _text.Length);
+            int maxWidth = Pos.Width - padding;
 
-            int trimPos = (_cursorPos > 0 ? _cursorPos - 1 : _cursorPos);
-            _trimmedTextCursor = SharedResources.Font.TrimTextToWidth(textWithCursor, Pos.Width - padding, !FontEngine.UseEllipsis, trimPos);
+            if (EditMode)
+            {
+                // Use cursorPos as leftPos so cursor stays visible when text is long
+                _trimmedText = SharedResources.Font.TrimTextToWidth(_text, maxWidth, !FontEngine.UseEllipsis, _cursorPos);
+                _trimmedTextCursor = _trimmedText;
+
+                // Determine where displayed text starts in original _text
+                _displayedTextStart = _text.IndexOf(_trimmedText, StringComparison.Ordinal);
+                if (_displayedTextStart < 0) _displayedTextStart = 0;
+
+                // Compute cursor pixel X from displayed text
+                int cursorOffsetInTrimmed = _cursorPos - _displayedTextStart;
+                if (cursorOffsetInTrimmed < 0) cursorOffsetInTrimmed = 0;
+                if (cursorOffsetInTrimmed > _trimmedText.Length) cursorOffsetInTrimmed = _trimmedText.Length;
+                _cursorPixelX = _fontPos.X + SharedResources.Font.CalcSize(_trimmedText.Substring(0, cursorOffsetInTrimmed)).X;
+            }
+            else
+            {
+                _trimmedText = SharedResources.Font.TrimTextToWidth(_text, maxWidth, !FontEngine.UseEllipsis, _text.Length);
+                _trimmedTextCursor = _trimmedText;
+                _displayedTextStart = 0;
+            }
         }
 
         public override void Activate()
@@ -176,6 +285,7 @@ namespace FlareEngine
             if (CheckClick(mouse))
             {
                 EditMode = true;
+                TrimText();
                 if (Platform.Instance.IsMobileDevice)
                 {
                     // Not sure if this is SDL's fault or Android's fault...
@@ -202,12 +312,45 @@ namespace FlareEngine
                 inpt.SlowRepeat[Input.Right] = true;
                 inpt.StartTextInput();
 
+                // --- Mouse drag: cursor positioning and selection ---
+                if (inpt.Pressing[Input.Main1] && Utils.IsWithinRect(Pos, mouse))
+                {
+                    int clickedPos = PixelToCursorPos(mouse.X);
+                    if (_mouseDragAnchor < 0)
+                    {
+                        // Start of drag: position cursor, clear previous selection
+                        _mouseDragAnchor = clickedPos;
+                        _cursorPos = clickedPos;
+                        ClearSelection();
+                        TrimText();
+                    }
+                    else if (clickedPos != _cursorPos)
+                    {
+                        // Continuing drag: extend selection from anchor to current
+                        _cursorPos = clickedPos;
+                        _selStart = Math.Min(_mouseDragAnchor, clickedPos);
+                        _selEnd = Math.Max(_mouseDragAnchor, clickedPos);
+                        TrimText();
+                    }
+                }
+                else if (_mouseDragAnchor >= 0)
+                {
+                    // Mouse released or left widget — end drag
+                    _mouseDragAnchor = -1;
+                }
+
                 if (inpt.Inkeys != "")
                 {
-                    // handle text input
-                    // only_numbers will restrict our input to 0-9 characters
+                    // handle text input — replace selection if any, otherwise insert at cursor
                     if (!OnlyNumbers || (inpt.Inkeys[0] >= 48 && inpt.Inkeys[0] <= 57))
                     {
+                        if (HasSelection())
+                        {
+                            var (s, e) = GetSelectionRange();
+                            _text = _text.Remove(s, e - s);
+                            _cursorPos = s;
+                            ClearSelection();
+                        }
                         _text = _text.Insert(_cursorPos, inpt.Inkeys);
                         _cursorPos += inpt.Inkeys.Length;
                         TrimText();
@@ -224,35 +367,156 @@ namespace FlareEngine
                     }
                 }
 
-                // handle backspaces
-                if (inpt.Pressing[Input.Del] && inpt.RepeatCooldown[Input.Del].IsBegin())
+                // --- Clipboard & selection shortcuts (using raw SDL key state for reliability) ---
+                var sdlKeys = SDLInputState.Sdl;
+                bool ctrlHeld = sdlKeys != null && (sdlKeys.IsKeyPressed(SdlScancode.LCtrl) || sdlKeys.IsKeyPressed(SdlScancode.RCtrl));
+                bool shiftHeld = sdlKeys != null && (sdlKeys.IsKeyPressed(SdlScancode.LShift) || sdlKeys.IsKeyPressed(SdlScancode.RShift));
+
+                // Ctrl+A: select all
+                if (ctrlHeld && !_ctrlAUsed && sdlKeys!.IsKeyPressed(SdlScancode.A))
                 {
-                    if (_text.Length != 0 && _cursorPos > 0)
-                    {
-                        // remove utf-8 character
-                        // size_t old_cursor_pos = cursor_pos;
-                        int n = _cursorPos - 1;
-                        while (n > 0 && char.IsLowSurrogate(_text[n]))
-                        {
-                            n--;
-                        }
-                        _text = _text.Substring(0, n) + _text.Substring(_cursorPos);
-                        _cursorPos -= _cursorPos - n;
-                        TrimText();
-                    }
+                    _selStart = 0;
+                    _selEnd = _text.Length;
+                    _ctrlAUsed = true;
+                    TrimText();
                 }
 
-                // cursor movement
-                if (_text.Length != 0 && _cursorPos > 0 && inpt.Pressing[Input.Left] && inpt.RepeatCooldown[Input.Left].IsBegin())
+                // Ctrl+C: copy selection (or all text)
+                if (ctrlHeld && !_ctrlCUsed && sdlKeys!.IsKeyPressed(SdlScancode.C))
                 {
-                    _cursorPos--;
+                    string copyText;
+                    if (HasSelection())
+                    {
+                        var (s, e) = GetSelectionRange();
+                        copyText = _text.Substring(s, e - s);
+                    }
+                    else
+                    {
+                        copyText = _text;
+                    }
+                    if (copyText.Length > 0)
+                        sdlKeys.SetClipboardText(copyText);
+                    _ctrlCUsed = true;
+                }
+
+                // Ctrl+X: cut selection (or all text)
+                if (ctrlHeld && !_ctrlXUsed && sdlKeys!.IsKeyPressed(SdlScancode.X))
+                {
+                    string cutText;
+                    if (HasSelection())
+                    {
+                        var (s, e) = GetSelectionRange();
+                        cutText = _text.Substring(s, e - s);
+                        _text = _text.Remove(s, e - s);
+                        _cursorPos = s;
+                        ClearSelection();
+                        TrimText();
+                    }
+                    else
+                    {
+                        cutText = _text;
+                        _text = "";
+                        _cursorPos = 0;
+                        TrimText();
+                    }
+                    if (cutText.Length > 0)
+                        sdlKeys.SetClipboardText(cutText);
+                    _ctrlXUsed = true;
+                }
+
+                // Ctrl+V: paste, replacing selection if any
+                if (ctrlHeld && !_ctrlVUsed && sdlKeys!.IsKeyPressed(SdlScancode.V))
+                {
+                    string? clip = sdlKeys.GetClipboardText();
+                    if (!string.IsNullOrEmpty(clip))
+                    {
+                        if (HasSelection())
+                        {
+                            var (s, e) = GetSelectionRange();
+                            _text = _text.Remove(s, e - s);
+                            _cursorPos = s;
+                            ClearSelection();
+                        }
+                        if (!OnlyNumbers || (clip.Length > 0 && clip[0] >= 48 && clip[0] <= 57))
+                        {
+                            _text = _text.Insert(_cursorPos, clip);
+                            _cursorPos += clip.Length;
+                            TrimText();
+                        }
+                    }
+                    _ctrlVUsed = true;
+                }
+
+                // Reset combo flags when modifier released
+                if (!ctrlHeld)
+                {
+                    _ctrlCUsed = false;
+                    _ctrlVUsed = false;
+                    _ctrlXUsed = false;
+                    _ctrlAUsed = false;
+                }
+                // Also reset per-key when the letter key is released, so multiple pastes work while holding Ctrl
+                if (sdlKeys != null)
+                {
+                    if (!sdlKeys.IsKeyPressed(SdlScancode.V)) _ctrlVUsed = false;
+                    if (!sdlKeys.IsKeyPressed(SdlScancode.C)) _ctrlCUsed = false;
+                    if (!sdlKeys.IsKeyPressed(SdlScancode.X)) _ctrlXUsed = false;
+                    if (!sdlKeys.IsKeyPressed(SdlScancode.A)) _ctrlAUsed = false;
+                }
+
+                // handle backspace — delete selection or single char
+                if (inpt.Pressing[Input.Del] && inpt.RepeatCooldown[Input.Del].IsBegin())
+                {
+                    DeleteSelectionOrChar();
+                }
+
+                // cursor movement with Shift selection (using raw SDL key state for Shift)
+                // Skip during Ctrl to avoid A-key→Input.Left binding conflict
+                if (!ctrlHeld && _text.Length != 0 && _cursorPos > 0 && inpt.Pressing[Input.Left] && inpt.RepeatCooldown[Input.Left].IsBegin())
+                {
+                    if (shiftHeld)
+                    {
+                        if (!HasSelection())
+                            _selStart = _selEnd = _cursorPos;
+                        if (_cursorPos > 0)
+                        {
+                            _cursorPos--;
+                            _selEnd = _cursorPos;
+                        }
+                    }
+                    else
+                    {
+                        ClearSelection();
+                        _cursorPos--;
+                    }
                     TrimText();
                 }
-                else if (_text.Length != 0 && _cursorPos < _text.Length && inpt.Pressing[Input.Right] && inpt.RepeatCooldown[Input.Right].IsBegin())
+                else if (!ctrlHeld && _text.Length != 0 && _cursorPos < _text.Length && inpt.Pressing[Input.Right] && inpt.RepeatCooldown[Input.Right].IsBegin())
                 {
                     inpt.Lock[Input.Right] = true;
-                    _cursorPos++;
+                    if (shiftHeld)
+                    {
+                        if (!HasSelection())
+                            _selStart = _selEnd = _cursorPos;
+                        _cursorPos++;
+                        _selEnd = _cursorPos;
+                    }
+                    else
+                    {
+                        ClearSelection();
+                        _cursorPos++;
+                    }
                     TrimText();
+                }
+
+                // --- cursor blink (toggle every ~0.5s at current frame rate) ---
+                _cursorBlinkTimer++;
+                uint maxFps = SharedResources.Settings!.MaxFramesPerSec;
+                if (_cursorBlinkTimer >= maxFps / 2)
+                {
+                    _cursorBlinkTimer = 0;
+                    _showCursor = !_showCursor;
+                    TrimText(false);
                 }
 
                 // defocus with Enter or Escape
@@ -297,13 +561,46 @@ namespace FlareEngine
 
             SharedResources.Font!.SetFont(_fontName);
 
+            // Render selection highlight
+            if (EditMode && HasSelection())
+            {
+                var (selS, selE) = GetSelectionRange();
+                int selStartInDisplayed = selS - _displayedTextStart;
+                int selEndInDisplayed = selE - _displayedTextStart;
+                if (selStartInDisplayed < 0) selStartInDisplayed = 0;
+                if (selEndInDisplayed > _trimmedText.Length) selEndInDisplayed = _trimmedText.Length;
+                if (selEndInDisplayed > selStartInDisplayed)
+                {
+                    string beforeSel = _trimmedText.Substring(0, selStartInDisplayed);
+                    string selText = _trimmedText.Substring(selStartInDisplayed, selEndInDisplayed - selStartInDisplayed);
+                    int selX = _fontPos.X + SharedResources.Font.CalcSize(beforeSel).X;
+                    int selW = SharedResources.Font.CalcSize(selText).X;
+                    int selH = SharedResources.Font.GetFontHeight();
+                    Color selColor = new Color(64, 128, 255, 128);
+                    SharedResources.RenderDevice!.DrawRectangle(
+                        new Int2(selX, _fontPos.Y),
+                        new Int2(selX + selW, _fontPos.Y + selH),
+                        selColor);
+                }
+            }
+
             if (!EditMode)
             {
                 SharedResources.Font.Render(_trimmedText, _fontPos.X, _fontPos.Y, FontEngine.JustifyLeft, null, 0, SharedResources.Font.GetColor(FontEngine.ColorWidgetNormal), !FontEngine.ShadowOffset);
             }
             else
             {
-                SharedResources.Font.RenderShadowed(_trimmedTextCursor, _fontPos.X, _fontPos.Y, FontEngine.JustifyLeft, null, 0, SharedResources.Font.GetColor(FontEngine.ColorWidgetNormal));
+                SharedResources.Font.RenderShadowed(_trimmedText, _fontPos.X, _fontPos.Y, FontEngine.JustifyLeft, null, 0, SharedResources.Font.GetColor(FontEngine.ColorWidgetNormal));
+
+                // Draw cursor as vertical line
+                if (_showCursor)
+                {
+                    int cursorH = SharedResources.Font.GetFontHeight();
+                    SharedResources.RenderDevice!.DrawRectangle(
+                        new Int2(_cursorPixelX, _fontPos.Y + 1),
+                        new Int2(_cursorPixelX + 1, _fontPos.Y + cursorH - 1),
+                        SharedResources.Font.GetColor(FontEngine.ColorWidgetNormal));
+                }
             }
 
             if (InFocus && !EditMode)

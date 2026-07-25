@@ -106,12 +106,12 @@ namespace FlareEngine
             }
 
             _inputBox = new WidgetInput(WidgetInput.NoFile);
-            _inputBox.SetFontName(_fontName);
+            // _inputBox.SetFontName(_fontName);
 
             Tablist.Add(_inputBox);
 
             _logHistory = new WidgetLog(1, 1);
-            _logHistory.SetFontNames(_fontName, _fontBoldName);
+            // _logHistory.SetFontNames(_fontName, _fontBoldName);
             Tablist.Add(_logHistory.GetWidget());
 
             Align();

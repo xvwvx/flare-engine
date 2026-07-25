@@ -165,6 +165,27 @@ namespace FlareEngine.Sdl
                 SDL.SetGamepadLED(gamepad.NativePtr, r, g, b);
         }
 
+        /// <summary>对应 <c>SDL_GetClipboardText</c>。</summary>
+        public string? GetClipboardText()
+        {
+            return SDL.GetClipboardText();
+        }
+
+        /// <summary>对应 <c>SDL_SetClipboardText</c>。</summary>
+        public void SetClipboardText(string text)
+        {
+            SDL.SetClipboardText(text);
+        }
+
+        /// <summary>检测指定 scancode 的键是否被按下。</summary>
+        public bool IsKeyPressed(int scancode)
+        {
+            ReadOnlySpan<bool> keys = SDL.GetKeyboardState(out int numKeys);
+            if (scancode >= numKeys || scancode < 0)
+                return false;
+            return keys[scancode];
+        }
+
         private void EnsureFocusedWindow()
         {
             if (_focusedWindow == IntPtr.Zero)
