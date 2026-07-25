@@ -794,9 +794,14 @@ std::string Utils::getTimeString(const unsigned long time) {
 }
 
 unsigned long Utils::hashString(const std::string& str) {
-	std::locale loc;
-	const std::collate<char>& coll = std::use_facet<std::collate<char> >(loc);
-	return coll.hash(str.data(), str.data() + str.length());
+    uint32_t hash = 2166136261u;
+    const uint32_t prime = 16777619u;
+    for (size_t i = 0; i < str.size(); ++i) {
+        unsigned char b = static_cast<unsigned char>(str[i]);
+        hash ^= b;
+        hash *= prime;
+    }
+    return static_cast<uint64_t>(hash);
 }
 
 char* Utils::strdup(const std::string& str) {
@@ -859,6 +864,7 @@ void Utils::lockFileWrite(int increment) {
 }
 
 void Utils::lockFileCheck() {
+	return;
 	if (!platform.has_lock_file)
 		return;
 

@@ -224,7 +224,13 @@ std::string Filesystem::removeTrailingSlash(const std::string& path) {
 }
 
 std::string Filesystem::getFullPath(const std::string &path) {
+#ifdef _WIN32
+	// Windows 环境下的安全替代方案
+	char* full_path = _fullpath(NULL, path.c_str(), 0);
+#else
+	// 原有的 Linux/POSIX 路径解析
 	char* full_path = realpath(path.c_str(), NULL);
+#endif
 	std::string ret(full_path);
 	free(full_path);
 	return ret;

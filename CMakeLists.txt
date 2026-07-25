@@ -366,6 +366,40 @@ EndIf (NOT SDL2MAIN_LIBRARY)
 
 Target_Link_Libraries (flare ${CMAKE_LD_FLAGS} ${SDL2_LIBRARY} ${SDL2IMAGE_LIBRARY} ${SDL2MIXER_LIBRARY} ${SDL2TTF_LIBRARY} ${SDL2MAIN_LIBRARY})
 
+# 1. 找到 ntldd 工具
+find_program(NTLDD ntldd)
+if(NOT NTLDD)
+	message(FATAL_ERROR "请先在 UCRT64 终端安装：pacman -S mingw-w64-ucrt-x86_64-ntldd")
+endif()
+
+# 2. 生成复制脚本 (配置阶段写入文件)
+set(COPY_SCRIPT "${CMAKE_CURRENT_BINARY_DIR}/copy_dlls.sh")
+file(WRITE ${COPY_SCRIPT}
+		"#!/bin/bash
+# 参数：$1=可执行文件路径  $2=目标目录
+EXE=\"$1\"
+DEST=\"$2\"
+echo \"正在复制 DLL 依赖...\"
+${NTLDD} -R \"\${EXE}\" | \
+    awk -F'=>' '{print \$2}' | \
+    awk '{print \$1}' | \
+    grep -viE '(system32|windows|winsxs)' | \
+    sort -u | \
+    while read -r dll; do
+        if [ -f \"\${dll}\" ]; then
+            cp -u \"\${dll}\" \"\${DEST}\"
+            echo \"  \${dll} -> \${DEST}\"
+        fi
+    done
+echo \"完成。\"
+")
+
+# 3. 构建后调用脚本，并传入生成器表达式
+add_custom_command(TARGET flare POST_BUILD
+		COMMAND bash "${COPY_SCRIPT}" "$<TARGET_FILE:flare>" "$<TARGET_FILE_DIR:flare>"
+		COMMENT "Copying runtime DLLs..."
+		VERBATIM
+)
 
 # installing to the proper places
 install(PROGRAMS
