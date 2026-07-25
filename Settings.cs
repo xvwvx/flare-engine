@@ -130,6 +130,7 @@ namespace FlareEngine
         public ushort ViewWHalf;
         public ushort ViewHHalf;
         public float ViewScaling;
+        public float DisplayScale;   // Window size multiplier (1.0 = base resolution, 2.0 = 2x display)
 
         public bool Audio;
 
@@ -176,6 +177,7 @@ namespace FlareEngine
             ViewWHalf = 0;
             ViewHHalf = 0;
             ViewScaling = 1.0f;
+            DisplayScale = 2.0f;     // default 2x display
             Audio = true;
             Touchscreen = false;
             MouseScaled = true;
@@ -184,8 +186,8 @@ namespace FlareEngine
             SoftReset = false;
             SafeVideo = false;
 
-            _config = new List<ConfigEntry>(55);
-            for (int i = 0; i < 55; i++)
+            _config = new List<ConfigEntry>(56);
+            for (int i = 0; i < 56; i++)
                 _config.Add(new ConfigEntry());
 
             SetConfigDefault(0, "fullscreen", typeof(bool), "1", () => Fullscreen, v => Fullscreen = (bool)v, "Fullscreen mode | 0 = disable, 1 = enable");
@@ -243,6 +245,7 @@ namespace FlareEngine
             SetConfigDefault(52, "fade_walls", typeof(bool), "1", () => FadeWalls, v => FadeWalls = (bool)v, "Lowers the opacity of walls that are covering the player. 0 = disable, 1 = enable");
             SetConfigDefault(53, "setup_language", typeof(bool), "0", () => SetupLanguage, v => SetupLanguage = (bool)v, "(First-time-launch setup) Language | 0 = show dialog, 1 = no dialog");
             SetConfigDefault(54, "setup_mousemove", typeof(bool), "0", () => SetupMousemove, v => SetupMousemove = (bool)v, "(First-time-launch setup) Mouse movement | 0 = show dialog, 1 = no dialog");
+            SetConfigDefault(55, "display_scale", typeof(float), "2.0", () => DisplayScale, v => DisplayScale = Math.Clamp((float)v, 1.0f, 4.0f), "Window display scale multiplier | 1.0 = base resolution, 2.0 = 2x display (default), 4.0 = 4x display");
         }
 
         private void SetConfigDefault(int index, string name, Type type, string defaultVal, Func<object> getter, Action<object> setter, string comment)

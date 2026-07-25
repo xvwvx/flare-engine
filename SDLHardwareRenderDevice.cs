@@ -483,6 +483,14 @@ namespace FlareEngine
             int windowW = SharedResources.Settings!.ScreenW;
             int windowH = SharedResources.Settings!.ScreenH;
 
+            // Apply display scale multiplier for non-fullscreen mode
+            if (!SharedResources.Settings!.Fullscreen)
+            {
+                float scale = SharedResources.Settings!.DisplayScale;
+                windowW = (int)(windowW * scale);
+                windowH = (int)(windowH * scale);
+            }
+
             if (SharedResources.Settings!.Fullscreen)
             {
                 wFlags = wFlags | SdlHardwareConstants.WindowFullscreenDesktop;
@@ -495,8 +503,9 @@ namespace FlareEngine
             }
             else if (Fullscreen && IsInitialized)
             {
-                windowW = SharedResources.Eset!.Resolutions.MinScreenW;
-                windowH = SharedResources.Eset!.Resolutions.MinScreenH;
+                float scale = SharedResources.Settings!.DisplayScale;
+                windowW = (int)(SharedResources.Eset!.Resolutions.MinScreenW * scale);
+                windowH = (int)(SharedResources.Eset!.Resolutions.MinScreenH * scale);
                 wFlags = wFlags | SdlHardwareConstants.WindowShown;
             }
             else
@@ -533,7 +542,14 @@ namespace FlareEngine
                             Sdl?.SetHintWithPriority("SDL_RENDER_SCALE_QUALITY", "0", SdlHardwareConstants.HintOverride);
                     }
 
-                    Sdl?.SetWindowMinimumSize(_window, SharedResources.Eset!.Resolutions.MinScreenW, SharedResources.Eset!.Resolutions.MinScreenH);
+                    int cMinW = SharedResources.Eset!.Resolutions.MinScreenW;
+                    int cMinH = SharedResources.Eset!.Resolutions.MinScreenH;
+                    if (!SharedResources.Settings!.Fullscreen)
+                    {
+                        cMinW = (int)(cMinW * SharedResources.Settings!.DisplayScale);
+                        cMinH = (int)(cMinH * SharedResources.Settings!.DisplayScale);
+                    }
+                    Sdl?.SetWindowMinimumSize(_window, cMinW, cMinH);
                     Sdl?.SetWindowPosition(_window, SdlHardwareConstants.WindowposCentered, SdlHardwareConstants.WindowposCentered);
                     Sdl?.SetWindowSize(_window, windowW, windowH);
                 }
@@ -578,7 +594,14 @@ namespace FlareEngine
                 {
                     MinScreen.X = SharedResources.Eset!.Resolutions.MinScreenW;
                     MinScreen.Y = SharedResources.Eset!.Resolutions.MinScreenH;
-                    Sdl?.SetWindowMinimumSize(_window, SharedResources.Eset!.Resolutions.MinScreenW, SharedResources.Eset!.Resolutions.MinScreenH);
+                    int rMinW = MinScreen.X;
+                    int rMinH = MinScreen.Y;
+                    if (!SharedResources.Settings!.Fullscreen)
+                    {
+                        rMinW = (int)(rMinW * SharedResources.Settings!.DisplayScale);
+                        rMinH = (int)(rMinH * SharedResources.Settings!.DisplayScale);
+                    }
+                    Sdl?.SetWindowMinimumSize(_window, rMinW, rMinH);
                     Sdl?.SetWindowPosition(_window, SdlHardwareConstants.WindowposCentered, SdlHardwareConstants.WindowposCentered);
                 }
 
@@ -954,8 +977,11 @@ namespace FlareEngine
                     {
                         Sdl?.SetWindowFullscreen(_window, 0);
 
-                        Sdl?.SetWindowMinimumSize(_window, SharedResources.Eset!.Resolutions.MinScreenW, SharedResources.Eset!.Resolutions.MinScreenH);
-                        Sdl?.SetWindowSize(_window, SharedResources.Eset!.Resolutions.MinScreenW, SharedResources.Eset!.Resolutions.MinScreenH);
+                        float ds = SharedResources.Settings!.DisplayScale;
+                        int scaledMinW = (int)(SharedResources.Eset!.Resolutions.MinScreenW * ds);
+                        int scaledMinH = (int)(SharedResources.Eset!.Resolutions.MinScreenH * ds);
+                        Sdl?.SetWindowMinimumSize(_window, scaledMinW, scaledMinH);
+                        Sdl?.SetWindowSize(_window, scaledMinW, scaledMinH);
                         WindowResize();
                         Sdl?.SetWindowPosition(_window, SdlHardwareConstants.WindowposCentered, SdlHardwareConstants.WindowposCentered);
                     }
