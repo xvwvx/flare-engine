@@ -1,6 +1,7 @@
 // <自动生成> 对应 C++ 源文件：EngineSettings.h + EngineSettings.cpp
 // 注意：System, System.Collections.Generic, System.Linq, System.Threading.Tasks 已全局导入，此处省略。
 using Stride.Core.Mathematics;
+using Utils = FlareEngine.Utils;
 
 namespace FlareEngine
 {
@@ -1060,8 +1061,10 @@ namespace FlareEngine
 
                 // For backwards-compatibility, load engine/elements.txt as damage types
                 // @CLASS EngineSettings: Elements|(Deprecated in v1.14.85, use engine/damage_types.txt instead) Description of engine/elements.txt
-                if (infile.Open("engine/elements.txt", FileParser.ModFile, FileParser.ErrorNormal))
+                if (infile.Open("engine/elements.txt", FileParser.ModFile, FileParser.ErrorNone))
                 {
+                    Utils.LogInfo("EngineSettings: Found deprecated file engine/elements.txt. Please use engine/damage_types.txt instead!");
+                    
                     while (infile.Next())
                     {
                         if (infile.NewSection)
