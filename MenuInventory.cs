@@ -1468,7 +1468,7 @@ namespace FlareEngine
             if (_preview != null)
                 _preview.LoadGraphicsFromInventory(this);
 
-            if (pc.Stats.CurState == StatBlock.EntityPower || pc.Stats.CurState != StatBlock.EntityBlock)
+            if (pc.Stats.CurState == StatBlock.EntityPower)
             {
                 pc.Stats.CurState = StatBlock.EntityStance;
             }
