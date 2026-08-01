@@ -191,8 +191,8 @@ namespace FlareEngine
                 _config.Add(new ConfigEntry());
 
             SetConfigDefault(0, "fullscreen", typeof(bool), "1", () => Fullscreen, v => Fullscreen = (bool)v, "Fullscreen mode | 0 = disable, 1 = enable");
-            SetConfigDefault(1, "resolution_w", typeof(ushort), "640", () => ScreenW, v => ScreenW = (ushort)v, "Window size");
-            SetConfigDefault(2, "resolution_h", typeof(ushort), "480", () => ScreenH, v => ScreenH = (ushort)v, "");
+            SetConfigDefault(1, "resolution_w", typeof(ushort), "640", () => (ushort)(ScreenW / DisplayScale), v => ScreenW = (ushort)v, "Window size");
+            SetConfigDefault(2, "resolution_h", typeof(ushort), "480", () => (ushort)(ScreenH / DisplayScale), v => ScreenH = (ushort)v, "");
             SetConfigDefault(3, "music_volume", typeof(ushort), "96", () => MusicVolume, v => MusicVolume = (ushort)v, "Music and sound volume | 0 = silent, 128 = maximum");
             SetConfigDefault(4, "sound_volume", typeof(ushort), "128", () => SoundVolume, v => SoundVolume = (ushort)v, "");
             SetConfigDefault(5, "combat_text", typeof(bool), "1", () => CombatText, v => CombatText = (bool)v, "Display floating damage text | 0 = disable, 1 = enable");

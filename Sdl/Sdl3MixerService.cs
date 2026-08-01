@@ -28,7 +28,18 @@ namespace FlareEngine.Sdl
             public ISdlMixerChunk? Chunk;
             public bool Paused;
             public float Gain = 1.0f;
+
+            /// <summary>持久化的 stopped 回调 userdata 句柄（存放通道号），避免每次播放都重新分配 GCHandle。</summary>
+            public GCHandle CallbackHandle;
         }
+
+        /// <summary>
+        /// 强引用持有 stopped 回调委托：SDL 原生侧注册的回调需要托管委托在整个注册期内存活，
+        /// 否则轨道停止时回调已回收的委托会直接终止进程
+        /// （“A callback was made on a garbage collected delegate”）。
+        /// 委托绑定到当前服务实例，只要 mixer 服务存活，委托就保持可达。
+        /// </summary>
+        private readonly Mixer.TrackStoppedCallback _trackStoppedCallback;
 
         private IntPtr _mixer = IntPtr.Zero;
         private IntPtr _musicTrack = IntPtr.Zero;
@@ -39,6 +50,11 @@ namespace FlareEngine.Sdl
         private int _maxChannels = 128;
         private ChannelSlot[] _channels = Array.Empty<ChannelSlot>();
         private Action<int>? _channelFinishedCallback;
+
+        public Sdl3MixerService()
+        {
+            _trackStoppedCallback = OnTrackStopped;
+        }
 
         /// <summary>对应 <c>Mix_OpenAudio(freq, AUDIO_S16SYS, 2, 1024)</c>。</summary>
         public int OpenAudio(uint freq, int format, int channels, int chunksize)
@@ -89,6 +105,12 @@ namespace FlareEngine.Sdl
 
         public void CloseAudio()
         {
+            for (int i = 0; i < _channels.Length; ++i)
+            {
+                if (_channels[i].CallbackHandle.IsAllocated)
+                    _channels[i].CallbackHandle.Free();
+            }
+
             if (_mixer != IntPtr.Zero)
             {
                 Mixer.DestroyMixer(_mixer);
@@ -164,9 +186,10 @@ namespace FlareEngine.Sdl
         {
             if (channel >= 0 && channel < _channels.Length && _channels[channel].Track != IntPtr.Zero)
             {
+                // SDL3 的 StopTrack 本身会触发 stopped 回调（对应 SDL2 Mix_HaltChannel 触发
+                // channel_finished），因此这里不再手动触发，避免 ChannelFinished 被调用两次。
                 Mixer.StopTrack(_channels[channel].Track, 0);
                 _channels[channel].Chunk = null;
-                FireChannelFinished(channel);
             }
         }
 
@@ -203,26 +226,57 @@ namespace FlareEngine.Sdl
 
         public int PlayChannel(int channel, ISdlMixerChunk chunk, int loops)
         {
-            if (_mixer == IntPtr.Zero || channel < 0 || channel >= _channels.Length)
+            if (_mixer == IntPtr.Zero || _channels.Length == 0)
                 return -1;
             if (chunk is not MixerChunk native || native.Audio == IntPtr.Zero)
                 return -1;
 
-            IntPtr track = _channels[channel].Track;
+            // 对应 Mix_PlayChannel(-1, ...)：在第一个空闲通道上播放并返回其真实编号。
+            // 原实现直接对 channel < 0 返回 -1，导致调用方把 -1 当作通道号存入
+            // _playback，ChannelFinished 回调永远匹配不上，声音/音乐无法正常播放。
+            if (channel == -1)
+            {
+                channel = FindFreeChannel();
+                if (channel == -1)
+                    return -1;
+            }
+
+            if (channel < 0 || channel >= _channels.Length)
+                return -1;
+
+            ChannelSlot slot = _channels[channel];
+            IntPtr track = slot.Track;
             if (track == IntPtr.Zero)
                 return -1;
 
-            Mixer.SetTrackStoppedCallback(track, OnTrackStopped, GCHandle.ToIntPtr(GCHandle.Alloc(channel)));
+            // 每个通道持久持有回调 userdata（通道号），避免每次播放都新建 GCHandle 造成泄漏。
+            if (!slot.CallbackHandle.IsAllocated)
+                slot.CallbackHandle = GCHandle.Alloc(channel);
+
+            // 复用强引用持有的委托实例（见 _trackStoppedCallback），避免方法组新建的委托被 GC 回收。
+            Mixer.SetTrackStoppedCallback(track, _trackStoppedCallback, GCHandle.ToIntPtr(slot.CallbackHandle));
             Mixer.SetTrackAudio(track, native.Audio);
             Mixer.SetTrackLoops(track, loops);
-            _channels[channel].Chunk = chunk;
-            _channels[channel].Gain = 1.0f;
+            slot.Chunk = chunk;
+            slot.Gain = 1.0f;
             Mixer.SetTrackGain(track, 1.0f);
 
             if (!Mixer.PlayTrack(track, 0))
                 return -1;
 
             return channel;
+        }
+
+        /// <summary>返回第一个未在播放的通道编号；全部被占用时返回 -1。</summary>
+        private int FindFreeChannel()
+        {
+            for (int i = 0; i < _channels.Length; ++i)
+            {
+                IntPtr track = _channels[i].Track;
+                if (track != IntPtr.Zero && !Mixer.TrackPlaying(track))
+                    return i;
+            }
+            return -1;
         }
 
         public void Volume(int channel, int volume)
@@ -307,15 +361,13 @@ namespace FlareEngine.Sdl
 
         private void OnTrackStopped(IntPtr userdata, IntPtr track)
         {
-            if (userdata != IntPtr.Zero)
-            {
-                GCHandle handle = GCHandle.FromIntPtr(userdata);
-                if (handle.Target is int channel)
-                {
-                    handle.Free();
-                    FireChannelFinished(channel);
-                }
-            }
+            if (userdata == IntPtr.Zero)
+                return;
+
+            // 句柄生命周期由对应 ChannelSlot 管理（CloseAudio 时统一释放），此处只读取通道号，不释放。
+            GCHandle handle = GCHandle.FromIntPtr(userdata);
+            if (handle.Target is int channel)
+                FireChannelFinished(channel);
         }
 
         private void FireChannelFinished(int channel)
