@@ -1112,6 +1112,7 @@ namespace FlareEngine
 
         private void CreateTooltip(TooltipData tipData, MenuPowersCell? pcell, PowerID powerIndex, bool showUnlockPrompt, int tooltipLength)
         {
+            var eset = SharedResources.Eset!;
             MenuPowersCell? pcellBonus = null;
             if (pcell != null)
             {
@@ -1290,10 +1291,22 @@ namespace FlareEngine
                 else if (effectType == Effect.Damage)
                 {
                     ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append(' ').Append(SharedResources.Msg!.Get("Damage per second"));
+                    if (effectPtr != null && effectPtr.DamageIsTyped)
+                    {
+                        ss.Append("（")
+                            .Append(eset.DamageTypes.Types[effectPtr.DamageType].Name)
+                            .Append("）");
+                    }
                 }
                 else if (effectType == Effect.DamagePercent)
                 {
                     ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append("% ").Append(SharedResources.Msg!.Get("Damage per second"));
+                    if (effectPtr != null && effectPtr.DamageIsTyped)
+                    {
+                        ss.Append("（")
+                            .Append(eset.DamageTypes.Types[effectPtr.DamageType].Name)
+                            .Append("）");
+                    }
                 }
                 else if (effectType == Effect.Hpot)
                 {
