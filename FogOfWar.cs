@@ -72,6 +72,7 @@ namespace FlareEngine
 
         public int Load()
         {
+            var mapr = SharedGameResources.Mapr!;
             using FileParser infile = new FileParser();
             // @CLASS FogOfWar|Description of engine/fow_mask.txt
             if (!infile.Open(MaskDefinition, FileParser.ModFile, FileParser.ErrorNormal))
@@ -177,27 +178,27 @@ namespace FlareEngine
 
             if (_defMask == null)
             {
-                SharedGameResources.Mapr!.Fogofwar = FogOfWar.TypeNone;
+                mapr.Fogofwar = FogOfWar.TypeNone;
                 invalidConfig = true;
             }
 
-            if (SharedGameResources.Mapr!.Fogofwar == FogOfWar.TypeOverlay)
+            if (mapr.Fogofwar == FogOfWar.TypeOverlay)
             {
                 if (TilesetDark.Length == 0)
                 {
                     if (!_loaded)
                         Utils.LogError("FogOfWar: tileset_dark is not set");
 
-                    SharedGameResources.Mapr.Fogofwar = FogOfWar.TypeTint;
+                    mapr.Fogofwar = FogOfWar.TypeTint;
                 }
                 if (TilesetFog.Length == 0)
                 {
                     if (!_loaded)
                         Utils.LogError("FogOfWar: tileset_fog is not set");
 
-                    SharedGameResources.Mapr.Fogofwar = FogOfWar.TypeTint;
+                    mapr.Fogofwar = FogOfWar.TypeTint;
                 }
-                if (!invalidConfig && !_loaded && SharedGameResources.Mapr.Fogofwar == FogOfWar.TypeOverlay)
+                if (!invalidConfig && !_loaded && mapr.Fogofwar == FogOfWar.TypeOverlay)
                 {
                     TsetDark.Load(TilesetDark);
                     TsetFog.Load(TilesetFog);
@@ -211,31 +212,36 @@ namespace FlareEngine
 
         public void Logic()
         {
-            if (_prevHeroPos.X == SharedGameResources.Pc!.Stats.Pos.X && _prevHeroPos.Y == SharedGameResources.Pc!.Stats.Pos.Y)
+            var pc = SharedGameResources.Pc!;
+            var menu = SharedGameResources.Menu!;
+            var mapr = SharedGameResources.Mapr!;
+
+            if (_prevHeroPos.X == pc.Stats.Pos.X && _prevHeroPos.Y == pc.Stats.Pos.Y)
                 return;
 
-            _prevHeroPos = SharedGameResources.Pc!.Stats.Pos;
+            _prevHeroPos = pc.Stats.Pos;
 
             UpdateTiles();
             if (_updateMinimap)
             {
                 CalcMiniBoundaries();
-                SharedGameResources.Menu!.Mini!.Update(SharedGameResources.Mapr!.Collider, ref _bounds);
+                menu.Mini!.Update(mapr.Collider, ref _bounds);
                 _updateMinimap = false;
             }
         }
 
         public void HandleIntramapTeleport()
         {
+            var mapr = SharedGameResources.Mapr!;
             CalcBoundaries();
 
             for (int x = _bounds.X; x <= _bounds.Width; x++)
             {
                 for (int y = _bounds.Y; y <= _bounds.Height; y++)
                 {
-                    if (x >= 0 && y >= 0 && x < SharedGameResources.Mapr!.W && y < SharedGameResources.Mapr!.H)
+                    if (x >= 0 && y >= 0 && x < mapr.W && y < mapr.H)
                     {
-                        SharedGameResources.Mapr!.Layers[FogLayerId][x][y] = TileHidden;
+                        mapr.Layers[FogLayerId][x][y] = TileHidden;
                     }
                 }
             }
@@ -243,9 +249,10 @@ namespace FlareEngine
 
         public Color GetTileColorMod(short x, short y)
         {
-            if (SharedGameResources.Mapr!.Layers[DarkLayerId][x][y] == 0 && SharedGameResources.Mapr!.Layers[FogLayerId][x][y] > 0)
+            var mapr = SharedGameResources.Mapr!;
+            if (mapr.Layers[DarkLayerId][x][y] == 0 && mapr.Layers[FogLayerId][x][y] > 0)
                 return _colorFog;
-            else if (SharedGameResources.Mapr!.Layers[DarkLayerId][x][y] > 0)
+            else if (mapr.Layers[DarkLayerId][x][y] > 0)
                 return _colorDark;
             else
                 return _colorSight;
@@ -266,27 +273,31 @@ namespace FlareEngine
 
         private void CalcBoundaries()
         {
-            _bounds.X = (short)SharedGameResources.Pc!.Stats.Pos.X - MaskRadius;
-            _bounds.Y = (short)SharedGameResources.Pc!.Stats.Pos.Y - MaskRadius;
-            _bounds.Width = (short)SharedGameResources.Pc!.Stats.Pos.X + MaskRadius;
-            _bounds.Height = (short)SharedGameResources.Pc!.Stats.Pos.Y + MaskRadius;
+            var pc = SharedGameResources.Pc!;
+            _bounds.X = (short)pc.Stats.Pos.X - MaskRadius;
+            _bounds.Y = (short)pc.Stats.Pos.Y - MaskRadius;
+            _bounds.Width = (short)pc.Stats.Pos.X + MaskRadius;
+            _bounds.Height = (short)pc.Stats.Pos.Y + MaskRadius;
         }
 
         private void CalcMiniBoundaries()
         {
-            _bounds.X = (short)SharedGameResources.Pc!.Stats.Pos.X - MaskRadius;
-            _bounds.Y = (short)SharedGameResources.Pc!.Stats.Pos.Y - MaskRadius;
-            _bounds.Width = (short)SharedGameResources.Pc!.Stats.Pos.X + MaskRadius;
-            _bounds.Height = (short)SharedGameResources.Pc!.Stats.Pos.Y + MaskRadius;
+            var pc = SharedGameResources.Pc!;
+            var mapr = SharedGameResources.Mapr!;
+            _bounds.X = (short)pc.Stats.Pos.X - MaskRadius;
+            _bounds.Y = (short)pc.Stats.Pos.Y - MaskRadius;
+            _bounds.Width = (short)pc.Stats.Pos.X + MaskRadius;
+            _bounds.Height = (short)pc.Stats.Pos.Y + MaskRadius;
 
             if (_bounds.X < 0) _bounds.X = 0;
             if (_bounds.Y < 0) _bounds.Y = 0;
-            if (_bounds.Width > SharedGameResources.Mapr!.W) _bounds.Width = SharedGameResources.Mapr!.W;
-            if (_bounds.Height > SharedGameResources.Mapr!.H) _bounds.Height = SharedGameResources.Mapr!.H;
+            if (_bounds.Width > mapr.W) _bounds.Width = mapr.W;
+            if (_bounds.Height > mapr.H) _bounds.Height = mapr.H;
         }
 
         private void UpdateTiles()
         {
+            var mapr = SharedGameResources.Mapr!;
             if (_defMask == null)
                 return;
 
@@ -297,14 +308,14 @@ namespace FlareEngine
             {
                 for (int y = _bounds.Y; y <= _bounds.Height; y++)
                 {
-                    if (x >= 0 && y >= 0 && x < SharedGameResources.Mapr!.W && y < SharedGameResources.Mapr!.H)
+                    if (x >= 0 && y >= 0 && x < mapr.W && y < mapr.H)
                     {
-                        ushort prevDarkTile = SharedGameResources.Mapr!.Layers[DarkLayerId][x][y];
+                        ushort prevDarkTile = mapr.Layers[DarkLayerId][x][y];
 
-                        SharedGameResources.Mapr!.Layers[DarkLayerId][x][y] = (ushort)(SharedGameResources.Mapr!.Layers[DarkLayerId][x][y] & _defMask[mask]);
-                        SharedGameResources.Mapr!.Layers[FogLayerId][x][y] = _defMask[mask];
+                        mapr.Layers[DarkLayerId][x][y] = (ushort)(mapr.Layers[DarkLayerId][x][y] & _defMask[mask]);
+                        mapr.Layers[FogLayerId][x][y] = _defMask[mask];
 
-                        if (prevDarkTile != SharedGameResources.Mapr!.Layers[DarkLayerId][x][y])
+                        if (prevDarkTile != mapr.Layers[DarkLayerId][x][y])
                         {
                             _updateMinimap = true;
                         }

@@ -72,13 +72,15 @@ namespace FlareEngine
             if (relX <= 0)
                 return _displayedTextStart;
 
+            var font = SharedResources.Font!;
+
             int cumulative = 0;
             for (int i = 0; i < _trimmedText.Length; i++)
             {
                 int charLen = 1;
                 if (char.IsHighSurrogate(_trimmedText[i]) && i + 1 < _trimmedText.Length)
                     charLen = 2;
-                int charW = SharedResources.Font!.CalcSize(_trimmedText.Substring(i, charLen)).X;
+                int charW = font.CalcSize(_trimmedText.Substring(i, charLen)).X;
                 if (cumulative + charW / 2 >= relX)
                     return _displayedTextStart + i;
                 cumulative += charW;
@@ -134,8 +136,11 @@ namespace FlareEngine
 
             LoadGraphics(filename);
 
-            if (SharedResources.Eset!.Widgets.SoundActivate.Length != 0)
-                _soundActivate = SharedResources.Snd!.Load(SharedResources.Eset.Widgets.SoundActivate, "Widget activate");
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
+            if (eset.Widgets.SoundActivate.Length != 0)
+                _soundActivate = snd.Load(eset.Widgets.SoundActivate, "Widget activate");
         }
 
         /// <summary>
@@ -157,9 +162,10 @@ namespace FlareEngine
             Pos.Y = PosBase.Y + offsetY + LocalFrame.Y - LocalOffset.Y;
             Utils.AlignToScreenEdge(Alignment, ref Pos);
 
-            SharedResources.Font!.SetFont(_fontName);
-            _fontPos.X = Pos.X + (SharedResources.Font.GetFontHeight() / 2);
-            _fontPos.Y = Pos.Y + (Pos.Height / 2) - (SharedResources.Font.GetFontHeight() / 2);
+            var font = SharedResources.Font!;
+            font.SetFont(_fontName);
+            _fontPos.X = Pos.X + (font.GetFontHeight() / 2);
+            _fontPos.Y = Pos.Y + (Pos.Height / 2) - (font.GetFontHeight() / 2);
         }
 
         protected void LoadGraphics(string filename)
@@ -168,14 +174,15 @@ namespace FlareEngine
                 return;
 
             // load input background image
+            var renderDevice = SharedResources.RenderDevice!;
             Image? graphics = null;
             if (filename != DefaultFile)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(filename, RenderDevice.ErrorNormal);
+                graphics = renderDevice.LoadImage(filename, RenderDevice.ErrorNormal);
             }
             if (graphics == null)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(DefaultFile, RenderDevice.ErrorExit);
+                graphics = renderDevice.LoadImage(DefaultFile, RenderDevice.ErrorExit);
             }
             if (graphics != null)
             {
@@ -190,19 +197,21 @@ namespace FlareEngine
         /// false for blink-driven updates (respects _showCursor state).</param>
         protected void TrimText(bool resetBlink = true)
         {
+            var font = SharedResources.Font!;
+
             if (resetBlink)
             {
                 _showCursor = true;
                 _cursorBlinkTimer = 0;
             }
 
-            int padding = SharedResources.Font!.GetFontHeight();
+            int padding = font.GetFontHeight();
             int maxWidth = Pos.Width - padding;
 
             if (EditMode)
             {
                 // Use cursorPos as leftPos so cursor stays visible when text is long
-                _trimmedText = SharedResources.Font.TrimTextToWidth(_text, maxWidth, !FontEngine.UseEllipsis, _cursorPos);
+                _trimmedText = font.TrimTextToWidth(_text, maxWidth, !FontEngine.UseEllipsis, _cursorPos);
                 _trimmedTextCursor = _trimmedText;
 
                 // Determine where displayed text starts in original _text
@@ -213,11 +222,11 @@ namespace FlareEngine
                 int cursorOffsetInTrimmed = _cursorPos - _displayedTextStart;
                 if (cursorOffsetInTrimmed < 0) cursorOffsetInTrimmed = 0;
                 if (cursorOffsetInTrimmed > _trimmedText.Length) cursorOffsetInTrimmed = _trimmedText.Length;
-                _cursorPixelX = _fontPos.X + SharedResources.Font.CalcSize(_trimmedText.Substring(0, cursorOffsetInTrimmed)).X;
+                _cursorPixelX = _fontPos.X + font.CalcSize(_trimmedText.Substring(0, cursorOffsetInTrimmed)).X;
             }
             else
             {
-                _trimmedText = SharedResources.Font.TrimTextToWidth(_text, maxWidth, !FontEngine.UseEllipsis, _text.Length);
+                _trimmedText = font.TrimTextToWidth(_text, maxWidth, !FontEngine.UseEllipsis, _text.Length);
                 _trimmedTextCursor = _trimmedText;
                 _displayedTextStart = 0;
             }
@@ -236,7 +245,8 @@ namespace FlareEngine
             // disabled buttons can't be clicked;
             if (!Enabled) return false;
 
-            InputState inpt = SharedResources.Inpt!;
+            var inpt = SharedResources.Inpt!;
+            var snd = SharedResources.Snd!;
 
             // main button already in use, new click not allowed
             if (inpt.Lock[Input.Main1]) return false;
@@ -248,7 +258,7 @@ namespace FlareEngine
 
                 if (Utils.IsWithinRect(Pos, mouse))
                 {
-                    SharedResources.Snd!.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
+                    snd.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
 
                     // activate upon release
                     return true;
@@ -544,6 +554,11 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+            var font = SharedResources.Font!;
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+
             Rectangle src = default;
             src.X = 0;
             src.Y = (EditMode ? Pos.Height : 0);
@@ -556,10 +571,10 @@ namespace FlareEngine
                 _background.SetOffset(LocalOffset);
                 _background.SetClipFromRect(src);
                 _background.SetDestFromRect(Pos);
-                SharedResources.RenderDevice!.Render(_background);
+                renderDevice.Render(_background);
             }
 
-            SharedResources.Font!.SetFont(_fontName);
+            font.SetFont(_fontName);
 
             // Render selection highlight
             if (EditMode && HasSelection())
@@ -573,11 +588,11 @@ namespace FlareEngine
                 {
                     string beforeSel = _trimmedText.Substring(0, selStartInDisplayed);
                     string selText = _trimmedText.Substring(selStartInDisplayed, selEndInDisplayed - selStartInDisplayed);
-                    int selX = _fontPos.X + SharedResources.Font.CalcSize(beforeSel).X;
-                    int selW = SharedResources.Font.CalcSize(selText).X;
-                    int selH = SharedResources.Font.GetFontHeight();
+                    int selX = _fontPos.X + font.CalcSize(beforeSel).X;
+                    int selW = font.CalcSize(selText).X;
+                    int selH = font.GetFontHeight();
                     Color selColor = new Color(64, 128, 255, 128);
-                    SharedResources.RenderDevice!.DrawRectangle(
+                    renderDevice.DrawRectangle(
                         new Int2(selX, _fontPos.Y),
                         new Int2(selX + selW, _fontPos.Y + selH),
                         selColor);
@@ -586,20 +601,20 @@ namespace FlareEngine
 
             if (!EditMode)
             {
-                SharedResources.Font.Render(_trimmedText, _fontPos.X, _fontPos.Y, FontEngine.JustifyLeft, null, 0, SharedResources.Font.GetColor(FontEngine.ColorWidgetNormal), !FontEngine.ShadowOffset);
+                font.Render(_trimmedText, _fontPos.X, _fontPos.Y, FontEngine.JustifyLeft, null, 0, font.GetColor(FontEngine.ColorWidgetNormal), !FontEngine.ShadowOffset);
             }
             else
             {
-                SharedResources.Font.RenderShadowed(_trimmedText, _fontPos.X, _fontPos.Y, FontEngine.JustifyLeft, null, 0, SharedResources.Font.GetColor(FontEngine.ColorWidgetNormal));
+                font.RenderShadowed(_trimmedText, _fontPos.X, _fontPos.Y, FontEngine.JustifyLeft, null, 0, font.GetColor(FontEngine.ColorWidgetNormal));
 
                 // Draw cursor as vertical line
                 if (_showCursor)
                 {
-                    int cursorH = SharedResources.Font.GetFontHeight();
-                    SharedResources.RenderDevice!.DrawRectangle(
+                    int cursorH = font.GetFontHeight();
+                    renderDevice.DrawRectangle(
                         new Int2(_cursorPixelX, _fontPos.Y + 1),
                         new Int2(_cursorPixelX + 1, _fontPos.Y + cursorH - 1),
-                        SharedResources.Font.GetColor(FontEngine.ColorWidgetNormal));
+                        font.GetColor(FontEngine.ColorWidgetNormal));
                 }
             }
 
@@ -627,7 +642,7 @@ namespace FlareEngine
                 }
                 if (draw)
                 {
-                    SharedResources.RenderDevice!.DrawRectangleCorners(SharedResources.Eset!.Widgets.SelectionRectCornerSize, topLeft, bottomRight, SharedResources.Eset.Widgets.SelectionRectColor);
+                    renderDevice.DrawRectangleCorners(eset.Widgets.SelectionRectCornerSize, topLeft, bottomRight, eset.Widgets.SelectionRectColor);
                 }
             }
 
@@ -636,7 +651,7 @@ namespace FlareEngine
             {
                 _oskBuf.Clear();
                 _oskBuf.AddText(_trimmedTextCursor);
-                _oskTip.Render(_oskBuf, new Int2(SharedResources.Settings!.ViewWHalf + Pos.Width / 2, 0), TooltipData.StyleFloat);
+                _oskTip.Render(_oskBuf, new Int2(settings.ViewWHalf + Pos.Width / 2, 0), TooltipData.StyleFloat);
             }
         }
 
@@ -662,17 +677,20 @@ namespace FlareEngine
 
             if (_background == null)
             {
-                int lineHeight = SharedResources.Font!.GetFontHeight();
+                var font = SharedResources.Font!;
+                var renderDevice = SharedResources.RenderDevice!;
+
+                int lineHeight = font.GetFontHeight();
                 Pos.Width = newWidth;
                 Pos.Height = (int)(lineHeight * 1.5);
 
                 int gfxH = Pos.Height * 2;
 
-                Image? temp = SharedResources.RenderDevice!.CreateImage(Pos.Width, gfxH);
+                Image? temp = renderDevice.CreateImage(Pos.Width, gfxH);
                 if (temp != null)
                 {
-                    Color colorInactive = SharedResources.Font.GetColor(FontEngine.ColorWidgetDisabled);
-                    Color colorActive = SharedResources.Font.GetColor(FontEngine.ColorWidgetNormal);
+                    Color colorInactive = font.GetColor(FontEngine.ColorWidgetDisabled);
+                    Color colorActive = font.GetColor(FontEngine.ColorWidgetNormal);
 
                     int pad = (int)((float)lineHeight * 0.15f);
 

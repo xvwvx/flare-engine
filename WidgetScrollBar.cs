@@ -70,14 +70,18 @@ namespace FlareEngine
             _pressedKnob = false;
             _soundActivate = 0;
 
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
             Image? graphics = null;
             if (_fileName != DefaultFile)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(_fileName, RenderDevice.ErrorNormal);
+                graphics = renderDevice.LoadImage(_fileName, RenderDevice.ErrorNormal);
             }
             if (graphics == null)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(DefaultFile, RenderDevice.ErrorExit);
+                graphics = renderDevice.LoadImage(DefaultFile, RenderDevice.ErrorExit);
             }
             if (graphics != null)
             {
@@ -91,8 +95,8 @@ namespace FlareEngine
                 _posUp.Height = _posDown.Height = _posKnob.Height = (_scrollbars.GetGraphicsHeight() / GfxTotal); // height of one button; all buttons are the same size
             }
 
-            if (SharedResources.Eset!.Widgets.SoundActivate.Length != 0)
-                _soundActivate = SharedResources.Snd!.Load(SharedResources.Eset.Widgets.SoundActivate, "Widget activate");
+            if (eset.Widgets.SoundActivate.Length != 0)
+                _soundActivate = snd.Load(eset.Widgets.SoundActivate, "Widget activate");
         }
 
         /// <summary>
@@ -122,7 +126,8 @@ namespace FlareEngine
         public int CheckClickAt(int x, int y)
         {
             Int2 mouse = new Int2(x, y);
-            InputState inpt = SharedResources.Inpt!;
+            var inpt = SharedResources.Inpt!;
+            var snd = SharedResources.Snd!;
 
             bool inBounds = Utils.IsWithinRect(GetBounds(), mouse);
             bool inUp = Utils.IsWithinRect(_posUp, mouse) || Utils.IsWithinRect(_upToKnob, mouse);
@@ -150,7 +155,7 @@ namespace FlareEngine
                     else if (inKnob && !_pressedUp && !_pressedDown)
                     {
                         if (!_pressedKnob)
-                            SharedResources.Snd!.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
 
                         _pressedKnob = true;
                         _dragging = true;
@@ -175,7 +180,7 @@ namespace FlareEngine
                 {
                     // activate upon release
                     ret = ClickUp;
-                    SharedResources.Snd!.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
+                    snd.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
                 }
             }
             else if (_pressedDown && !inpt.Pressing[Input.Main1])
@@ -185,7 +190,7 @@ namespace FlareEngine
                 {
                     // activate upon release
                     ret = ClickDown;
-                    SharedResources.Snd!.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
+                    snd.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
                 }
             }
             else if (_pressedKnob && _dragging)
@@ -237,6 +242,8 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             Rectangle srcUp = new Rectangle();
             Rectangle srcDown = new Rectangle();
             Rectangle srcKnob = new Rectangle();
@@ -263,7 +270,7 @@ namespace FlareEngine
                 _bg.LocalFrame = LocalFrame;
                 _bg.SetOffset(LocalOffset);
                 _bg.SetDestFromRect(_posUp);
-                SharedResources.RenderDevice!.Render(_bg);
+                renderDevice.Render(_bg);
             }
             if (_scrollbars != null)
             {
@@ -272,15 +279,15 @@ namespace FlareEngine
 
                 _scrollbars.SetClipFromRect(srcUp);
                 _scrollbars.SetDestFromRect(_posUp);
-                SharedResources.RenderDevice!.Render(_scrollbars);
+                renderDevice.Render(_scrollbars);
 
                 _scrollbars.SetClipFromRect(srcDown);
                 _scrollbars.SetDestFromRect(_posDown);
-                SharedResources.RenderDevice!.Render(_scrollbars);
+                renderDevice.Render(_scrollbars);
 
                 _scrollbars.SetClipFromRect(srcKnob);
                 _scrollbars.SetDestFromRect(_posKnob);
-                SharedResources.RenderDevice!.Render(_scrollbars);
+                renderDevice.Render(_scrollbars);
             }
         }
 
@@ -301,6 +308,9 @@ namespace FlareEngine
             Rectangle after = GetBounds();
             if (before.Height != after.Height)
             {
+                var renderDevice = SharedResources.RenderDevice!;
+                var eset = SharedResources.Eset!;
+
                 // create background surface
                 if (_bg != null)
                 {
@@ -308,7 +318,7 @@ namespace FlareEngine
                     _bg = null;
                 }
                 Image? graphics;
-                graphics = SharedResources.RenderDevice!.CreateImage(after.Width, after.Height);
+                graphics = renderDevice.CreateImage(after.Width, after.Height);
                 if (graphics != null)
                 {
                     _bg = graphics.CreateSprite();
@@ -317,7 +327,7 @@ namespace FlareEngine
 
                 if (_bg != null)
                 {
-                    _bg.GetGraphics()!.FillWithColor(SharedResources.Eset!.Widgets.ScrollbarBgColor);
+                    _bg.GetGraphics()!.FillWithColor(eset.Widgets.ScrollbarBgColor);
                 }
             }
         }

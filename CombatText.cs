@@ -73,15 +73,18 @@ namespace FlareEngine
 
         public CombatText()
         {
-            _msgColor[MsgGivedmg] = SharedResources.Font!.GetColor(FontEngine.ColorCombatGivedmg);
-            _msgColor[MsgTakedmg] = SharedResources.Font!.GetColor(FontEngine.ColorCombatTakedmg);
-            _msgColor[MsgCrit] = SharedResources.Font!.GetColor(FontEngine.ColorCombatCrit);
-            _msgColor[MsgBuff] = SharedResources.Font!.GetColor(FontEngine.ColorCombatBuff);
-            _msgColor[MsgMiss] = SharedResources.Font!.GetColor(FontEngine.ColorCombatMiss);
+            var font = SharedResources.Font!;
+            var settings = SharedResources.Settings!;
 
-            _duration = SharedResources.Settings!.MaxFramesPerSec; // 1 second
+            _msgColor[MsgGivedmg] = font.GetColor(FontEngine.ColorCombatGivedmg);
+            _msgColor[MsgTakedmg] = font.GetColor(FontEngine.ColorCombatTakedmg);
+            _msgColor[MsgCrit] = font.GetColor(FontEngine.ColorCombatCrit);
+            _msgColor[MsgBuff] = font.GetColor(FontEngine.ColorCombatBuff);
+            _msgColor[MsgMiss] = font.GetColor(FontEngine.ColorCombatMiss);
+
+            _duration = settings.MaxFramesPerSec; // 1 second
             _fadeDuration = 0;
-            _speed = Settings.LogicFps / SharedResources.Settings!.MaxFramesPerSec;
+            _speed = Settings.LogicFps / settings.MaxFramesPerSec;
             _offset = 48; // average height of flare-game enemies, so a sensible default
             _fontId = "font_regular";
 
@@ -100,7 +103,7 @@ namespace FlareEngine
                     else if (infile.Key == "speed")
                     {
                         // @ATTR speed|float|Motion speed of the combat text.
-                        _speed = (Parse.ToFloat(infile.Val) * Settings.LogicFps) / SharedResources.Settings!.MaxFramesPerSec;
+                        _speed = (Parse.ToFloat(infile.Val) * Settings.LogicFps) / settings.MaxFramesPerSec;
                     }
                     else if (infile.Key == "offset")
                     {
@@ -185,19 +188,21 @@ namespace FlareEngine
             if (!SharedResources.Settings!.CombatText)
                 return;
 
+            var eset = SharedResources.Eset!;
+
             // when adding multiple combat text of the same type and position on the same frame, add the num to the existing text
             foreach (CombatTextItem it in _combatText)
             {
                 if (it.IsNumber && it.DisplayType == displaytype && it.Lifespan == _duration && it.Pos.X == location.X && it.Pos.Y == location.Y)
                 {
                     it.NumberValue += num;
-                    it.Text = Utils.FloatToString(it.NumberValue, SharedResources.Eset!.NumberFormat.CombatText);
+                    it.Text = Utils.FloatToString(it.NumberValue, eset.NumberFormat.CombatText);
                     it.Label!.SetText(it.Text);
                     return;
                 }
             }
 
-            AddString(Utils.FloatToString(num, SharedResources.Eset!.NumberFormat.CombatText), location, displaytype);
+            AddString(Utils.FloatToString(num, eset.NumberFormat.CombatText), location, displaytype);
 
             _combatText[^1].IsNumber = true;
             _combatText[^1].NumberValue = num;

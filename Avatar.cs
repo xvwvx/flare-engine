@@ -1318,8 +1318,9 @@ namespace FlareEngine
 
         private bool IsDroppedToLowHp()
         {
+            Settings settings = SharedResources.Settings!;
             float hpOnePerc = Math.Max(Stats.Get(global::FlareEngine.Stats.HpMax), 1f) / 100.0f;
-            return (Stats.Hp / hpOnePerc < (float)SharedResources.Settings!.LowHpThreshold) && (PrevHp / hpOnePerc >= (float)SharedResources.Settings!.LowHpThreshold);
+            return (Stats.Hp / hpOnePerc < (float)settings.LowHpThreshold) && (PrevHp / hpOnePerc >= (float)settings.LowHpThreshold);
         }
 
         public bool IsLowHpMessageEnabled()

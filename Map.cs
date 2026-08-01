@@ -35,6 +35,8 @@ namespace FlareEngine
 
         public void Parse(FileParser infile)
         {
+            var eset = SharedResources.Eset!;
+
             string next = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
 
             if (next == "default") Mode = ModeDefault;
@@ -91,9 +93,9 @@ namespace FlareEngine
 
                     if (Mode == ModeStat)
                     {
-                        int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(next);
-
-                        if (primStatIndex != SharedResources.Eset.PrimaryStats.Stats.Count)
+                        int primStatIndex = eset.PrimaryStats.GetIndexByID(next);
+    
+                        if (primStatIndex != eset.PrimaryStats.Stats.Count)
                         {
                             Stat = primStatIndex;
                         }
@@ -108,6 +110,8 @@ namespace FlareEngine
 
         public void ParseString(string s)
         {
+            var eset = SharedResources.Eset!;
+
             string parseStr = s;
 
             string next = global::FlareEngine.Parse.PopFirstString(ref parseStr);
@@ -138,9 +142,9 @@ namespace FlareEngine
 
                     if (Mode == ModeStat)
                     {
-                        int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(next);
+                        int primStatIndex = eset.PrimaryStats.GetIndexByID(next);
 
-                        if (primStatIndex != SharedResources.Eset.PrimaryStats.Stats.Count)
+                        if (primStatIndex != eset.PrimaryStats.Stats.Count)
                         {
                             Stat = primStatIndex;
                         }
@@ -1752,8 +1756,9 @@ namespace FlareEngine
             }
 
             // turn fog-of-war off when loading map chunks
-            ushort tempFow = SharedResources.Eset!.Misc.Fogofwar;
-            SharedResources.Eset.Misc.Fogofwar = 0;
+            var eset = SharedResources.Eset!;
+            ushort tempFow = eset.Misc.Fogofwar;
+            eset.Misc.Fogofwar = 0;
 
             List<List<Map>> chunkMaps = new List<List<Map>>();
             for (int i = 0; i < Chunk.TypeCount; ++i)
@@ -1809,7 +1814,7 @@ namespace FlareEngine
                 }
             }
 
-            SharedResources.Eset.Misc.Fogofwar = tempFow;
+            eset.Misc.Fogofwar = tempFow;
 
             //
             // BEGIN CHUNK GENERATION
@@ -2189,12 +2194,20 @@ namespace FlareEngine
 
         private string GetProcgenFilename()
         {
-            return SharedResources.Settings!.PathUser + "saves/" + SharedResources.Eset!.Misc.SavePrefix + "/" + SharedResources.SaveLoad!.GameSlot + "/maps/" + Utils.HashString(_filename) + ".txt";
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+            var saveLoad = SharedResources.SaveLoad!;
+
+            return settings.PathUser + "saves/" + eset.Misc.SavePrefix + "/" + saveLoad.GameSlot + "/maps/" + Utils.HashString(_filename) + ".txt";
         }
 
         public string GetFOWFilename()
         {
-            return SharedResources.Settings!.PathUser + "saves/" + SharedResources.Eset!.Misc.SavePrefix + "/" + SharedResources.SaveLoad!.GameSlot + "/fow/" + Utils.HashString(_filename) + ".txt";
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+            var saveLoad = SharedResources.SaveLoad!;
+
+            return settings.PathUser + "saves/" + eset.Misc.SavePrefix + "/" + saveLoad.GameSlot + "/fow/" + Utils.HashString(_filename) + ".txt";
         }
     }
 }

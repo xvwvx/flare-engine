@@ -150,7 +150,8 @@ namespace FlareEngine
 
         public bool IsWholeSecond()
         {
-            return current % SharedResources.Settings!.MaxFramesPerSec == 0;
+            var settings = SharedResources.Settings!;
+            return current % settings.MaxFramesPerSec == 0;
         }
     }
 
@@ -396,11 +397,12 @@ namespace FlareEngine
 
         public static string AbbreviateKilo(int amount)
         {
+            var msg = SharedResources.Msg!;
             StringBuilder ss = new StringBuilder();
             if (amount < 1000)
                 ss.Append(amount);
             else
-                ss.Append(amount / 1000).Append(SharedResources.Msg!.Get("k"));
+                ss.Append(amount / 1000).Append(msg.Get("k"));
 
             return ss.ToString();
         }
@@ -546,7 +548,8 @@ namespace FlareEngine
 
         public static void CreateLogFile()
         {
-            LogPath = SharedResources.Settings!.PathConf + "/flare_log.txt";
+            var settings = SharedResources.Settings!;
+            LogPath = settings.PathConf + "/flare_log.txt";
 
             // always create a new log file on each launch
             if (Filesystem.FileExists(LogPath))
@@ -707,21 +710,23 @@ namespace FlareEngine
         public static string GetDurationString(int duration, int precision)
         {
             Settings settings = SharedResources.Settings!;
+            var msg = SharedResources.Msg!;
             float realDuration = duration / (float)settings.MaxFramesPerSec;
             string temp = FloatToString(realDuration, precision);
 
             if (realDuration == 1f)
             {
-                return SharedResources.Msg!.GetV("%s second", temp);
+                return msg.GetV("%s second", temp);
             }
             else
             {
-                return SharedResources.Msg!.GetV("%s seconds", temp);
+                return msg.GetV("%s seconds", temp);
             }
         }
 
         public static string SubstituteVarsInString(string s0, Avatar? avatar)
         {
+            var inpt = SharedResources.Inpt!;
             string s = s0;
 
             int begin = s.IndexOf("${", StringComparison.Ordinal);
@@ -745,11 +750,11 @@ namespace FlareEngine
                 }
                 else if (var == "${INPUT_MOVEMENT}")
                 {
-                    s = s.Remove(begin, varLen).Insert(begin, SharedResources.Inpt!.GetMovementString());
+                    s = s.Remove(begin, varLen).Insert(begin, inpt.GetMovementString());
                 }
                 else if (var == "${INPUT_ATTACK}")
                 {
-                    s = s.Remove(begin, varLen).Insert(begin, SharedResources.Inpt!.GetAttackString());
+                    s = s.Remove(begin, varLen).Insert(begin, inpt.GetAttackString());
                 }
                 else
                 {
@@ -872,7 +877,8 @@ namespace FlareEngine
             if (!Platform.Instance.HasLockFile)
                 return;
 
-            string lockFilePath = Filesystem.ConvertSlashes(SharedResources.Settings!.PathConf + "flare_lock");
+            var settings = SharedResources.Settings!;
+            string lockFilePath = Filesystem.ConvertSlashes(settings.PathConf + "flare_lock");
 
             try
             {
@@ -902,7 +908,8 @@ namespace FlareEngine
             if (!Platform.Instance.HasLockFile)
                 return;
 
-            string lockFilePath = SharedResources.Settings!.PathConf + "flare_lock";
+            var settings = SharedResources.Settings!;
+            string lockFilePath = settings.PathConf + "flare_lock";
 
             if (increment < 0)
             {

@@ -39,15 +39,19 @@ namespace FlareEngine
 
         public void AddRenders(List<Renderable> r)
         {
+            var mapr = SharedGameResources.Mapr;
+            var pc = SharedGameResources.Pc!;
+            var fow = SharedGameResources.Fow!;
+
             for (int i = 0; i < Npcs.Count; i++)
             {
-                if (SharedGameResources.Mapr != null && SharedGameResources.Mapr.Collider.IsOutsideMap(Npcs[i].Stats.Pos.X, Npcs[i].Stats.Pos.Y))
+                if (mapr != null && mapr.Collider.IsOutsideMap(Npcs[i].Stats.Pos.X, Npcs[i].Stats.Pos.Y))
                     continue;
 
-                if (SharedGameResources.Mapr!.Fogofwar > FogOfWar.TypeMinimap)
+                if (mapr!.Fogofwar > FogOfWar.TypeMinimap)
                 {
-                    float delta = Utils.CalcDist(SharedGameResources.Pc!.Stats.Pos, Npcs[i].Stats.Pos);
-                    if (delta > SharedGameResources.Fow!.MaskRadius - 1.0)
+                    float delta = Utils.CalcDist(pc.Stats.Pos, Npcs[i].Stats.Pos);
+                    if (delta > fow.MaskRadius - 1.0)
                     {
                         continue;
                     }
@@ -58,6 +62,10 @@ namespace FlareEngine
 
         public void HandleNewMap()
         {
+            var mapr = SharedGameResources.Mapr!;
+            var camp = SharedGameResources.Camp!;
+            var entitym = SharedGameResources.Entitym!;
+            var pc = SharedGameResources.Pc!;
 
             ItemStack itemRoll = new ItemStack();
 
@@ -79,11 +87,11 @@ namespace FlareEngine
             Npcs.Clear();
 
             // read the queued NPCs in the map file
-            for (int i = 0; i < SharedGameResources.Mapr!.MapNpcs.Count; ++i)
+            for (int i = 0; i < mapr.MapNpcs.Count; ++i)
             {
-                MapNpc mn = SharedGameResources.Mapr!.MapNpcs[i];
+                MapNpc mn = mapr.MapNpcs[i];
 
-                if (!SharedGameResources.Camp!.CheckRequirementsInVector(mn.Requirements))
+                if (!camp.CheckRequirementsInVector(mn.Requirements))
                     continue;
 
                 // ally npc that was moved from another map should not be loaded once again
@@ -93,7 +101,7 @@ namespace FlareEngine
                 }
 
                 NPC npc;
-                Entity entity = SharedGameResources.Entitym!.GetEntityPrototype(mn.Id);
+                Entity entity = entitym.GetEntityPrototype(mn.Id);
                 if (entity != null)
                 {
                     npc = new NPC(entity);
@@ -126,7 +134,7 @@ namespace FlareEngine
                 // npc->stock.sort();
                 Npcs.Add(npc);
                 CreateMapEvent(npc, Npcs.Count);
-                if (!SharedGameResources.Mapr!.Collider.IsValidPosition(npc.Stats.Pos.X, npc.Stats.Pos.Y, MapCollision.MoveNormal, MapCollision.CollideTypeNone))
+                if (!mapr.Collider.IsValidPosition(npc.Stats.Pos.X, npc.Stats.Pos.Y, MapCollision.MoveNormal, MapCollision.CollideTypeNone))
                     Utils.LogInfo("NPC: Collision tile detected at NPC position (%.2f, %.2f).", npc.Stats.Pos.X, npc.Stats.Pos.Y);
             }
 
@@ -136,15 +144,15 @@ namespace FlareEngine
                 NPC npc = allyEntry.Value;
                 allies.Remove(allyEntry.Key);
 
-                npc.Stats.Pos = SharedGameResources.Mapr!.Collider.GetRandomNeighbor(SharedGameResources.Pc!.Stats.Pos.ToInt2(), 1, npc.Stats.MovementType, MapCollision.CollideTypeAllEntities);
-                npc.Stats.Direction = SharedGameResources.Pc!.Stats.Direction;
+                npc.Stats.Pos = mapr.Collider.GetRandomNeighbor(pc.Stats.Pos.ToInt2(), 1, npc.Stats.MovementType, MapCollision.CollideTypeAllEntities);
+                npc.Stats.Direction = pc.Stats.Direction;
 
                 Npcs.Add(npc);
                 CreateMapEvent(npc, Npcs.Count);
 
-                SharedGameResources.Mapr!.Collider.Block(npc.Stats.Pos.X, npc.Stats.Pos.Y, !MapCollision.IsAlly);
+                mapr.Collider.Block(npc.Stats.Pos.X, npc.Stats.Pos.Y, !MapCollision.IsAlly);
 
-                SharedGameResources.Entitym!.Entities.Add(npc);
+                entitym.Entities.Add(npc);
             }
 
         }

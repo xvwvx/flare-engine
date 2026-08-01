@@ -380,8 +380,9 @@ namespace FlareEngine
             TraitCritsImpaired = 0;
             TargetNearest = 0;
 
-            BaseDamage = SharedResources.Eset != null ? SharedResources.Eset.DamageTypes.Types.Count : 0;
-            ConvertedDamage = SharedResources.Eset != null ? SharedResources.Eset.DamageTypes.Types.Count : 0;
+            var eset = SharedResources.Eset;
+            BaseDamage = eset != null ? eset.DamageTypes.Types.Count : 0;
+            ConvertedDamage = eset != null ? eset.DamageTypes.Types.Count : 0;
             SpawnLimitStat = 0;
 
             SfxHit = 0;
@@ -399,7 +400,7 @@ namespace FlareEngine
             SpawnType = "";
             Script = "";
 
-            int resourceStatCount = SharedResources.Eset != null ? SharedResources.Eset.ResourceStats.Stats.Count : 0;
+            int resourceStatCount = eset != null ? eset.ResourceStats.Stats.Count : 0;
             RequiresResourceStat = new List<float>(new float[resourceStatCount]);
             RequiresResourceStatState = new List<ResourceState>(resourceStatCount);
             for (int i = 0; i < resourceStatCount; ++i)
@@ -445,6 +446,9 @@ namespace FlareEngine
         {
             Utils.LogInfo("Cleaning up: PowerManager");
 
+            var anim = SharedResources.Anim!;
+            var snd = SharedResources.Snd!;
+
             for (int i = 0; i < Powers.Count; ++i)
             {
                 if (Powers[i] == null)
@@ -452,7 +456,7 @@ namespace FlareEngine
 
                 if (!string.IsNullOrEmpty(Powers[i]!.AnimationName))
                 {
-                    SharedResources.Anim!.DecreaseCount(Powers[i]!.AnimationName);
+                    anim.DecreaseCount(Powers[i]!.AnimationName);
                 }
 
                 Powers[i] = null;
@@ -465,7 +469,7 @@ namespace FlareEngine
                 if (string.IsNullOrEmpty(Effects[i].AnimationName))
                     continue;
 
-                SharedResources.Anim!.DecreaseCount(Effects[i].AnimationName);
+                anim.DecreaseCount(Effects[i].AnimationName);
 
                 if (_effectAnimations[i] != null)
                 {
@@ -476,7 +480,7 @@ namespace FlareEngine
 
             for (int i = 0; i < Sfx.Count; i++)
             {
-                SharedResources.Snd!.Unload(Sfx[i]);
+                snd.Unload(Sfx[i]);
             }
             Sfx.Clear();
 
@@ -636,18 +640,25 @@ namespace FlareEngine
                 }
             }
 
+            var anim = SharedResources.Anim!;
             for (int i = 0; i < Effects.Count; ++i)
             {
                 if (!string.IsNullOrEmpty(Effects[i].AnimationName))
                 {
-                    SharedResources.Anim!.IncreaseCount(Effects[i].AnimationName);
-                    _effectAnimations[i] = SharedResources.Anim!.GetAnimationSet(Effects[i].AnimationName)!.GetAnimation("");
+                    anim.IncreaseCount(Effects[i].AnimationName);
+                    _effectAnimations[i] = anim.GetAnimationSet(Effects[i].AnimationName)!.GetAnimation("");
                 }
             }
         }
 
         private void LoadPowers()
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var items = SharedGameResources.Items!;
+            var anim = SharedResources.Anim!;
+
             using FileParser infile = new FileParser();
 
             if (!infile.Open("powers/powers.txt", FileParser.ModFile, FileParser.ErrorNormal))
@@ -706,11 +717,11 @@ namespace FlareEngine
                 }
                 else if (infile.Key == "name")
                 {
-                    power!.Name = SharedResources.Msg!.Get(val);
+                    power!.Name = msg.Get(val);
                 }
                 else if (infile.Key == "description")
                 {
-                    power!.Description = SharedResources.Msg!.Get(val);
+                    power!.Description = msg.Get(val);
                 }
                 else if (infile.Key == "icon")
                 {
@@ -802,7 +813,7 @@ namespace FlareEngine
 
                     while (flag != "")
                     {
-                        power!.RequiresFlags.Add(SharedResources.Eset!.EquipFlags.GetIndex(flag));
+                        power!.RequiresFlags.Add(eset.EquipFlags.GetIndex(flag));
                         flag = Parse.PopFirstString(ref val);
                     }
                 }
@@ -822,7 +833,7 @@ namespace FlareEngine
                     bool foundStatId = false;
                     for (int i = 0; i < power!.RequiresResourceStat.Count; ++i)
                     {
-                        if (statId == SharedResources.Eset!.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatBase])
+                        if (statId == eset.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatBase])
                         {
                             power!.RequiresResourceStat[i] = statVal;
                             foundStatId = true;
@@ -851,7 +862,7 @@ namespace FlareEngine
                 else if (infile.Key == "requires_item")
                 {
                     PowerRequiredItem pri = new PowerRequiredItem();
-                    pri.Id = SharedGameResources.Items!.VerifyID(Parse.ToItemID(Parse.PopFirstString(ref val)), infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                    pri.Id = items.VerifyID(Parse.ToItemID(Parse.PopFirstString(ref val)), infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
                     if (pri.Id > 0)
                     {
                         pri.Quantity = Parse.ToInt(Parse.PopFirstString(ref val), 1);
@@ -862,7 +873,7 @@ namespace FlareEngine
                 else if (infile.Key == "requires_equipped_item")
                 {
                     PowerRequiredItem pri = new PowerRequiredItem();
-                    pri.Id = SharedGameResources.Items!.VerifyID(Parse.ToItemID(Parse.PopFirstString(ref val)), infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                    pri.Id = items.VerifyID(Parse.ToItemID(Parse.PopFirstString(ref val)), infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
                     if (pri.Id > 0)
                     {
                         pri.Quantity = Parse.PopFirstInt(ref val);
@@ -979,7 +990,7 @@ namespace FlareEngine
 
                     for (int i = 0; i < power!.RequiresResourceStatState.Count; ++i)
                     {
-                        if (statId == SharedResources.Eset!.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatBase])
+                        if (statId == eset.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatBase])
                         {
                             power!.RequiresResourceStatState[i].Value = value;
 
@@ -1064,7 +1075,7 @@ namespace FlareEngine
                 }
                 else if (infile.Key == "speed")
                 {
-                    power!.Speed = Parse.ToFloat(val) / SharedResources.Settings!.MaxFramesPerSec;
+                    power!.Speed = Parse.ToFloat(val) / settings.MaxFramesPerSec;
                 }
                 else if (infile.Key == "lifespan")
                 {
@@ -1080,7 +1091,7 @@ namespace FlareEngine
                 }
                 else if (infile.Key == "charge_speed")
                 {
-                    power!.ChargeSpeed = Parse.ToFloat(val) / SharedResources.Settings!.MaxFramesPerSec;
+                    power!.ChargeSpeed = Parse.ToFloat(val) / settings.MaxFramesPerSec;
                 }
                 else if (infile.Key == "attack_speed")
                 {
@@ -1109,16 +1120,16 @@ namespace FlareEngine
                 }
                 else if (infile.Key == "base_damage")
                 {
-                    for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                    for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                     {
-                        if (val == SharedResources.Eset.DamageTypes.Types[i].Id)
+                        if (val == eset.DamageTypes.Types[i].Id)
                         {
                             power!.BaseDamage = i;
                             break;
                         }
                     }
 
-                    if (power!.BaseDamage == SharedResources.Eset.DamageTypes.Types.Count)
+                    if (power!.BaseDamage == eset.DamageTypes.Types.Count)
                     {
                         infile.Error("PowerManager: Unknown base_damage '%s'", val);
                     }
@@ -1176,9 +1187,9 @@ namespace FlareEngine
                 }
                 else if (infile.Key == "trait_elemental")
                 {
-                    for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                    for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                     {
-                        if (val == SharedResources.Eset.DamageTypes.Types[i].Id)
+                        if (val == eset.DamageTypes.Types[i].Id)
                         {
                             power!.ConvertedDamage = i;
                             break;
@@ -1204,7 +1215,7 @@ namespace FlareEngine
 
                     for (int i = 0; i < power!.ResourceSteal.Count; ++i)
                     {
-                        if (statId == SharedResources.Eset!.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatBase])
+                        if (statId == eset.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatBase])
                         {
                             power!.ResourceSteal[i] = statValue;
                             break;
@@ -1422,9 +1433,9 @@ namespace FlareEngine
                             power!.SpawnLimitRatio = Parse.PopFirstFloat(ref val);
 
                             string stat = Parse.PopFirstString(ref val);
-                            int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(stat);
+                            int primStatIndex = eset.PrimaryStats.GetIndexByID(stat);
 
-                            if (primStatIndex != SharedResources.Eset.PrimaryStats.Stats.Count)
+                            if (primStatIndex != eset.PrimaryStats.Stats.Count)
                             {
                                 power!.SpawnLimitStat = primStatIndex;
                             }
@@ -1555,7 +1566,7 @@ namespace FlareEngine
 
                     while (slotType != "")
                     {
-                        power!.DisableEquipSlots.Add(SharedGameResources.Items!.GetItemTypeIndexByString(slotType));
+                        power!.DisableEquipSlots.Add(items.GetItemTypeIndexByString(slotType));
                         slotType = Parse.PopFirstString(ref val);
                     }
                 }
@@ -1598,8 +1609,8 @@ namespace FlareEngine
 
                 if (!string.IsNullOrEmpty(power.AnimationName))
                 {
-                    SharedResources.Anim!.IncreaseCount(power.AnimationName);
-                    _powerAnimations[i] = SharedResources.Anim!.GetAnimationSet(power.AnimationName)!.GetAnimation("");
+                    anim.IncreaseCount(power.AnimationName);
+                    _powerAnimations[i] = anim.GetAnimationSet(power.AnimationName)!.GetAnimation("");
                 }
 
                 power.BuffPartyPowerId = VerifyID(power.BuffPartyPowerId, null, AllowZeroId);
@@ -1661,11 +1672,11 @@ namespace FlareEngine
             }
             Utils.LogInfo("PowerManager: Power IDs = %zu reserved / %zu allocated / %zu empty / %zu bytes used", Powers.Count - 1, countAllocated, Powers.Count - 1 - countAllocated, (IntPtr.Size * Powers.Count) + (countAllocated * 800));
 
-            if (SharedGameResources.Items != null)
+            if (items != null)
             {
-                for (int i = 1; i < SharedGameResources.Items.Items.Count; ++i)
+                for (int i = 1; i < items.Items.Count; ++i)
                 {
-                    Item? item = SharedGameResources.Items.Items[i];
+                    Item? item = items.Items[i];
 
                     if (item == null)
                         continue;
@@ -1701,6 +1712,8 @@ namespace FlareEngine
 
                 private bool IsValidEffect(string type)
         {
+            var eset = SharedResources.Eset!;
+
             if (type == "speed")
                 return true;
             if (type == "attack_speed")
@@ -1711,19 +1724,19 @@ namespace FlareEngine
             if (type == "mp_percent")
                 return true;
 
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
-                if (type == SharedResources.Eset.PrimaryStats.Stats[i].Id)
+                if (type == eset.PrimaryStats.Stats[i].Id)
                     return true;
             }
 
-            for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+            for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
             {
-                if (type == SharedResources.Eset.DamageTypes.Types[i].Min)
+                if (type == eset.DamageTypes.Types[i].Min)
                     return true;
-                else if (type == SharedResources.Eset.DamageTypes.Types[i].Max)
+                else if (type == eset.DamageTypes.Types[i].Max)
                     return true;
-                else if (type == SharedResources.Eset.DamageTypes.Types[i].Resist)
+                else if (type == eset.DamageTypes.Types[i].Resist)
                     return true;
             }
 
@@ -1777,6 +1790,8 @@ namespace FlareEngine
 
         private void InitHazard(PowerID powerIndex, StatBlock srcStats, Vector2 origin, Vector2 target, Hazard haz)
         {
+            var eset = SharedResources.Eset!;
+
             haz.SrcStats = srcStats;
 
             haz.PowerIndex = powerIndex;
@@ -1808,7 +1823,7 @@ namespace FlareEngine
                             haz.Damage[haz.HazardPower!.ConvertedDamage].Max += srcStats.GetDamageMax(i);
                         }
                     }
-                    else if (i == haz.HazardPower!.BaseDamage || (!SharedResources.Eset!.DamageTypes.Types[haz.HazardPower!.BaseDamage].IsElemental && SharedResources.Eset.DamageTypes.Types[i].IsElemental))
+                    else if (i == haz.HazardPower!.BaseDamage || (!eset.DamageTypes.Types[haz.HazardPower!.BaseDamage].IsElemental && eset.DamageTypes.Types[i].IsElemental))
                     {
                         haz.Damage[i].Min += srcStats.GetDamageMin(i);
                         haz.Damage[i].Max += srcStats.GetDamageMax(i);
@@ -1958,6 +1973,10 @@ namespace FlareEngine
             if (!IsValid(powerIndex))
                 return false;
 
+            var eset = SharedResources.Eset!;
+            var comb = SharedResources.Comb!;
+            var msg = SharedResources.Msg!;
+
             Power pwr = Powers[powerIndex]!;
             for (int i = 0; i < pwr.PostEffects.Count; ++i)
             {
@@ -1982,7 +2001,7 @@ namespace FlareEngine
 
                     if (effectData.Type == global::FlareEngine.Effect.Shield)
                     {
-                        if (pwr.BaseDamage == SharedResources.Eset!.DamageTypes.Types.Count)
+                        if (pwr.BaseDamage == eset.DamageTypes.Types.Count)
                             continue;
 
                         if (pwr.ModDamageMode == Power.StatModifierModeMultiply)
@@ -1994,12 +2013,12 @@ namespace FlareEngine
                         else
                             magnitude = casterStats.GetDamageMax(pwr.BaseDamage);
 
-                        magnitude = SharedResources.Eset!.Combat.ResourceRound(magnitude);
-                        SharedResources.Comb!.AddString(SharedResources.Msg!.GetV("+%s Shield", Utils.FloatToString(magnitude, SharedResources.Eset.NumberFormat.CombatText)), destStats.Pos, CombatText.MsgBuff);
+                        magnitude = eset.Combat.ResourceRound(magnitude);
+                        comb.AddString(msg.GetV("+%s Shield", Utils.FloatToString(magnitude, eset.NumberFormat.CombatText)), destStats.Pos, CombatText.MsgBuff);
                     }
                     else if (effectData.Type == global::FlareEngine.Effect.Heal)
                     {
-                        if (pwr.BaseDamage == SharedResources.Eset!.DamageTypes.Types.Count)
+                        if (pwr.BaseDamage == eset.DamageTypes.Types.Count)
                             continue;
 
                         magnitude = MathUtils.RandBetweenF(casterStats.GetDamageMin(pwr.BaseDamage), casterStats.GetDamageMax(pwr.BaseDamage));
@@ -2011,7 +2030,7 @@ namespace FlareEngine
                         else if (pwr.ModDamageMode == Power.StatModifierModeAbsolute)
                             magnitude = MathUtils.RandBetweenF(pwr.ModDamageValueMin, pwr.ModDamageValueMax);
 
-                        SharedResources.Comb!.AddString(SharedResources.Msg!.GetV("+%s HP", Utils.FloatToString(magnitude, SharedResources.Eset.NumberFormat.CombatText)), destStats.Pos, CombatText.MsgBuff);
+                        comb.AddString(msg.GetV("+%s HP", Utils.FloatToString(magnitude, eset.NumberFormat.CombatText)), destStats.Pos, CombatText.MsgBuff);
                         destStats.Hp += magnitude;
                         if (destStats.Hp > destStats.Get(global::FlareEngine.Stats.HpMax)) destStats.Hp = destStats.Get(global::FlareEngine.Stats.HpMax);
                     }
@@ -2283,13 +2302,17 @@ namespace FlareEngine
             if (_collider == null)
                 return false;
 
+            var inpt = SharedResources.Inpt!;
+            var pc = SharedGameResources.Pc!;
+            var msg = SharedResources.Msg!;
+
             Power power = Powers[powerIndex]!;
 
-            SharedResources.Inpt!.LockActionBar();
+            inpt.LockActionBar();
 
             if (srcStats.Transformed && power.SpawnType != "untransform")
             {
-                SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.Get("You are already transformed, untransform first."), Avatar.MsgNormal);
+                pc.LogMsg(msg.Get("You are already transformed, untransform first."), Avatar.MsgNormal);
                 return false;
             }
 
@@ -2303,8 +2326,8 @@ namespace FlareEngine
                 }
                 else
                 {
-                    SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.Get("Could not untransform at this position."), Avatar.MsgNormal);
-                    SharedResources.Inpt!.UnlockActionBar();
+                    pc.LogMsg(msg.Get("Could not untransform at this position."), Avatar.MsgNormal);
+                    inpt.UnlockActionBar();
                     _collider.Block(srcStats.Pos.X, srcStats.Pos.Y, false);
                     return false;
                 }
@@ -2725,26 +2748,29 @@ namespace FlareEngine
 
         public bool CheckRequiredItems(Power pow, StatBlock srcStats)
         {
+            var menu = SharedGameResources.Menu!;
+            var items = SharedGameResources.Items!;
+
             for (int i = 0; i < pow.RequiredItems.Count; ++i)
             {
                 if (pow.RequiredItems[i].Id > 0)
                 {
                     if (pow.RequiredItems[i].Equipped)
                     {
-                        if (!SharedGameResources.Menu!.Inv!.EquipmentContain(pow.RequiredItems[i].Id, 1))
+                        if (!menu.Inv!.EquipmentContain(pow.RequiredItems[i].Id, 1))
                         {
                             return false;
                         }
                     }
                     else
                     {
-                        if (!SharedGameResources.Items!.RequirementsMet(srcStats, pow.RequiredItems[i].Id))
+                        if (!items.RequirementsMet(srcStats, pow.RequiredItems[i].Id))
                         {
                             return false;
                         }
 
                         int quantity = Math.Max(1, pow.RequiredItems[i].Quantity);
-                        if (!SharedGameResources.Menu!.Inv!.Inventory[MenuInventory.Carried].Contain(pow.RequiredItems[i].Id, quantity))
+                        if (!menu.Inv!.Inventory[MenuInventory.Carried].Contain(pow.RequiredItems[i].Id, quantity))
                         {
                             return false;
                         }

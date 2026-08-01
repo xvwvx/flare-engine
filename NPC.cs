@@ -89,6 +89,8 @@ namespace FlareEngine
         /// <summary>对应 C++ 析构函数 <c>~NPC()</c>。</summary>
         public override void Dispose()
         {
+            var snd = SharedResources.Snd!;
+
             for (int i = 0; i < Portraits.Count; ++i)
             {
                 Portraits[i]?.Dispose();
@@ -96,12 +98,12 @@ namespace FlareEngine
 
             while (_voxIntro.Count > 0)
             {
-                SharedResources.Snd!.Unload(_voxIntro[^1]);
+                snd.Unload(_voxIntro[^1]);
                 _voxIntro.RemoveAt(_voxIntro.Count - 1);
             }
             while (_voxQuests.Count > 0)
             {
-                SharedResources.Snd!.Unload(_voxQuests[^1]);
+                snd.Unload(_voxQuests[^1]);
                 _voxQuests.RemoveAt(_voxQuests.Count - 1);
             }
 
@@ -114,6 +116,13 @@ namespace FlareEngine
         /// <param name="npcId">Config file for npc</param>
         public bool Load(string npcId)
         {
+            var msg = SharedResources.Msg!;
+            var eventm = SharedGameResources.Eventm!;
+            var camp = SharedGameResources.Camp!;
+            var items = SharedGameResources.Items!;
+            var loot = SharedGameResources.Loot!;
+            var mods = SharedResources.Mods!;
+
             FileParser infile = new FileParser();
             ItemStack stack = new ItemStack();
 
@@ -152,13 +161,13 @@ namespace FlareEngine
                             // @ATTR dialog.him|repeatable(string)|A line of dialog from the NPC.
                             // @ATTR dialog.her|repeatable(string)|A line of dialog from the NPC.
                             e.Type = EventComponent.NpcDialogThem;
-                            e.S = SharedResources.Msg!.Get(infile.Val);
+                            e.S = msg.Get(infile.Val);
                         }
                         else if (infile.Key == "you")
                         {
                             // @ATTR dialog.you|repeatable(string)|A line of dialog from the player.
                             e.Type = EventComponent.NpcDialogYou;
-                            e.S = SharedResources.Msg!.Get(infile.Val);
+                            e.S = msg.Get(infile.Val);
                         }
                         else if (infile.Key == "voice")
                         {
@@ -170,7 +179,7 @@ namespace FlareEngine
                         {
                             // @ATTR dialog.topic|string|The name of this dialog topic. Displayed when picking a dialog tree.
                             e.Type = EventComponent.NpcDialogTopic;
-                            e.S = SharedResources.Msg!.Get(infile.Val);
+                            e.S = msg.Get(infile.Val);
                         }
                         else if (infile.Key == "group")
                         {
@@ -220,7 +229,7 @@ namespace FlareEngine
                         else
                         {
                             Event ev = new Event();
-                            SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                            eventm.LoadEventComponent(infile, ev, null);
 
                             for (int i = 0; i < ev.Components.Count; ++i)
                             {
@@ -250,7 +259,7 @@ namespace FlareEngine
                         if (infile.Key == "name")
                         {
                             // @ATTR npc.name|string|NPC's name.
-                            Name = SharedResources.Msg!.Get(infile.Val);
+                            Name = msg.Get(infile.Val);
                         }
                         else if (infile.Key == "animations" || infile.Key == "gfx")
                         {
@@ -290,7 +299,7 @@ namespace FlareEngine
                             // @ATTR npc.vendor_requires_status|list(string)|The player must have these statuses in order to use this NPC as a vendor.
                             while (infile.Val != "")
                             {
-                                _vendorRequiresStatus.Add(SharedGameResources.Camp!.RegisterStatus(Parse.PopFirstString(ref infile.Val)));
+                                _vendorRequiresStatus.Add(camp.RegisterStatus(Parse.PopFirstString(ref infile.Val)));
                             }
                         }
                         else if (infile.Key == "vendor_requires_not_status")
@@ -298,7 +307,7 @@ namespace FlareEngine
                             // @ATTR npc.vendor_requires_not_status|list(string)|The player must not have these statuses in order to use this NPC as a vendor.
                             while (infile.Val != "")
                             {
-                                _vendorRequiresNotStatus.Add(SharedGameResources.Camp!.RegisterStatus(Parse.PopFirstString(ref infile.Val)));
+                                _vendorRequiresNotStatus.Add(camp.RegisterStatus(Parse.PopFirstString(ref infile.Val)));
                             }
                         }
                         else if (infile.Key == "constant_stock")
@@ -307,10 +316,10 @@ namespace FlareEngine
                             while (infile.Val != "")
                             {
                                 stack = Parse.ToItemQuantityPair(Parse.PopFirstString(ref infile.Val));
-                                stack.Item = SharedGameResources.Items!.VerifyID(stack.Item, infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                                stack.Item = items.VerifyID(stack.Item, infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
 
                                 List<ItemStack> exStacks = new List<ItemStack>();
-                                SharedGameResources.Items.GetExtendedStacks(stack.Item, (uint)stack.Quantity, exStacks);
+                                items.GetExtendedStacks(stack.Item, (uint)stack.Quantity, exStacks);
                                 for (int i = 0; i < exStacks.Count; ++i)
                                 {
                                     Stock.Add(exStacks[i], ItemStorage.NoSlot);
@@ -320,15 +329,15 @@ namespace FlareEngine
                         else if (infile.Key == "status_stock")
                         {
                             // @ATTR npc.status_stock|repeatable(string, list(item_id)) : Required status, Item(s)|A list of items this vendor will have for sale if the required status is met. Quantity can be specified by appending ":Q" to the item_id, where Q is an integer.
-                            if (SharedGameResources.Camp!.CheckStatus(SharedGameResources.Camp.RegisterStatus(Parse.PopFirstString(ref infile.Val))))
+                            if (camp.CheckStatus(camp.RegisterStatus(Parse.PopFirstString(ref infile.Val))))
                             {
                                 while (infile.Val != "")
                                 {
                                     stack = Parse.ToItemQuantityPair(Parse.PopFirstString(ref infile.Val));
-                                    stack.Item = SharedGameResources.Items!.VerifyID(stack.Item, infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                                    stack.Item = items.VerifyID(stack.Item, infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
 
                                     List<ItemStack> exStacks = new List<ItemStack>();
-                                    SharedGameResources.Items.GetExtendedStacks(stack.Item, (uint)stack.Quantity, exStacks);
+                                    items.GetExtendedStacks(stack.Item, (uint)stack.Quantity, exStacks);
                                     for (int i = 0; i < exStacks.Count; ++i)
                                     {
                                         Stock.Add(exStacks[i], ItemStorage.NoSlot);
@@ -346,7 +355,7 @@ namespace FlareEngine
                             }
 
                             _randomTable.Add(new EventComponent());
-                            SharedGameResources.Loot!.ParseLoot(ref infile.Val, _randomTable[^1], _randomTable);
+                            loot.ParseLoot(ref infile.Val, _randomTable[^1], _randomTable);
                         }
                         else if (infile.Key == "random_stock_count")
                         {
@@ -388,11 +397,11 @@ namespace FlareEngine
                             while (infile.Val != "")
                             {
                                 stack = Parse.ToItemQuantityPair(Parse.PopFirstString(ref infile.Val));
-                                stack.Item = SharedGameResources.Items!.VerifyID(stack.Item, infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                                stack.Item = items.VerifyID(stack.Item, infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
                                 stack.Quantity = 1;
 
                                 List<ItemStack> exStacks = new List<ItemStack>();
-                                SharedGameResources.Items.GetExtendedStacks(stack.Item, (uint)stack.Quantity, exStacks);
+                                items.GetExtendedStacks(stack.Item, (uint)stack.Quantity, exStacks);
                                 for (int i = 0; i < exStacks.Count; ++i)
                                 {
                                     CraftStock.Add(exStacks[i], ItemStorage.NoSlot);
@@ -402,16 +411,16 @@ namespace FlareEngine
                         else if (infile.Key == "craft_status_stock")
                         {
                             // @ATTR npc.craft_status_stock|repeatable(string, list(item_id)) : Required status, Item(s)|A list of items this vendor can craft if the required status is met.
-                            if (SharedGameResources.Camp!.CheckStatus(SharedGameResources.Camp.RegisterStatus(Parse.PopFirstString(ref infile.Val))))
+                            if (camp.CheckStatus(camp.RegisterStatus(Parse.PopFirstString(ref infile.Val))))
                             {
                                 while (infile.Val != "")
                                 {
                                     stack = Parse.ToItemQuantityPair(Parse.PopFirstString(ref infile.Val));
-                                    stack.Item = SharedGameResources.Items!.VerifyID(stack.Item, infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                                    stack.Item = items.VerifyID(stack.Item, infile, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
                                     stack.Quantity = 1;
 
                                     List<ItemStack> exStacks = new List<ItemStack>();
-                                    SharedGameResources.Items.GetExtendedStacks(stack.Item, (uint)stack.Quantity, exStacks);
+                                    items.GetExtendedStacks(stack.Item, (uint)stack.Quantity, exStacks);
                                     for (int i = 0; i < exStacks.Count; ++i)
                                     {
                                         CraftStock.Add(exStacks[i], ItemStorage.NoSlot);
@@ -429,7 +438,7 @@ namespace FlareEngine
                             }
 
                             _craftRandomTable.Add(new EventComponent());
-                            SharedGameResources.Loot!.ParseLoot(ref infile.Val, _craftRandomTable[^1], _craftRandomTable);
+                            loot.ParseLoot(ref infile.Val, _craftRandomTable[^1], _craftRandomTable);
                         }
                         else if (infile.Key == "craft_random_stock_count")
                         {
@@ -477,7 +486,7 @@ namespace FlareEngine
             List<ItemStack> randItemstacks = new List<ItemStack>();
             for (int i = 0; i < randCount; ++i)
             {
-                SharedGameResources.Loot!.CheckLoot(_randomTable, null, randItemstacks);
+                loot.CheckLoot(_randomTable, null, randItemstacks);
             }
             randItemstacks.Sort((a, b) =>
             {
@@ -497,7 +506,7 @@ namespace FlareEngine
             randItemstacks.Clear();
             for (int i = 0; i < randCount; ++i)
             {
-                SharedGameResources.Loot!.CheckLoot(_craftRandomTable, null, randItemstacks);
+                loot.CheckLoot(_craftRandomTable, null, randItemstacks);
             }
             randItemstacks.Sort((a, b) =>
             {
@@ -525,7 +534,7 @@ namespace FlareEngine
             }
 
             // warn if dialog nodes lack a topic
-            string fullFilename = SharedResources.Mods!.Locate(npcId);
+            string fullFilename = mods.Locate(npcId);
             for (int i = 0; i < Dialog.Count; ++i)
             {
                 string topic = GetDialogTopic(i);
@@ -590,13 +599,15 @@ namespace FlareEngine
 
         public void Logic()
         {
-            SharedGameResources.Mapr!.Collider.Unblock(Stats.Pos.X, Stats.Pos.Y);
+            var mapr = SharedGameResources.Mapr!;
+
+            mapr.Collider.Unblock(Stats.Pos.X, Stats.Pos.Y);
 
             base.Logic();
             MoveMapEvents();
 
             if (!Stats.HeroAlly)
-                SharedGameResources.Mapr.Collider.Block(Stats.Pos.X, Stats.Pos.Y, true);
+                mapr.Collider.Block(Stats.Pos.X, Stats.Pos.Y, true);
         }
 
         public bool PlaySoundIntro()
@@ -781,37 +792,39 @@ namespace FlareEngine
 
         public void MoveMapEvents()
         {
-            for (int it = SharedGameResources.Mapr!.Events.Count; it > 0; )
+            var mapr = SharedGameResources.Mapr!;
+
+            for (int it = mapr.Events.Count; it > 0; )
             {
                 --it;
 
-                if (SharedGameResources.Mapr.Events[it].Type == Filename)
+                if (mapr.Events[it].Type == Filename)
                 {
                     if (Stats.Hp > 0)
                     {
                         // Update event position after NPC has moved
-                        SharedGameResources.Mapr.Events[it].Location.X = (int)Stats.Pos.X;
-                        SharedGameResources.Mapr.Events[it].Location.Y = (int)Stats.Pos.Y;
+                        mapr.Events[it].Location.X = (int)Stats.Pos.X;
+                        mapr.Events[it].Location.Y = (int)Stats.Pos.Y;
 
-                        SharedGameResources.Mapr.Events[it].Hotspot.X = (int)Stats.Pos.X;
-                        SharedGameResources.Mapr.Events[it].Hotspot.Y = (int)Stats.Pos.Y;
+                        mapr.Events[it].Hotspot.X = (int)Stats.Pos.X;
+                        mapr.Events[it].Hotspot.Y = (int)Stats.Pos.Y;
 
-                        SharedGameResources.Mapr.Events[it].Center.X = (float)SharedGameResources.Mapr.Events[it].Hotspot.X + (float)SharedGameResources.Mapr.Events[it].Hotspot.Width / 2;
-                        SharedGameResources.Mapr.Events[it].Center.Y = (float)SharedGameResources.Mapr.Events[it].Hotspot.Y + (float)SharedGameResources.Mapr.Events[it].Hotspot.Height / 2;
+                        mapr.Events[it].Center.X = (float)mapr.Events[it].Hotspot.X + (float)mapr.Events[it].Hotspot.Width / 2;
+                        mapr.Events[it].Center.Y = (float)mapr.Events[it].Hotspot.Y + (float)mapr.Events[it].Hotspot.Height / 2;
 
-                        for (int ci = 0; ci < SharedGameResources.Mapr.Events[it].Components.Count; ci++)
+                        for (int ci = 0; ci < mapr.Events[it].Components.Count; ci++)
                         {
-                            if (SharedGameResources.Mapr.Events[it].Components[ci].Type == EventComponent.NpcHotspot)
+                            if (mapr.Events[it].Components[ci].Type == EventComponent.NpcHotspot)
                             {
-                                SharedGameResources.Mapr.Events[it].Components[ci].Data[0].Int = (int)Stats.Pos.X;
-                                SharedGameResources.Mapr.Events[it].Components[ci].Data[1].Int = (int)Stats.Pos.Y;
+                                mapr.Events[it].Components[ci].Data[0].Int = (int)Stats.Pos.X;
+                                mapr.Events[it].Components[ci].Data[1].Int = (int)Stats.Pos.Y;
                             }
                         }
                     }
                     else
                     {
                         // NPC is dead! Remove the map event
-                        SharedGameResources.Mapr.Events.RemoveAt(it);
+                        mapr.Events.RemoveAt(it);
                     }
                 }
             }
@@ -819,18 +832,20 @@ namespace FlareEngine
 
         public bool CheckVendor()
         {
+            var camp = SharedGameResources.Camp!;
+
             if (!Vendor)
                 return false;
 
             for (int i = 0; i < _vendorRequiresStatus.Count; ++i)
             {
-                if (!SharedGameResources.Camp!.CheckStatus(_vendorRequiresStatus[i]))
+                if (!camp.CheckStatus(_vendorRequiresStatus[i]))
                     return false;
             }
 
             for (int i = 0; i < _vendorRequiresNotStatus.Count; ++i)
             {
-                if (SharedGameResources.Camp!.CheckStatus(_vendorRequiresNotStatus[i]))
+                if (camp.CheckStatus(_vendorRequiresNotStatus[i]))
                     return false;
             }
 
@@ -844,6 +859,8 @@ namespace FlareEngine
         /// </summary>
         public bool ProcessDialog(int dialogNode, ref int eventCursor)
         {
+            var entitym = SharedGameResources.Entitym!;
+
             if (dialogNode >= Dialog.Count)
                 return false;
 
@@ -949,14 +966,14 @@ namespace FlareEngine
                         Stats.HeroAlly = newHeroAlly;
                         if (Stats.HeroAlly)
                         {
-                            SharedGameResources.Entitym!.Entities.Add(this);
+                            entitym.Entities.Add(this);
                         }
                         else
                         {
-                            for (int i = SharedGameResources.Entitym.Entities.Count; i > 0; --i)
+                            for (int i = entitym.Entities.Count; i > 0; --i)
                             {
-                                if (SharedGameResources.Entitym.Entities[i - 1] == this)
-                                    SharedGameResources.Entitym.Entities.RemoveAt(i - 1);
+                                if (entitym.Entities[i - 1] == this)
+                                    entitym.Entities.RemoveAt(i - 1);
                             }
                         }
                     }

@@ -102,6 +102,9 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+
             for (int i = 0; i < _effectIcons.Count; ++i)
             {
                 if (_effectIcons[i].StacksLabel != null)
@@ -115,11 +118,11 @@ namespace FlareEngine
             int iconsPerRow = 1;
             if (!_isVertical)
             {
-                iconsPerRow = (SharedResources.Settings!.ViewW - WindowArea.X) / SharedResources.Eset!.Resolutions.IconSize;
+                iconsPerRow = (settings.ViewW - WindowArea.X) / eset.Resolutions.IconSize;
             }
             else
             {
-                iconsPerRow = (SharedResources.Settings!.ViewH - WindowArea.Y) / SharedResources.Eset!.Resolutions.IconSize;
+                iconsPerRow = (settings.ViewH - WindowArea.Y) / eset.Resolutions.IconSize;
             }
             if (iconsPerRow < 1)
             {
@@ -160,9 +163,9 @@ namespace FlareEngine
                             if (ed.EffectTimer.Current < (uint)eicon.Current)
                             {
                                 if (ed.EffectTimer.Duration > 0)
-                                    eicon.Overlay.Y = (SharedResources.Eset!.Resolutions.IconSize * (int)ed.EffectTimer.Current) / (int)ed.EffectTimer.Duration;
+                                    eicon.Overlay.Y = (eset.Resolutions.IconSize * (int)ed.EffectTimer.Current) / (int)ed.EffectTimer.Duration;
                                 else
-                                    eicon.Overlay.Y = SharedResources.Eset!.Resolutions.IconSize;
+                                    eicon.Overlay.Y = eset.Resolutions.IconSize;
                                 eicon.Current = eicon.TimerCurrent;
                                 eicon.Max = eicon.TimerMax;
                             }
@@ -172,7 +175,7 @@ namespace FlareEngine
                         {
                             eicon.StacksLabel = new WidgetLabel();
                             eicon.StacksLabel.SetPos(eicon.Pos.X, eicon.Pos.Y);
-                            eicon.StacksLabel.SetMaxWidth(SharedResources.Eset!.Resolutions.IconSize);
+                            eicon.StacksLabel.SetMaxWidth(eset.Resolutions.IconSize);
                         }
 
                         StringBuilder ss = new StringBuilder();
@@ -192,57 +195,57 @@ namespace FlareEngine
                 // icon position
                 if (!_isVertical)
                 {
-                    ei.Pos.X = WindowArea.X + (_effectIcons.Count % iconsPerRow * SharedResources.Eset!.Resolutions.IconSize);
-                    ei.Pos.Y = WindowArea.Y + (wrapDir * (_effectIcons.Count / iconsPerRow * SharedResources.Eset!.Resolutions.IconSize));
+                    ei.Pos.X = WindowArea.X + (_effectIcons.Count % iconsPerRow * eset.Resolutions.IconSize);
+                    ei.Pos.Y = WindowArea.Y + (wrapDir * (_effectIcons.Count / iconsPerRow * eset.Resolutions.IconSize));
                 }
                 else
                 {
-                    ei.Pos.X = WindowArea.X + (wrapDir * (_effectIcons.Count / iconsPerRow * SharedResources.Eset!.Resolutions.IconSize));
-                    ei.Pos.Y = WindowArea.Y + (_effectIcons.Count % iconsPerRow * SharedResources.Eset!.Resolutions.IconSize);
+                    ei.Pos.X = WindowArea.X + (wrapDir * (_effectIcons.Count / iconsPerRow * eset.Resolutions.IconSize));
+                    ei.Pos.Y = WindowArea.Y + (_effectIcons.Count % iconsPerRow * eset.Resolutions.IconSize);
                 }
-                ei.Pos.Width = ei.Pos.Height = SharedResources.Eset!.Resolutions.IconSize;
+                ei.Pos.Width = ei.Pos.Height = eset.Resolutions.IconSize;
 
                 // timer overlay
                 ei.Overlay.X = 0;
-                ei.Overlay.Width = SharedResources.Eset!.Resolutions.IconSize;
+                ei.Overlay.Width = eset.Resolutions.IconSize;
 
                 ei.TimerCurrent = (int)ed.EffectTimer.Current;
                 ei.TimerMax = (int)ed.EffectTimer.Duration;
 
                 if (ed.Type == Effect.Shield)
                 {
-                    ei.Overlay.Y = (int)((SharedResources.Eset!.Resolutions.IconSize * ed.Magnitude) / ed.MagnitudeMax);
+                    ei.Overlay.Y = (int)((eset.Resolutions.IconSize * ed.Magnitude) / ed.MagnitudeMax);
                     ei.Current = (int)ed.Magnitude;
                     ei.Max = (int)ed.MagnitudeMax;
                 }
                 else if (ed.Type == Effect.Heal)
                 {
-                    ei.Overlay.Y = SharedResources.Eset!.Resolutions.IconSize;
+                    ei.Overlay.Y = eset.Resolutions.IconSize;
                     // current and max are ignored
                 }
                 else
                 {
                     if (ed.EffectTimer.Duration > 0)
-                        ei.Overlay.Y = (SharedResources.Eset!.Resolutions.IconSize * (int)ed.EffectTimer.Current) / (int)ed.EffectTimer.Duration;
+                        ei.Overlay.Y = (eset.Resolutions.IconSize * (int)ed.EffectTimer.Current) / (int)ed.EffectTimer.Duration;
                     else
-                        ei.Overlay.Y = SharedResources.Eset!.Resolutions.IconSize;
+                        ei.Overlay.Y = eset.Resolutions.IconSize;
                     ei.Current = ei.TimerCurrent;
                     ei.Max = ei.TimerMax;
                 }
-                ei.Overlay.Height = SharedResources.Eset!.Resolutions.IconSize - ei.Overlay.Y;
+                ei.Overlay.Height = eset.Resolutions.IconSize - ei.Overlay.Y;
 
                 _effectIcons.Add(ei);
             }
 
             if (!_isVertical)
             {
-                WindowArea.Width = _effectIcons.Count * SharedResources.Eset!.Resolutions.IconSize;
-                WindowArea.Height = SharedResources.Eset!.Resolutions.IconSize;
+                WindowArea.Width = _effectIcons.Count * eset.Resolutions.IconSize;
+                WindowArea.Height = eset.Resolutions.IconSize;
             }
             else
             {
-                WindowArea.Width = SharedResources.Eset!.Resolutions.IconSize;
-                WindowArea.Height = _effectIcons.Count * SharedResources.Eset!.Resolutions.IconSize;
+                WindowArea.Width = eset.Resolutions.IconSize;
+                WindowArea.Height = _effectIcons.Count * eset.Resolutions.IconSize;
             }
             Align();
         }
@@ -272,6 +275,10 @@ namespace FlareEngine
 
         public void RenderTooltips(Int2 position)
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var tooltipm = SharedResources.Tooltipm!;
+
             TooltipData tipData = new TooltipData();
 
             for (int i = 0; i < _effectIcons.Count; ++i)
@@ -281,7 +288,7 @@ namespace FlareEngine
                     StringBuilder ss = new StringBuilder();
                     if (_effectIcons[i].Name.Length != 0)
                     {
-                        ss.Append(SharedResources.Msg!.Get(_effectIcons[i].Name));
+                        ss.Append(msg.Get(_effectIcons[i].Name));
                         if (_effectIcons[i].Type != Effect.Shield && _effectIcons[i].Stacks > 1)
                         {
                             ss.Append(' ').Append("(×").Append(_effectIcons[i].Stacks).Append(')');
@@ -302,7 +309,7 @@ namespace FlareEngine
                     if (_effectIcons[i].Max > 0 && _effectIcons[i].TimerMax > 0)
                     {
                         ss.Clear();
-                        ss.Append(SharedResources.Msg!.Get("Remaining:")).Append(' ').Append(Utils.GetDurationString(_effectIcons[i].TimerCurrent, SharedResources.Eset!.NumberFormat.Durations));
+                        ss.Append(msg.Get("Remaining:")).Append(' ').Append(Utils.GetDurationString(_effectIcons[i].TimerCurrent, eset.NumberFormat.Durations));
                         tipData.AddText(ss.ToString());
                     }
 
@@ -310,7 +317,7 @@ namespace FlareEngine
                 }
             }
 
-            SharedResources.Tooltipm!.Push(tipData, position, TooltipData.StyleFloat);
+            tooltipm.Push(tipData, position, TooltipData.StyleFloat);
         }
 
         /// <summary>

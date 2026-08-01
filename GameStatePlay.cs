@@ -88,23 +88,28 @@ namespace FlareEngine
         /// </summary>
         public void ResetGame()
         {
-            SharedGameResources.Camp!.ResetAllStatuses();
-            SharedGameResources.Pc!.Init();
-            SharedGameResources.Pc!.Stats.Currency = 0;
-            SharedGameResources.Menu!.Act!.Clear(!MenuActionBar.ClearSkipItems);
-            SharedGameResources.Menu!.Inv!.Inventory[MenuInventory.Equipment].Clear();
-            SharedGameResources.Menu!.Inv!.Inventory[MenuInventory.Carried].Clear();
-            SharedGameResources.Menu!.Inv!.ChangedEquipment = true;
-            SharedGameResources.Menu!.Inv!.Currency = 0;
-            SharedGameResources.Menu!.Questlog!.ClearAll();
+            var camp = SharedGameResources.Camp!;
+            var pc = SharedGameResources.Pc!;
+            var menu = SharedGameResources.Menu!;
+            var mapr = SharedGameResources.Mapr!;
+
+            camp.ResetAllStatuses();
+            pc.Init();
+            pc.Stats.Currency = 0;
+            menu.Act!.Clear(!MenuActionBar.ClearSkipItems);
+            menu.Inv!.Inventory[MenuInventory.Equipment].Clear();
+            menu.Inv!.Inventory[MenuInventory.Carried].Clear();
+            menu.Inv!.ChangedEquipment = true;
+            menu.Inv!.Currency = 0;
+            menu.Questlog!.ClearAll();
             _quests!.CreateQuestList();
-            SharedGameResources.Menu!.Hudlog!.Clear();
+            menu.Hudlog!.Clear();
 
-            SharedGameResources.Menu!.Talker!.SetHero(SharedGameResources.Pc!.Stats);
-            SharedGameResources.Pc!.LoadSounds();
+            menu.Talker!.SetHero(pc.Stats);
+            pc.LoadSounds();
 
-            SharedGameResources.Mapr!.Teleportation = true;
-            SharedGameResources.Mapr!.TeleportMapname = "maps/spawn.txt";
+            mapr.Teleportation = true;
+            mapr.TeleportMapname = "maps/spawn.txt";
         }
 
         /// <summary>
@@ -544,6 +549,9 @@ namespace FlareEngine
 
         private void LoadTitles()
         {
+            var powers = SharedGameResources.Powers!;
+            var camp = SharedGameResources.Camp!;
+
             using FileParser infile = new FileParser();
             if (infile.Open("engine/titles.txt", FileParser.ModFile, FileParser.ErrorNormal))
             {
@@ -569,14 +577,14 @@ namespace FlareEngine
                     }
                     else if (infile.Key == "power")
                     {
-                        title.Power = SharedGameResources.Powers!.VerifyID(Parse.ToPowerID(infile.Val), infile, !PowerManager.AllowZeroId);
+                        title.Power = powers.VerifyID(Parse.ToPowerID(infile.Val), infile, !PowerManager.AllowZeroId);
                     }
                     else if (infile.Key == "requires_status")
                     {
                         string repeatVal = Parse.PopFirstString(ref infile.Val);
                         while (repeatVal != "")
                         {
-                            title.RequiresStatus.Add(SharedGameResources.Camp!.RegisterStatus(repeatVal));
+                            title.RequiresStatus.Add(camp.RegisterStatus(repeatVal));
                             repeatVal = Parse.PopFirstString(ref infile.Val);
                         }
                     }
@@ -585,7 +593,7 @@ namespace FlareEngine
                         string repeatVal = Parse.PopFirstString(ref infile.Val);
                         while (repeatVal != "")
                         {
-                            title.RequiresNotStatus.Add(SharedGameResources.Camp!.RegisterStatus(repeatVal));
+                            title.RequiresNotStatus.Add(camp.RegisterStatus(repeatVal));
                             repeatVal = Parse.PopFirstString(ref infile.Val);
                         }
                     }

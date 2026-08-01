@@ -41,6 +41,10 @@ namespace FlareEngine
 
         public Subtitles()
         {
+            var mods = SharedResources.Mods!;
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+
             _currentId = unchecked((ulong)-1);
             _currentText = "";
             _visible = false;
@@ -98,7 +102,7 @@ namespace FlareEngine
                         if (infile.Key == "id")
                         {
                             // @ATTR subtitle.id|filename|Filename of the sound file that will trigger this subtitle.
-                            ulong filenameHash = (ulong)Utils.HashString(SharedResources.Mods!.Locate(infile.Val));
+                            ulong filenameHash = (ulong)Utils.HashString(mods.Locate(infile.Val));
 
                             bool foundId = false;
                             for (int i = 0; i < _subtitles.Count; ++i)
@@ -119,13 +123,13 @@ namespace FlareEngine
                         else if (infile.Key == "text")
                         {
                             // @ATTR subtitle.text|string|The subtitle text that will be displayed.
-                            current.Text = SharedResources.Msg!.Get(infile.Val);
+                            current.Text = msg.Get(infile.Val);
                         }
                     }
                 }
             }
 
-            _label.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            _label.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
         }
 
         /// <summary>对应 C++ 的 <c>~Subtitles()</c>。</summary>
@@ -158,6 +162,7 @@ namespace FlareEngine
                 return;
             }
 
+            var settings = SharedResources.Settings!;
             for (int i = 0; i < _subtitles.Count; ++i)
             {
                 if (_subtitles[i].Filename == (ulong)id)
@@ -167,7 +172,7 @@ namespace FlareEngine
                     UpdateLabelAndBackground();
 
                     // 1 second per 10 letters
-                    _visibleTimer.Duration = (uint)(_currentText.Length * (SharedResources.Settings!.MaxFramesPerSec / 10));
+                    _visibleTimer.Duration = (uint)(_currentText.Length * (settings.MaxFramesPerSec / 10));
 
                     return;
                 }
@@ -220,10 +225,13 @@ namespace FlareEngine
             if (_backgroundColor.A == 0)
                 return;
 
+            var font = SharedResources.Font!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             // create padded background rectangle
             Rectangle oldBackgroundRect = _backgroundRect;
             _backgroundRect = _label.GetBounds();
-            int padding = SharedResources.Font!.GetLineHeight() / 4;
+            int padding = font.GetLineHeight() / 4;
             _backgroundRect.X -= padding;
             _backgroundRect.Y -= padding;
             _backgroundRect.Width += padding * 2;
@@ -239,7 +247,7 @@ namespace FlareEngine
                 }
 
                 // fill the background rectangle
-                Image? temp = SharedResources.RenderDevice!.CreateImage(_backgroundRect.Width, _backgroundRect.Height);
+                Image? temp = renderDevice.CreateImage(_backgroundRect.Width, _backgroundRect.Height);
                 if (temp != null)
                 {
                     // translucent black background

@@ -62,10 +62,12 @@ namespace FlareEngine
 
         public float Get()
         {
-            float result = Base + (PerItemLevel * (float)(ItemLevel - 1)) + (PerPlayerLevel * (float)(SharedGameResources.Pc!.Stats.Level - 1));
+            var pc = SharedGameResources.Pc!;
+
+            float result = Base + (PerItemLevel * (float)(ItemLevel - 1)) + (PerPlayerLevel * (float)(pc.Stats.Level - 1));
             for (int i = 0; i < PerPlayerPrimary.Count; ++i)
             {
-                result += PerPlayerPrimary[i] * (float)(SharedGameResources.Pc!.Stats.GetPrimary(i) - 1);
+                result += PerPlayerPrimary[i] * (float)(pc.Stats.GetPrimary(i) - 1);
             }
 
             if (ResultMaxEnabled)
@@ -78,10 +80,12 @@ namespace FlareEngine
 
         public float GetMax()
         {
-            float result = BaseMax + (PerItemLevelMax * (float)(ItemLevel - 1)) + (PerPlayerLevelMax * (float)(SharedGameResources.Pc!.Stats.Level - 1));
+            var pc = SharedGameResources.Pc!;
+
+            float result = BaseMax + (PerItemLevelMax * (float)(ItemLevel - 1)) + (PerPlayerLevelMax * (float)(pc.Stats.Level - 1));
             for (int i = 0; i < PerPlayerPrimaryMax.Count; ++i)
             {
-                result += PerPlayerPrimaryMax[i] * (float)(SharedGameResources.Pc!.Stats.GetPrimary(i) - 1);
+                result += PerPlayerPrimaryMax[i] * (float)(pc.Stats.GetPrimary(i) - 1);
             }
 
             if (ResultMaxEnabled)
@@ -94,10 +98,12 @@ namespace FlareEngine
 
         public float GetStep()
         {
-            float result = BaseStep + (PerItemLevelStep * (float)(ItemLevel - 1)) + (PerPlayerLevelStep * (float)(SharedGameResources.Pc!.Stats.Level - 1));
+            var pc = SharedGameResources.Pc!;
+
+            float result = BaseStep + (PerItemLevelStep * (float)(ItemLevel - 1)) + (PerPlayerLevelStep * (float)(pc.Stats.Level - 1));
             for (int i = 0; i < PerPlayerPrimaryStep.Count; ++i)
             {
-                result += PerPlayerPrimaryStep[i] * (float)(SharedGameResources.Pc!.Stats.GetPrimary(i) - 1);
+                result += PerPlayerPrimaryStep[i] * (float)(pc.Stats.GetPrimary(i) - 1);
             }
             return result;
         }
@@ -140,6 +146,8 @@ namespace FlareEngine
 
         public void Parse(ref string s)
         {
+            var eset = SharedResources.Eset!;
+
             Clear();
 
             string section = global::FlareEngine.Parse.PopFirstString(ref s);
@@ -190,8 +198,8 @@ namespace FlareEngine
                     else
                     {
                         // player primary stats
-                        int primaryIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(scaleType);
-                        if (primaryIndex < SharedResources.Eset.PrimaryStats.Stats.Count)
+                        int primaryIndex = eset.PrimaryStats.GetIndexByID(scaleType);
+                        if (primaryIndex < eset.PrimaryStats.Stats.Count)
                         {
                             PerPlayerPrimary[primaryIndex] = global::FlareEngine.Parse.PopFirstFloat(ref section, ':');
                             PerPlayerPrimaryMax[primaryIndex] = Math.Max(PerPlayerPrimary[primaryIndex], global::FlareEngine.Parse.PopFirstFloat(ref section, ':'));
@@ -245,6 +253,8 @@ namespace FlareEngine
 
         public string Serialize(bool isMultiplier)
         {
+            var eset = SharedResources.Eset!;
+
             StringBuilder outSb = new StringBuilder();
             bool comma = false;
 
@@ -294,7 +304,7 @@ namespace FlareEngine
                     if (comma)
                         outSb.Append(',');
 
-                    outSb.Append(SharedResources.Eset!.PrimaryStats.Stats[i].Id).Append(':');
+                    outSb.Append(eset.PrimaryStats.Stats[i].Id).Append(':');
                     if (isMultiplier)
                         outSb.Append(PerPlayerPrimary[i] * 100).Append('%');
                     else
@@ -697,18 +707,21 @@ namespace FlareEngine
 
         public int GetPrice(bool useVendorRatio)
         {
+            var eset = SharedResources.Eset!;
+            var menu = SharedGameResources.Menu;
+
             int newPrice = (int)Price.Get();
             if (newPrice == 0)
                 return newPrice;
 
-            newPrice = (int)((float)newPrice * SharedResources.Eset!.Loot.VendorRatioBuy);
+            newPrice = (int)((float)newPrice * eset.Loot.VendorRatioBuy);
 
-            NPC? vendorNpc = ((SharedGameResources.Menu != null && SharedGameResources.Menu!.Vendor != null && SharedGameResources.Menu.Vendor!.Visible) ? SharedGameResources.Menu.Vendor.Npc : null);
+            NPC? vendorNpc = ((menu != null && menu.Vendor != null && menu.Vendor!.Visible) ? menu.Vendor.Npc : null);
 
             if (useVendorRatio)
             {
                 // get vendor ratio from NPC (or fall back to global value)
-                float vendorRatioBuy = (vendorNpc != null && vendorNpc.VendorRatioBuy > 0) ? vendorNpc.VendorRatioBuy : SharedResources.Eset.Loot.VendorRatioBuy;
+                float vendorRatioBuy = (vendorNpc != null && vendorNpc.VendorRatioBuy > 0) ? vendorNpc.VendorRatioBuy : eset.Loot.VendorRatioBuy;
 
                 newPrice = (int)((float)newPrice * vendorRatioBuy);
             }
@@ -718,12 +731,15 @@ namespace FlareEngine
 
         public int GetSellPrice(bool isNewBuyback)
         {
+            var eset = SharedResources.Eset!;
+            var menu = SharedGameResources.Menu;
+
             int newPrice = 0;
-            NPC? vendorNpc = ((SharedGameResources.Menu != null && SharedGameResources.Menu!.Vendor != null && SharedGameResources.Menu.Vendor!.Visible) ? SharedGameResources.Menu.Vendor.Npc : null);
+            NPC? vendorNpc = ((menu != null && menu.Vendor != null && menu.Vendor!.Visible) ? menu.Vendor.Npc : null);
 
             // get vendor ratio from NPC (or fall back to global value)
-            float vendorRatioSell = (vendorNpc != null && vendorNpc.VendorRatioSell > 0) ? vendorNpc.VendorRatioSell : SharedResources.Eset!.Loot.VendorRatioSell;
-            float vendorRatioSellOld = (vendorNpc != null && vendorNpc.VendorRatioSellOld > 0) ? vendorNpc.VendorRatioSellOld : SharedResources.Eset.Loot.VendorRatioSellOld;
+            float vendorRatioSell = (vendorNpc != null && vendorNpc.VendorRatioSell > 0) ? vendorNpc.VendorRatioSell : eset.Loot.VendorRatioSell;
+            float vendorRatioSellOld = (vendorNpc != null && vendorNpc.VendorRatioSellOld > 0) ? vendorNpc.VendorRatioSellOld : eset.Loot.VendorRatioSellOld;
 
             if (isNewBuyback || vendorRatioSellOld == 0)
             {
@@ -745,6 +761,8 @@ namespace FlareEngine
 
         public int GetCraftCount()
         {
+            var menu = SharedGameResources.Menu!;
+
             int craftCount = int.MaxValue;
 
             if (CraftingItems.Count == 0)
@@ -753,8 +771,8 @@ namespace FlareEngine
             for (int i = 0; i < CraftingItems.Count; ++i)
             {
                 ItemStack stack = CraftingItems[i];
-                int itemCount = SharedGameResources.Menu!.Inv!.Inventory[MenuInventory.Carried].Count(stack.Item);
-                itemCount += SharedGameResources.Menu.Inv.Inventory[MenuInventory.Equipment].Count(stack.Item);
+                int itemCount = menu.Inv!.Inventory[MenuInventory.Carried].Count(stack.Item);
+                itemCount += menu.Inv.Inventory[MenuInventory.Equipment].Count(stack.Item);
                 craftCount = Math.Min(craftCount, itemCount / stack.Quantity);
             }
 
@@ -945,6 +963,10 @@ namespace FlareEngine
 
         protected void LoadItems(string filename)
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
             FileParser infile = new FileParser();
 
             // @CLASS ItemManager: Items|Description of Items in items/items.txt.
@@ -999,12 +1021,12 @@ namespace FlareEngine
                 if (infile.Key == "name")
                 {
                     // @ATTR name|string|Item name displayed on long and short tooltips.
-                    item!.Name = SharedResources.Msg!.Get(infile.Val);
+                    item!.Name = msg.Get(infile.Val);
                     item.HasName = true;
                 }
                 else if (infile.Key == "flavor")
                     // @ATTR flavor|string|A description of the item.
-                    item!.Flavor = SharedResources.Msg!.Get(infile.Val);
+                    item!.Flavor = msg.Get(infile.Val);
                 else if (infile.Key == "level")
                     // @ATTR level|int|The item's level.
                     item!.Level = Parse.ToInt(infile.Val);
@@ -1041,7 +1063,7 @@ namespace FlareEngine
 
                     while (flag != "")
                     {
-                        item.EquipFlags.Add(SharedResources.Eset!.EquipFlags.GetIndex(flag));
+                        item.EquipFlags.Add(eset.EquipFlags.GetIndex(flag));
                         flag = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
                     }
                 }
@@ -1050,17 +1072,17 @@ namespace FlareEngine
                     // @ATTR dmg|predefined_string, float, float : Damage type, Min, Max|Defines the item's base damage type and range. Max may be ommitted and will default to Min.
                     string dmgTypeStr = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
 
-                    int dmgType = SharedResources.Eset!.DamageTypes.Types.Count;
-                    for (int i = 0; i < SharedResources.Eset.DamageTypes.Types.Count; ++i)
+                    int dmgType = eset.DamageTypes.Types.Count;
+                    for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                     {
-                        if (dmgTypeStr == SharedResources.Eset.DamageTypes.Types[i].Id)
+                        if (dmgTypeStr == eset.DamageTypes.Types[i].Id)
                         {
                             dmgType = i;
                             break;
                         }
                     }
 
-                    if (dmgType == SharedResources.Eset.DamageTypes.Types.Count)
+                    if (dmgType == eset.DamageTypes.Types.Count)
                     {
                         infile.Error("ItemManager: '%s' is not a known damage type id.", dmgTypeStr);
                     }
@@ -1077,17 +1099,17 @@ namespace FlareEngine
                 {
                     string dmgTypeStr = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
 
-                    int dmgType = SharedResources.Eset!.DamageTypes.Types.Count;
-                    for (int i = 0; i < SharedResources.Eset.DamageTypes.Types.Count; ++i)
+                    int dmgType = eset.DamageTypes.Types.Count;
+                    for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                     {
-                        if (dmgTypeStr == SharedResources.Eset.DamageTypes.Types[i].Id)
+                        if (dmgTypeStr == eset.DamageTypes.Types[i].Id)
                         {
                             dmgType = i;
                             break;
                         }
                     }
 
-                    if (dmgType == SharedResources.Eset.DamageTypes.Types.Count)
+                    if (dmgType == eset.DamageTypes.Types.Count)
                     {
                         infile.Error("ItemManager: '%s' is not a known damage type id.", dmgTypeStr);
                     }
@@ -1102,17 +1124,17 @@ namespace FlareEngine
                 {
                     string dmgTypeStr = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
 
-                    int dmgType = SharedResources.Eset!.DamageTypes.Types.Count;
-                    for (int i = 0; i < SharedResources.Eset.DamageTypes.Types.Count; ++i)
+                    int dmgType = eset.DamageTypes.Types.Count;
+                    for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                     {
-                        if (dmgTypeStr == SharedResources.Eset.DamageTypes.Types[i].Id)
+                        if (dmgTypeStr == eset.DamageTypes.Types[i].Id)
                         {
                             dmgType = i;
                             break;
                         }
                     }
 
-                    if (dmgType == SharedResources.Eset.DamageTypes.Types.Count)
+                    if (dmgType == eset.DamageTypes.Types.Count)
                     {
                         infile.Error("ItemManager: '%s' is not a known damage type id.", dmgTypeStr);
                     }
@@ -1155,14 +1177,14 @@ namespace FlareEngine
                     {
                         Utils.LogInfo("ItemManager: Item %zu, clearing requires_stat list.", id);
                         item!.RequiresStat.Clear();
-                        for (int ri = 0; ri < SharedResources.Eset!.PrimaryStats.Stats.Count; ++ri)
+                        for (int ri = 0; ri < eset.PrimaryStats.Stats.Count; ++ri)
                             item.RequiresStat.Add(new LevelScaledValue());
                         clearReqStat = false;
                     }
 
                     string s = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
-                    int reqStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(s);
-                    if (reqStatIndex < SharedResources.Eset.PrimaryStats.Stats.Count)
+                    int reqStatIndex = eset.PrimaryStats.GetIndexByID(s);
+                    if (reqStatIndex < eset.PrimaryStats.Stats.Count)
                     {
                         string val = infile.Val;
                         item!.RequiresStat[reqStatIndex].Parse(ref val);
@@ -1200,7 +1222,7 @@ namespace FlareEngine
                 else if (infile.Key == "soundfx")
                 {
                     item!.Sfx = infile.Val;
-                    item.SfxId = SharedResources.Snd!.Load(item.Sfx, "ItemManager");
+                    item.SfxId = snd.Load(item.Sfx, "ItemManager");
                 }
                 else if (infile.Key == "gfx")
                     item!.Gfx = infile.Val;
@@ -1238,7 +1260,7 @@ namespace FlareEngine
                     item!.ReplacePower.Add((powerIdFirst, powerIdSecond));
                 }
                 else if (infile.Key == "power_desc")
-                    item!.PowerDesc = SharedResources.Msg!.Get(infile.Val);
+                    item!.PowerDesc = msg.Get(infile.Val);
                 else if (infile.Key == "price")
                 {
                     string val = infile.Val;
@@ -1326,7 +1348,7 @@ namespace FlareEngine
             }
             infile.Close();
 
-            SharedResources.Eset!.Misc.CurrencyId = VerifyID(SharedResources.Eset.Misc.CurrencyId, null, !VerifyAllowZero, VerifyAllocate);
+            eset.Misc.CurrencyId = VerifyID(eset.Misc.CurrencyId, null, !VerifyAllowZero, VerifyAllocate);
 
             int countAllocated = 0;
             for (int i = 0; i < Items.Count; ++i)
@@ -1353,11 +1375,11 @@ namespace FlareEngine
 
             Utils.LogInfo("ItemManager: Item IDs = %zu reserved / %zu allocated / %zu empty / %zu bytes used", itemCount, countAllocated, itemCount - countAllocated, (IntPtr.Size * Items.Count) + (IntPtr.Size * countAllocated));
 
-            if (SharedResources.Eset.Loot.ExtendedItemsOffset < Items.Count)
+            if (eset.Loot.ExtendedItemsOffset < Items.Count)
             {
-                SharedResources.Eset.Loot.ExtendedItemsOffset = (ItemID)Items.Count;
+                eset.Loot.ExtendedItemsOffset = (ItemID)Items.Count;
             }
-            Utils.LogInfo("ItemManager: Extended item offset set to %zu.", SharedResources.Eset.Loot.ExtendedItemsOffset);
+            Utils.LogInfo("ItemManager: Extended item offset set to %zu.", eset.Loot.ExtendedItemsOffset);
         }
 
         protected void LoadTypes(string filename)
@@ -1776,6 +1798,8 @@ namespace FlareEngine
 
         private void ParseBonus(BonusData bdata, FileParser infile)
         {
+            var eset = SharedResources.Eset!;
+
             string bonusStr = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
             string bonusValueStr = "";
 
@@ -1853,21 +1877,21 @@ namespace FlareEngine
                 }
             }
 
-            for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+            for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
             {
-                if (bonusStr == SharedResources.Eset.DamageTypes.Types[i].Min)
+                if (bonusStr == eset.DamageTypes.Types[i].Min)
                 {
                     bdata.Type = BonusData.DamageMin;
                     bdata.Index = i;
                     return;
                 }
-                else if (bonusStr == SharedResources.Eset.DamageTypes.Types[i].Max)
+                else if (bonusStr == eset.DamageTypes.Types[i].Max)
                 {
                     bdata.Type = BonusData.DamageMax;
                     bdata.Index = i;
                     return;
                 }
-                else if (bonusStr == SharedResources.Eset.DamageTypes.Types[i].Resist)
+                else if (bonusStr == eset.DamageTypes.Types[i].Resist)
                 {
                     bdata.Type = BonusData.ResistElement;
                     bdata.Index = i;
@@ -1875,9 +1899,9 @@ namespace FlareEngine
                 }
             }
 
-            for (int i = 0; i < SharedResources.Eset.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
-                if (bonusStr == SharedResources.Eset.PrimaryStats.Stats[i].Id)
+                if (bonusStr == eset.PrimaryStats.Stats[i].Id)
                 {
                     bdata.Type = BonusData.PrimaryStat;
                     bdata.Index = i;
@@ -1890,11 +1914,11 @@ namespace FlareEngine
                 }
             }
 
-            for (int i = 0; i < SharedResources.Eset.ResourceStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
             {
                 for (int j = 0; j < EngineSettings.ResourceStatsSettings.StatCount; ++j)
                 {
-                    if (bonusStr == SharedResources.Eset.ResourceStats.Stats[i].Ids[j])
+                    if (bonusStr == eset.ResourceStats.Stats[i].Ids[j])
                     {
                         bdata.Type = BonusData.ResourceStat;
                         bdata.Index = i;
@@ -1909,6 +1933,11 @@ namespace FlareEngine
 
         private void GetBonusString(StringBuilder ss, BonusData bdata)
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var powers = SharedGameResources.Powers;
+            var menu = SharedGameResources.Menu;
+
             float scaledBdataValue = bdata.Value.Get();
 
             if (bdata.PowerId > 0)
@@ -1918,21 +1947,21 @@ namespace FlareEngine
 
             if (bdata.Type == BonusData.Speed)
             {
-                ss.Append(SharedResources.Msg!.GetV("%s%% Speed", Utils.FloatToString(scaledBdataValue, SharedResources.Eset!.NumberFormat.ItemTooltips)));
+                ss.Append(msg.GetV("%s%% Speed", Utils.FloatToString(scaledBdataValue, eset.NumberFormat.ItemTooltips)));
                 return;
             }
             else if (bdata.Type == BonusData.AttackSpeed)
             {
-                ss.Append(SharedResources.Msg!.GetV("%s%% Attack Speed", Utils.FloatToString(scaledBdataValue, SharedResources.Eset!.NumberFormat.ItemTooltips)));
+                ss.Append(msg.GetV("%s%% Attack Speed", Utils.FloatToString(scaledBdataValue, eset.NumberFormat.ItemTooltips)));
                 return;
             }
 
             if (bdata.IsMultiplier)
-                ss.Append(Utils.FloatToString(scaledBdataValue, SharedResources.Eset!.NumberFormat.ItemTooltips + 2)).Append('×');
+                ss.Append(Utils.FloatToString(scaledBdataValue, eset.NumberFormat.ItemTooltips + 2)).Append('×');
             else if (scaledBdataValue > 0)
-                ss.Append('+').Append(Utils.FloatToString(scaledBdataValue, SharedResources.Eset!.NumberFormat.ItemTooltips));
+                ss.Append('+').Append(Utils.FloatToString(scaledBdataValue, eset.NumberFormat.ItemTooltips));
             else
-                ss.Append(Utils.FloatToString(scaledBdataValue, SharedResources.Eset!.NumberFormat.ItemTooltips));
+                ss.Append(Utils.FloatToString(scaledBdataValue, eset.NumberFormat.ItemTooltips));
 
             if (bdata.Type == BonusData.Stat)
             {
@@ -1943,36 +1972,36 @@ namespace FlareEngine
             }
             else if (bdata.Type == BonusData.DamageMin)
             {
-                ss.Append(' ').Append(SharedResources.Eset!.DamageTypes.Types[bdata.Index].NameMin);
+                ss.Append(' ').Append(eset.DamageTypes.Types[bdata.Index].NameMin);
             }
             else if (bdata.Type == BonusData.DamageMax)
             {
-                ss.Append(' ').Append(SharedResources.Eset!.DamageTypes.Types[bdata.Index].NameMax);
+                ss.Append(' ').Append(eset.DamageTypes.Types[bdata.Index].NameMax);
             }
             else if (bdata.Type == BonusData.ResistElement)
             {
                 if (!bdata.IsMultiplier)
                     ss.Append('%');
 
-                ss.Append(' ').Append(SharedResources.Eset!.DamageTypes.Types[bdata.Index].NameResist);
+                ss.Append(' ').Append(eset.DamageTypes.Types[bdata.Index].NameResist);
             }
             else if (bdata.Type == BonusData.PrimaryStat)
             {
-                ss.Append(' ').Append(SharedResources.Eset!.PrimaryStats.Stats[bdata.Index].Name);
+                ss.Append(' ').Append(eset.PrimaryStats.Stats[bdata.Index].Name);
             }
-            else if (SharedGameResources.Powers != null && SharedGameResources.Powers!.IsValid(bdata.PowerId))
+            else if (powers != null && powers.IsValid(bdata.PowerId))
             {
-                ss.Append(' ').Append(SharedGameResources.Powers!.Powers[(int)bdata.PowerId]!.Name);
-                if (SharedGameResources.Menu != null && SharedGameResources.Menu!.Pow != null)
+                ss.Append(' ').Append(powers.Powers[(int)bdata.PowerId]!.Name);
+                if (menu != null && menu.Pow != null)
                 {
-                    string reqStr = SharedGameResources.Menu.Pow!.GetItemBonusPowerReqString(bdata.PowerId);
+                    string reqStr = menu.Pow.GetItemBonusPowerReqString(bdata.PowerId);
                     if (!string.IsNullOrEmpty(reqStr))
-                        ss.Append(" (").Append(SharedResources.Msg!.GetV("Requires %s", reqStr)).Append(')');
+                        ss.Append(" (").Append(msg.GetV("Requires %s", reqStr)).Append(')');
                 }
             }
             else if (bdata.Type == BonusData.ResourceStat)
             {
-                ss.Append(' ').Append(SharedResources.Eset!.ResourceStats.Stats[bdata.Index].Text[bdata.SubIndex]);
+                ss.Append(' ').Append(eset.ResourceStats.Stats[bdata.Index].Text[bdata.SubIndex]);
             }
         }
 
@@ -2007,6 +2036,12 @@ namespace FlareEngine
 
         public TooltipData GetTooltip(ItemStack stack, StatBlock? stats, int context, bool inputHint)
         {
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var pc = SharedGameResources.Pc!;
+
             TooltipData tip = new TooltipData();
 
             if (stack.Empty() || !IsValid(stack.Item))
@@ -2025,10 +2060,10 @@ namespace FlareEngine
 
             if (item.QuestItem)
             {
-                tip.AddColoredText(SharedResources.Msg!.Get("Quest Item"), SharedResources.Font!.GetColor(FontEngine.ColorItemBonus));
+                tip.AddColoredText(msg.Get("Quest Item"), font.GetColor(FontEngine.ColorItemBonus));
             }
 
-            if (stack.Item == SharedResources.Eset!.Misc.CurrencyId)
+            if (stack.Item == eset.Misc.CurrencyId)
             {
                 if (inputHint)
                     GetTooltipInputHint(ref tip, stack, context);
@@ -2037,13 +2072,13 @@ namespace FlareEngine
 
             if (item.Level != 0)
             {
-                tip.AddText(SharedResources.Msg!.GetV("Level %d", item.Level));
+                tip.AddText(msg.GetV("Level %d", item.Level));
             }
 
             ItemType itemType = GetItemType(item.Type);
             if (!string.IsNullOrEmpty(itemType.Name))
             {
-                tip.AddText(SharedResources.Msg!.Get(itemType.Name));
+                tip.AddText(msg.Get(itemType.Name));
             }
 
             if (item.DisableSlots.Count > 0)
@@ -2053,24 +2088,24 @@ namespace FlareEngine
                     ItemType disableType = GetItemType(item.DisableSlots[i]);
                     if (!string.IsNullOrEmpty(disableType.Name))
                     {
-                        tip.AddColoredText(SharedResources.Msg!.GetV("Prevents use of slot: %s", disableType.Name), SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled));
+                        tip.AddColoredText(msg.GetV("Prevents use of slot: %s", disableType.Name), font.GetColor(FontEngine.ColorWidgetDisabled));
                     }
                 }
             }
 
-            if (SharedResources.Settings!.Colorblind && item.Quality < ItemQualities.Count && !string.IsNullOrEmpty(ItemQualities[item.Quality].Name))
+            if (settings.Colorblind && item.Quality < ItemQualities.Count && !string.IsNullOrEmpty(ItemQualities[item.Quality].Name))
             {
-                color = SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal);
-                tip.AddColoredText(SharedResources.Msg!.GetV("Quality: %s", SharedResources.Msg!.Get(ItemQualities[item.Quality].Name)), color);
+                color = font.GetColor(FontEngine.ColorWidgetNormal);
+                tip.AddColoredText(msg.GetV("Quality: %s", msg.Get(ItemQualities[item.Quality].Name)), color);
             }
 
-            for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+            for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
             {
                 if (item.BaseDmg[i].Max.Get() > 0)
                 {
                     StringBuilder dmgStr = new StringBuilder();
-                    dmgStr.Append(SharedResources.Eset.DamageTypes.Types[i].Name);
-                    dmgStr.Append(": ").Append(Utils.CreateMinMaxString(item.BaseDmg[i].Min.Get(), item.BaseDmg[i].Max.Get(), SharedResources.Eset.NumberFormat.ItemTooltips));
+                    dmgStr.Append(eset.DamageTypes.Types[i].Name);
+                    dmgStr.Append(": ").Append(Utils.CreateMinMaxString(item.BaseDmg[i].Min.Get(), item.BaseDmg[i].Max.Get(), eset.NumberFormat.ItemTooltips));
                     tip.AddText(dmgStr.ToString());
                 }
             }
@@ -2078,8 +2113,8 @@ namespace FlareEngine
             if (item.BaseAbs.Max.Get() > 0)
             {
                 StringBuilder absStr = new StringBuilder();
-                absStr.Append(SharedResources.Msg!.Get("Absorb"));
-                absStr.Append(": ").Append(Utils.CreateMinMaxString(item.BaseAbs.Min.Get(), item.BaseAbs.Max.Get(), SharedResources.Eset!.NumberFormat.ItemTooltips));
+                absStr.Append(msg.Get("Absorb"));
+                absStr.Append(": ").Append(Utils.CreateMinMaxString(item.BaseAbs.Min.Get(), item.BaseAbs.Max.Get(), eset.NumberFormat.ItemTooltips));
                 tip.AddText(absStr.ToString());
             }
 
@@ -2095,23 +2130,23 @@ namespace FlareEngine
                 if (bdata.Type == BonusData.Speed || bdata.Type == BonusData.AttackSpeed)
                 {
                     if (scaledBdataValue >= 100)
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorItemBonus);
+                        color = font.GetColor(FontEngine.ColorItemBonus);
                     else
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorItemPenalty);
+                        color = font.GetColor(FontEngine.ColorItemPenalty);
                 }
                 else if (bdata.IsMultiplier)
                 {
                     if (scaledBdataValue >= 1)
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorItemBonus);
+                        color = font.GetColor(FontEngine.ColorItemBonus);
                     else
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorItemPenalty);
+                        color = font.GetColor(FontEngine.ColorItemPenalty);
                 }
                 else
                 {
                     if (scaledBdataValue > 0)
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorItemBonus);
+                        color = font.GetColor(FontEngine.ColorItemBonus);
                     else
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorItemPenalty);
+                        color = font.GetColor(FontEngine.ColorItemPenalty);
                 }
 
                 GetBonusString(ss, bdata);
@@ -2121,85 +2156,85 @@ namespace FlareEngine
 
             if (!string.IsNullOrEmpty(item.PowerDesc))
             {
-                tip.AddColoredText(item.PowerDesc, SharedResources.Font!.GetColor(FontEngine.ColorItemBonus));
+                tip.AddColoredText(item.PowerDesc, font.GetColor(FontEngine.ColorItemBonus));
             }
 
             int scaledRequiresLevel = (int)item.RequiresLevel.Get();
             if (scaledRequiresLevel > 0)
             {
                 if (stats!.Level < scaledRequiresLevel)
-                    color = SharedResources.Font!.GetColor(FontEngine.ColorRequirementsNotMet);
+                    color = font.GetColor(FontEngine.ColorRequirementsNotMet);
                 else
-                    color = SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal);
+                    color = font.GetColor(FontEngine.ColorWidgetNormal);
 
-                tip.AddColoredText(SharedResources.Msg!.GetV("Requires Level %d", scaledRequiresLevel), color);
+                tip.AddColoredText(msg.GetV("Requires Level %d", scaledRequiresLevel), color);
             }
 
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
                 int scaledRequiresPrimary = (int)item.RequiresStat[i].Get();
                 if (scaledRequiresPrimary > 0)
                 {
                     if (stats!.GetPrimary(i) < scaledRequiresPrimary)
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorRequirementsNotMet);
+                        color = font.GetColor(FontEngine.ColorRequirementsNotMet);
                     else
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal);
+                        color = font.GetColor(FontEngine.ColorWidgetNormal);
 
-                    tip.AddColoredText(SharedResources.Msg!.GetV("Requires %s %d", SharedResources.Eset.PrimaryStats.Stats[i].Name, scaledRequiresPrimary), color);
+                    tip.AddColoredText(msg.GetV("Requires %s %d", eset.PrimaryStats.Stats[i].Name, scaledRequiresPrimary), color);
                 }
             }
 
             if (!string.IsNullOrEmpty(item.RequiresClass))
             {
                 if (item.RequiresClass != stats!.CharacterClass)
-                    color = SharedResources.Font!.GetColor(FontEngine.ColorRequirementsNotMet);
+                    color = font.GetColor(FontEngine.ColorRequirementsNotMet);
                 else
-                    color = SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal);
+                    color = font.GetColor(FontEngine.ColorWidgetNormal);
 
-                tip.AddColoredText(SharedResources.Msg!.GetV("Requires Class: %s", SharedResources.Msg!.Get(item.RequiresClass)), color);
+                tip.AddColoredText(msg.GetV("Requires Class: %s", msg.Get(item.RequiresClass)), color);
             }
 
             if (!string.IsNullOrEmpty(item.Flavor))
             {
-                tip.AddColoredText(Utils.SubstituteVarsInString(item.Flavor, SharedGameResources.Pc), SharedResources.Font!.GetColor(FontEngine.ColorItemFlavor));
+                tip.AddColoredText(Utils.SubstituteVarsInString(item.Flavor, pc), font.GetColor(FontEngine.ColorItemFlavor));
             }
 
-            if (item.GetPrice(UseVendorRatio) > 0 && stack.Item != SharedResources.Eset!.Misc.CurrencyId)
+            if (item.GetPrice(UseVendorRatio) > 0 && stack.Item != eset.Misc.CurrencyId)
             {
-                Color currencyColor = GetItemColor(SharedResources.Eset.Misc.CurrencyId);
+                Color currencyColor = GetItemColor(eset.Misc.CurrencyId);
 
                 int pricePerUnit;
                 if (context == VendorBuy)
                 {
                     pricePerUnit = item.GetPrice(UseVendorRatio);
                     if (stats!.Currency < pricePerUnit)
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorRequirementsNotMet);
+                        color = font.GetColor(FontEngine.ColorRequirementsNotMet);
                     else
                         color = currencyColor;
 
                     if (item.MaxQuantity <= 1)
-                        tip.AddColoredText(SharedResources.Msg!.GetV("Buy Price: %d %s", pricePerUnit, SharedResources.Eset.Loot.Currency), color);
+                        tip.AddColoredText(msg.GetV("Buy Price: %d %s", pricePerUnit, eset.Loot.Currency), color);
                     else
-                        tip.AddColoredText(SharedResources.Msg!.GetV("Buy Price: %d %s each", pricePerUnit, SharedResources.Eset.Loot.Currency), color);
+                        tip.AddColoredText(msg.GetV("Buy Price: %d %s each", pricePerUnit, eset.Loot.Currency), color);
                 }
                 else if (context == VendorSell)
                 {
                     pricePerUnit = item.GetSellPrice(stack.CanBuyback);
                     if (stats!.Currency < pricePerUnit)
-                        color = SharedResources.Font!.GetColor(FontEngine.ColorRequirementsNotMet);
+                        color = font.GetColor(FontEngine.ColorRequirementsNotMet);
                     else
                         color = currencyColor;
 
                     if (item.MaxQuantity <= 1)
-                        tip.AddColoredText(SharedResources.Msg!.GetV("Buy Price: %d %s", pricePerUnit, SharedResources.Eset.Loot.Currency), color);
+                        tip.AddColoredText(msg.GetV("Buy Price: %d %s", pricePerUnit, eset.Loot.Currency), color);
                     else
-                        tip.AddColoredText(SharedResources.Msg!.GetV("Buy Price: %d %s each", pricePerUnit, SharedResources.Eset.Loot.Currency), color);
+                        tip.AddColoredText(msg.GetV("Buy Price: %d %s each", pricePerUnit, eset.Loot.Currency), color);
                 }
                 else if (context == VendorCraft)
                 {
                     if (item.CraftingItems.Count > 0)
                     {
-                        tip.AddColoredText("\n" + SharedResources.Msg!.Get("Crafting requires:"), currencyColor);
+                        tip.AddColoredText("\n" + msg.Get("Crafting requires:"), currencyColor);
                     }
                     for (int i = 0; i < item.CraftingItems.Count; ++i)
                     {
@@ -2213,7 +2248,7 @@ namespace FlareEngine
                         if (SharedGameResources.Camp == null || (SharedGameResources.Camp != null && SharedGameResources.Camp!.CheckItem(craftStack)))
                             color = currencyColor;
                         else
-                            color = SharedResources.Font!.GetColor(FontEngine.ColorRequirementsNotMet);
+                            color = font.GetColor(FontEngine.ColorRequirementsNotMet);
 
                         tip.AddColoredText(ss.ToString(), color);
                     }
@@ -2225,9 +2260,9 @@ namespace FlareEngine
                         pricePerUnit = 1;
 
                     if (item.MaxQuantity <= 1)
-                        tip.AddColoredText(SharedResources.Msg!.GetV("Sell Price: %d %s", pricePerUnit, SharedResources.Eset.Loot.Currency), currencyColor);
+                        tip.AddColoredText(msg.GetV("Sell Price: %d %s", pricePerUnit, eset.Loot.Currency), currencyColor);
                     else
-                        tip.AddColoredText(SharedResources.Msg!.GetV("Sell Price: %d %s each", pricePerUnit, SharedResources.Eset.Loot.Currency), currencyColor);
+                        tip.AddColoredText(msg.GetV("Sell Price: %d %s each", pricePerUnit, eset.Loot.Currency), currencyColor);
                 }
             }
 
@@ -2238,7 +2273,7 @@ namespace FlareEngine
                 ItemSet itemSet = ItemSets[(int)item.Set]!;
                 bonusCounter = 0;
 
-                tip.AddColoredText("\n" + SharedResources.Msg!.Get("Set:") + ' ' + SharedResources.Msg!.Get(itemSet.Name), itemSet.Color);
+                tip.AddColoredText("\n" + msg.Get("Set:") + ' ' + msg.Get(itemSet.Name), itemSet.Color);
 
                 while (bonusCounter < itemSet.Bonus.Count)
                 {
@@ -2252,7 +2287,7 @@ namespace FlareEngine
                     if (bdata.Requirement <= setCount)
                         tip.AddColoredText(ss.ToString(), itemSet.Color);
                     else
-                        tip.AddColoredText(ss.ToString(), SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled));
+                        tip.AddColoredText(ss.ToString(), font.GetColor(FontEngine.ColorWidgetDisabled));
                     bonusCounter++;
                 }
             }
@@ -2265,42 +2300,47 @@ namespace FlareEngine
 
         private void GetTooltipInputHint(ref TooltipData tip, ItemStack stack, int context)
         {
+            var inpt = SharedResources.Inpt!;
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+            var menu = SharedGameResources.Menu!;
+
             bool showActivateMsg = false;
             string activateBindStr = "";
 
             bool showMoreMsg = false;
             string moreBindStr = "";
 
-            if (SharedResources.Inpt!.Mode == InputState.ModeTouchscreen)
+            if (inpt.Mode == InputState.ModeTouchscreen)
             {
-                tip.AddColoredText('\n' + SharedResources.Msg!.Get("Tap icon again for more options"), SharedResources.Font!.GetColor(FontEngine.ColorItemBonus));
+                tip.AddColoredText('\n' + msg.Get("Tap icon again for more options"), font.GetColor(FontEngine.ColorItemBonus));
             }
-            else if (SharedResources.Inpt.Mode == InputState.ModeJoystick)
+            else if (inpt.Mode == InputState.ModeJoystick)
             {
-                if (context == PlayerInv && SharedGameResources.Menu!.Inv!.CanActivateItem(stack.Item))
+                if (context == PlayerInv && menu.Inv!.CanActivateItem(stack.Item))
                 {
                     showActivateMsg = true;
-                    activateBindStr = SharedResources.Inpt.GetGamepadBindingString(Input.MenuActivate);
+                    activateBindStr = inpt.GetGamepadBindingString(Input.MenuActivate);
                 }
                 showMoreMsg = true;
-                moreBindStr = SharedResources.Inpt.GetGamepadBindingString(Input.Accept);
+                moreBindStr = inpt.GetGamepadBindingString(Input.Accept);
             }
-            else if (!SharedResources.Inpt.UsingMouse())
+            else if (!inpt.UsingMouse())
             {
-                if (context == PlayerInv && SharedGameResources.Menu!.Inv!.CanActivateItem(stack.Item))
+                if (context == PlayerInv && menu.Inv!.CanActivateItem(stack.Item))
                 {
                     showActivateMsg = true;
-                    activateBindStr = SharedResources.Inpt.GetBindingString(Input.MenuActivate);
+                    activateBindStr = inpt.GetBindingString(Input.MenuActivate);
                 }
                 showMoreMsg = true;
-                moreBindStr = SharedResources.Inpt.GetBindingString(Input.Accept);
+                moreBindStr = inpt.GetBindingString(Input.Accept);
             }
             else
             {
-                if (context == PlayerInv && SharedGameResources.Menu!.Inv!.CanActivateItem(stack.Item))
+                if (context == PlayerInv && menu.Inv!.CanActivateItem(stack.Item))
                 {
                     showActivateMsg = true;
-                    activateBindStr = SharedResources.Inpt.GetBindingString(Input.Main2);
+                    activateBindStr = inpt.GetBindingString(Input.Main2);
                 }
             }
 
@@ -2313,16 +2353,16 @@ namespace FlareEngine
             {
                 if (Items[(int)stack.Item] != null && !string.IsNullOrEmpty(Items[(int)stack.Item]!.Book) && Items[(int)stack.Item]!.BookIsReadable)
                 {
-                    tip.AddColoredText(SharedResources.Msg!.GetV("Press [%s] to read", activateBindStr), SharedResources.Font!.GetColor(FontEngine.ColorItemBonus));
+                    tip.AddColoredText(msg.GetV("Press [%s] to read", activateBindStr), font.GetColor(FontEngine.ColorItemBonus));
                 }
                 else if (SharedGameResources.Menu!.Inv!.CanActivateItem(stack.Item))
                 {
-                    tip.AddColoredText(SharedResources.Msg!.GetV("Press [%s] to use", activateBindStr), SharedResources.Font!.GetColor(FontEngine.ColorItemBonus));
+                    tip.AddColoredText(msg.GetV("Press [%s] to use", activateBindStr), font.GetColor(FontEngine.ColorItemBonus));
                 }
             }
             if (showMoreMsg)
             {
-                tip.AddColoredText(SharedResources.Msg!.GetV("Press [%s] for more options", moreBindStr), SharedResources.Font!.GetColor(FontEngine.ColorItemBonus));
+                tip.AddColoredText(msg.GetV("Press [%s] for more options", moreBindStr), font.GetColor(FontEngine.ColorItemBonus));
             }
         }
 
@@ -2330,6 +2370,8 @@ namespace FlareEngine
         {
             if (stats == null || !IsValid(itemId))
                 return false;
+
+            var eset = SharedResources.Eset!;
 
             Item item = Items[(int)itemId]!;
 
@@ -2339,7 +2381,7 @@ namespace FlareEngine
                 return false;
             }
 
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; i++)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; i++)
             {
                 if (stats.GetPrimary(i) < (int)item.RequiresStat[i].Get())
                     return false;
@@ -2510,6 +2552,8 @@ namespace FlareEngine
                 return itemId;
             }
 
+            var eset = SharedResources.Eset!;
+
             if (Items[(int)itemId]!.RandomizerDef != null)
             {
                 ItemID extendedItem = AllocateExtendedItem(0, itemId);
@@ -2559,7 +2603,7 @@ namespace FlareEngine
                     else if (option.LevelSrc == ItemRandomizerDef.Option.LevelSrcHero)
                     {
                         int min = Math.Max(1, SharedGameResources.Pc!.Stats.Level + option.LevelRangeMin);
-                        int max = Math.Min(SharedResources.Eset!.Xp.GetMaxLevel(), Math.Max(min, SharedGameResources.Pc!.Stats.Level + option.LevelRangeMax));
+                        int max = Math.Min(eset.Xp.GetMaxLevel(), Math.Max(min, SharedGameResources.Pc!.Stats.Level + option.LevelRangeMax));
 
                         Items[(int)extendedItem]!.Level = MathUtils.RandBetween(min, max);
                     }
@@ -2575,13 +2619,13 @@ namespace FlareEngine
                 Items[(int)extendedItem]!.BaseAbs.Min.Randomize();
                 Items[(int)extendedItem]!.BaseAbs.Max.Randomize();
 
-                for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                 {
                     Items[(int)extendedItem]!.BaseDmg[i].Min.Randomize();
                     Items[(int)extendedItem]!.BaseDmg[i].Max.Randomize();
                 }
 
-                for (int i = 0; i < SharedResources.Eset.PrimaryStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
                 {
                     Items[(int)extendedItem]!.RequiresStat[i].Randomize();
                 }
@@ -2627,6 +2671,8 @@ namespace FlareEngine
 
             if (!infile.Open(filename, !FileParser.ModFile, FileParser.ErrorNone))
                 return;
+
+            var eset = SharedResources.Eset!;
 
             ItemID id = 0;
             Item? item = null;
@@ -2683,9 +2729,9 @@ namespace FlareEngine
                 else if (infile.Key == "requires_stat")
                 {
                     string statId = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
-                    int reqStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(statId);
+                    int reqStatIndex = eset.PrimaryStats.GetIndexByID(statId);
 
-                    if (reqStatIndex < SharedResources.Eset.PrimaryStats.Stats.Count)
+                    if (reqStatIndex < eset.PrimaryStats.Stats.Count)
                     {
                         string val = infile.Val;
                         item!.RequiresStat[reqStatIndex].Parse(ref val);
@@ -2725,9 +2771,9 @@ namespace FlareEngine
                 {
                     string dmgId = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
 
-                    for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                    for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                     {
-                        if (dmgId == SharedResources.Eset.DamageTypes.Types[i].Id)
+                        if (dmgId == eset.DamageTypes.Types[i].Id)
                         {
                             string val = infile.Val;
                             item!.BaseDmg[i].Min.Parse(ref val);
@@ -2741,9 +2787,9 @@ namespace FlareEngine
                 {
                     string dmgId = global::FlareEngine.Parse.PopFirstString(ref infile.Val);
 
-                    for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                    for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                     {
-                        if (dmgId == SharedResources.Eset.DamageTypes.Types[i].Id)
+                        if (dmgId == eset.DamageTypes.Types[i].Id)
                         {
                             string val = infile.Val;
                             item!.BaseDmg[i].Max.Parse(ref val);
@@ -2776,7 +2822,7 @@ namespace FlareEngine
 
             int countAllocated = 0;
 
-            for (int i = (int)SharedResources.Eset!.Loot.ExtendedItemsOffset; i < Items.Count; ++i)
+            for (int i = (int)eset.Loot.ExtendedItemsOffset; i < Items.Count; ++i)
             {
                 item = Items[i];
 
@@ -2787,8 +2833,8 @@ namespace FlareEngine
 
                 item.UpdateLevelScaling();
             }
-            int extendedItemCount = Items.Count - (int)SharedResources.Eset.Loot.ExtendedItemsOffset;
-            if (Items.Count > (int)SharedResources.Eset.Loot.ExtendedItemsOffset)
+            int extendedItemCount = Items.Count - (int)eset.Loot.ExtendedItemsOffset;
+            if (Items.Count > (int)eset.Loot.ExtendedItemsOffset)
                 extendedItemCount = countAllocated;
 
             Utils.LogInfo("ItemManager: Extended Item IDs = %zu reserved / %zu allocated / %zu empty / %zu bytes used", extendedItemCount, countAllocated, extendedItemCount - countAllocated, (IntPtr.Size * extendedItemCount) + (IntPtr.Size * countAllocated));

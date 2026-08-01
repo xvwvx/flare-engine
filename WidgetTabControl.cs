@@ -38,6 +38,9 @@ namespace FlareEngine
 
         public WidgetTabControl()
         {
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
             _activeTabSurface = null;
             _inactiveTabSurface = null;
             _activeTab = 0;
@@ -52,8 +55,8 @@ namespace FlareEngine
 
             ScrollType = ScrollHorizontal;
 
-            if (SharedResources.Eset!.Widgets.SoundActivate.Length != 0)
-                _soundActivate = SharedResources.Snd!.Load(SharedResources.Eset.Widgets.SoundActivate, "Widget activate");
+            if (eset.Widgets.SoundActivate.Length != 0)
+                _soundActivate = snd.Load(eset.Widgets.SoundActivate, "Widget activate");
         }
 
         /// <summary>
@@ -187,6 +190,9 @@ namespace FlareEngine
         /// </summary>
         public void SetMainArea(int x, int y, int w)
         {
+            var eset = SharedResources.Eset!;
+            var font = SharedResources.Font!;
+
             // Set tabs area.
             _tabsArea.X = x;
             _tabsArea.Y = y;
@@ -206,19 +212,19 @@ namespace FlareEngine
 
                 tabRect.X = xOffset;
 
-                _activeLabels[i].SetPos(tabRect.X + SharedResources.Eset!.Widgets.TabPadding.X + SharedResources.Eset.Widgets.TabTextPadding, tabRect.Y + tabRect.Height / 2 + SharedResources.Eset.Widgets.TabPadding.Y);
+                _activeLabels[i].SetPos(tabRect.X + eset.Widgets.TabPadding.X + eset.Widgets.TabTextPadding, tabRect.Y + tabRect.Height / 2 + eset.Widgets.TabPadding.Y);
                 _activeLabels[i].SetVAlign(LabelInfo.ValignCenter);
                 _activeLabels[i].SetText(_titles[i]);
-                _activeLabels[i].SetColor(SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal));
+                _activeLabels[i].SetColor(font.GetColor(FontEngine.ColorWidgetNormal));
 
-                _inactiveLabels[i].SetPos(tabRect.X + SharedResources.Eset.Widgets.TabPadding.X + SharedResources.Eset.Widgets.TabTextPadding, tabRect.Y + tabRect.Height / 2 + SharedResources.Eset.Widgets.TabPadding.Y);
+                _inactiveLabels[i].SetPos(tabRect.X + eset.Widgets.TabPadding.X + eset.Widgets.TabTextPadding, tabRect.Y + tabRect.Height / 2 + eset.Widgets.TabPadding.Y);
                 _inactiveLabels[i].SetVAlign(LabelInfo.ValignCenter);
                 _inactiveLabels[i].SetText(_titles[i]);
-                _inactiveLabels[i].SetColor(SharedResources.Font.GetColor(FontEngine.ColorWidgetDisabled));
+                _inactiveLabels[i].SetColor(font.GetColor(FontEngine.ColorWidgetDisabled));
 
                 if (_enabled[i])
                 {
-                    tabRect.Width = _activeLabels[i].GetBounds().Width + (SharedResources.Eset.Widgets.TabPadding.X * 2) + (SharedResources.Eset.Widgets.TabTextPadding * 2);
+                    tabRect.Width = _activeLabels[i].GetBounds().Width + (eset.Widgets.TabPadding.X * 2) + (eset.Widgets.TabTextPadding * 2);
                     _tabsArea.Width += tabRect.Width;
                     xOffset += tabRect.Width;
                 }
@@ -237,8 +243,8 @@ namespace FlareEngine
                 {
                     Rectangle tabRect = _tabs[i];
                     tabRect.X = _tabsArea.X + _buttonPrev.Pos.Width + ((betweenButtons - tabRect.Width) / 2);
-                    _activeLabels[i].SetPos(tabRect.X + SharedResources.Eset.Widgets.TabPadding.X + SharedResources.Eset.Widgets.TabTextPadding, tabRect.Y + tabRect.Height / 2 + SharedResources.Eset.Widgets.TabPadding.Y);
-                    _inactiveLabels[i].SetPos(tabRect.X + SharedResources.Eset.Widgets.TabPadding.X + SharedResources.Eset.Widgets.TabTextPadding, tabRect.Y + tabRect.Height / 2 + SharedResources.Eset.Widgets.TabPadding.Y);
+                    _activeLabels[i].SetPos(tabRect.X + eset.Widgets.TabPadding.X + eset.Widgets.TabTextPadding, tabRect.Y + tabRect.Height / 2 + eset.Widgets.TabPadding.Y);
+                    _inactiveLabels[i].SetPos(tabRect.X + eset.Widgets.TabPadding.X + eset.Widgets.TabTextPadding, tabRect.Y + tabRect.Height / 2 + eset.Widgets.TabPadding.Y);
                     _tabs[i] = tabRect;
                 }
             }
@@ -256,15 +262,17 @@ namespace FlareEngine
         /// </summary>
         private void LoadGraphics()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             Image? graphics;
-            graphics = SharedResources.RenderDevice!.LoadImage("images/menus/tab_active.png", RenderDevice.ErrorExit);
+            graphics = renderDevice.LoadImage("images/menus/tab_active.png", RenderDevice.ErrorExit);
             if (graphics != null)
             {
                 _activeTabSurface = graphics.CreateSprite();
                 graphics.Unref();
             }
 
-            graphics = SharedResources.RenderDevice.LoadImage("images/menus/tab_inactive.png", RenderDevice.ErrorExit);
+            graphics = renderDevice.LoadImage("images/menus/tab_inactive.png", RenderDevice.ErrorExit);
             if (graphics != null)
             {
                 _inactiveTabSurface = graphics.CreateSprite();
@@ -274,7 +282,8 @@ namespace FlareEngine
 
         public void Logic()
         {
-            Logic(SharedResources.Inpt!.Mouse.X, SharedResources.Inpt.Mouse.Y);
+            var inpt = SharedResources.Inpt!;
+            Logic(inpt.Mouse.X, inpt.Mouse.Y);
         }
 
         /// <summary>
@@ -284,6 +293,9 @@ namespace FlareEngine
         /// </summary>
         public void Logic(int x, int y)
         {
+            var snd = SharedResources.Snd!;
+            var inpt = SharedResources.Inpt!;
+
             Int2 mouse = new Int2(x, y);
             if (_showButtons)
             {
@@ -323,7 +335,6 @@ namespace FlareEngine
                     _lockMain1 = false;
                     _dragging = false;
 
-                    InputState inpt = SharedResources.Inpt!;
                     if (inpt.Pressing[Input.Main1])
                     {
                         inpt.Lock[Input.Main1] = true;
@@ -336,7 +347,7 @@ namespace FlareEngine
                             if (Utils.IsWithinRect(_tabs[(int)i], mouse) && _enabled[(int)i])
                             {
                                 if (_activeTab != i)
-                                    SharedResources.Snd!.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
+                                    snd.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
 
                                 _activeTab = i;
                                 SetActiveTab(i);
@@ -348,9 +359,9 @@ namespace FlareEngine
                 }
                 else
                 {
-                    _lockMain1 = SharedResources.Inpt!.Pressing[Input.Main1];
+                    _lockMain1 = inpt.Pressing[Input.Main1];
                 }
-                if (!SharedResources.Inpt.Pressing[Input.Main1])
+                if (!inpt.Pressing[Input.Main1])
                 {
                     _dragging = false;
                 }
@@ -358,7 +369,6 @@ namespace FlareEngine
 
             if (_tablists[(int)_activeTab] != null && _tablists[(int)_activeTab]!.GetCurrent() != -1)
             {
-                InputState inpt = SharedResources.Inpt!;
                 if (inpt.Pressing[Input.MenuPageNext] && !inpt.Lock[Input.MenuPageNext] && _activeTab < (uint)_tabs.Count)
                 {
                     for (uint i = _activeTab + 1; i < (uint)_tabs.Count; ++i)
@@ -401,6 +411,9 @@ namespace FlareEngine
         /// </summary>
         public override void Render()
         {
+            var eset = SharedResources.Eset!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             for (uint i = 0; i < (uint)_tabs.Count; i++)
             {
                 RenderTab(i);
@@ -423,7 +436,7 @@ namespace FlareEngine
                 bottomRight.X = topLeft.X + _tabs[(int)_activeTab].Width;
                 bottomRight.Y = topLeft.Y + _tabs[(int)_activeTab].Height;
 
-                SharedResources.RenderDevice!.DrawRectangleCorners(SharedResources.Eset!.Widgets.SelectionRectCornerSize, topLeft, bottomRight, SharedResources.Eset.Widgets.SelectionRectColor);
+                renderDevice.DrawRectangleCorners(eset.Widgets.SelectionRectCornerSize, topLeft, bottomRight, eset.Widgets.SelectionRectColor);
             }
         }
 
@@ -435,13 +448,16 @@ namespace FlareEngine
             if (!_enabled[(int)number] || (_showButtons && number != _activeTab))
                 return;
 
+            var eset = SharedResources.Eset!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             uint i = number;
             Rectangle src = default;
             Rectangle dest = default;
 
             // Draw tab's background.
             int gfxWidth = _activeTabSurface!.GetGraphicsWidth();
-            int widthToRender = _tabs[(int)i].Width - SharedResources.Eset!.Widgets.TabPadding.X; // don't draw the right edge yet
+            int widthToRender = _tabs[(int)i].Width - eset.Widgets.TabPadding.X; // don't draw the right edge yet
             int renderCursor = 0;
 
             src.Y = 0;
@@ -457,19 +473,19 @@ namespace FlareEngine
                 {
                     // left edge + middle
                     src.X = 0;
-                    src.Width = _tabs[(int)i].Width - SharedResources.Eset.Widgets.TabPadding.X;
+                    src.Width = _tabs[(int)i].Width - eset.Widgets.TabPadding.X;
 
-                    if (src.Width > gfxWidth - SharedResources.Eset.Widgets.TabPadding.X)
-                        src.Width = gfxWidth - SharedResources.Eset.Widgets.TabPadding.X;
+                    if (src.Width > gfxWidth - eset.Widgets.TabPadding.X)
+                        src.Width = gfxWidth - eset.Widgets.TabPadding.X;
                 }
                 else
                 {
                     // only middle
-                    src.X = SharedResources.Eset.Widgets.TabPadding.X;
-                    src.Width = _tabs[(int)i].Width - (SharedResources.Eset.Widgets.TabPadding.X * 2);
+                    src.X = eset.Widgets.TabPadding.X;
+                    src.Width = _tabs[(int)i].Width - (eset.Widgets.TabPadding.X * 2);
 
-                    if (src.Width > gfxWidth - (SharedResources.Eset.Widgets.TabPadding.X * 2))
-                        src.Width = gfxWidth - (SharedResources.Eset.Widgets.TabPadding.X * 2);
+                    if (src.Width > gfxWidth - (eset.Widgets.TabPadding.X * 2))
+                        src.Width = gfxWidth - (eset.Widgets.TabPadding.X * 2);
                 }
 
                 renderCursor += src.Width;
@@ -481,32 +497,32 @@ namespace FlareEngine
                 {
                     _activeTabSurface.SetClipFromRect(src);
                     _activeTabSurface.SetDestFromRect(dest);
-                    SharedResources.RenderDevice!.Render(_activeTabSurface);
+                    renderDevice.Render(_activeTabSurface);
                 }
                 else
                 {
                     _inactiveTabSurface!.SetClipFromRect(src);
                     _inactiveTabSurface.SetDestFromRect(dest);
-                    SharedResources.RenderDevice.Render(_inactiveTabSurface);
+                    renderDevice.Render(_inactiveTabSurface);
                 }
             }
 
             // Draw tab's right edge.
-            src.X = _activeTabSurface.GetGraphicsWidth() - SharedResources.Eset.Widgets.TabPadding.X;
-            src.Width = SharedResources.Eset.Widgets.TabPadding.X;
-            dest.X = _tabs[(int)i].X + _tabs[(int)i].Width - SharedResources.Eset.Widgets.TabPadding.X;
+            src.X = _activeTabSurface.GetGraphicsWidth() - eset.Widgets.TabPadding.X;
+            src.Width = eset.Widgets.TabPadding.X;
+            dest.X = _tabs[(int)i].X + _tabs[(int)i].Width - eset.Widgets.TabPadding.X;
 
             if (i == _activeTab)
             {
                 _activeTabSurface.SetClipFromRect(src);
                 _activeTabSurface.SetDestFromRect(dest);
-                SharedResources.RenderDevice.Render(_activeTabSurface);
+                renderDevice.Render(_activeTabSurface);
             }
             else
             {
                 _inactiveTabSurface!.SetClipFromRect(src);
                 _inactiveTabSurface.SetDestFromRect(dest);
-                SharedResources.RenderDevice.Render(_inactiveTabSurface);
+                renderDevice.Render(_inactiveTabSurface);
             }
 
             // Render labels

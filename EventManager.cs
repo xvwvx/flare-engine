@@ -398,6 +398,11 @@ namespace FlareEngine
 
         public bool LoadEventComponentString(string key, ref string val, Event? evnt, EventComponent? ec)
         {
+            var msg = SharedResources.Msg!;
+            var loot = SharedGameResources.Loot!;
+            var camp = SharedGameResources.Camp!;
+            var items = SharedGameResources.Items!;
+
             EventComponent? e = null;
             if (evnt != null)
             {
@@ -418,7 +423,7 @@ namespace FlareEngine
                 // @ATTR event.tooltip|string|Tooltip for event
                 e.Type = EventComponent.Tooltip;
 
-                e.S = SharedResources.Msg!.Get(val);
+                e.S = msg.Get(val);
             }
             else if (key == "intermap")
             {
@@ -556,7 +561,7 @@ namespace FlareEngine
                 // @ATTR event.loot|list(loot)|Add loot to the event.
                 e.Type = EventComponent.Loot;
 
-                SharedGameResources.Loot!.ParseLoot(ref val, e, evnt!.Components);
+                loot.ParseLoot(ref val, e, evnt!.Components);
             }
             else if (key == "loot_count")
             {
@@ -576,7 +581,7 @@ namespace FlareEngine
                 // @ATTR event.msg|string|Adds a message to be displayed for the event.
                 e.Type = EventComponent.Msg;
 
-                e.S = SharedResources.Msg!.Get(val);
+                e.S = msg.Get(val);
             }
             else if (key == "shakycam")
             {
@@ -591,7 +596,7 @@ namespace FlareEngine
                 e.Type = EventComponent.RequiresStatus;
 
                 e.S = Parse.PopFirstString(ref val);
-                e.Status = SharedGameResources.Camp!.RegisterStatus(e.S);
+                e.Status = camp.RegisterStatus(e.S);
 
                 // add repeating requires_status
                 if (evnt != null)
@@ -603,7 +608,7 @@ namespace FlareEngine
                         e = evnt.Components[^1];
                         e.Type = EventComponent.RequiresStatus;
                         e.S = repeatVal;
-                        e.Status = SharedGameResources.Camp!.RegisterStatus(repeatVal);
+                        e.Status = camp.RegisterStatus(repeatVal);
 
                         repeatVal = Parse.PopFirstString(ref val);
                     }
@@ -615,7 +620,7 @@ namespace FlareEngine
                 e.Type = EventComponent.RequiresNotStatus;
 
                 e.S = Parse.PopFirstString(ref val);
-                e.Status = SharedGameResources.Camp!.RegisterStatus(e.S);
+                e.Status = camp.RegisterStatus(e.S);
 
                 // add repeating requires_not
                 if (evnt != null)
@@ -627,7 +632,7 @@ namespace FlareEngine
                         e = evnt.Components[^1];
                         e.Type = EventComponent.RequiresNotStatus;
                         e.S = repeatVal;
-                        e.Status = SharedGameResources.Camp!.RegisterStatus(repeatVal);
+                        e.Status = camp.RegisterStatus(repeatVal);
 
                         repeatVal = Parse.PopFirstString(ref val);
                     }
@@ -793,7 +798,7 @@ namespace FlareEngine
                 e.Type = EventComponent.SetStatus;
 
                 e.S = Parse.PopFirstString(ref val);
-                e.Status = SharedGameResources.Camp!.RegisterStatus(e.S);
+                e.Status = camp.RegisterStatus(e.S);
 
                 // add repeating set_status
                 if (evnt != null)
@@ -805,7 +810,7 @@ namespace FlareEngine
                         e = evnt.Components[^1];
                         e.Type = EventComponent.SetStatus;
                         e.S = repeatVal;
-                        e.Status = SharedGameResources.Camp!.RegisterStatus(repeatVal);
+                        e.Status = camp.RegisterStatus(repeatVal);
 
                         repeatVal = Parse.PopFirstString(ref val);
                     }
@@ -817,7 +822,7 @@ namespace FlareEngine
                 e.Type = EventComponent.UnsetStatus;
 
                 e.S = Parse.PopFirstString(ref val);
-                e.Status = SharedGameResources.Camp!.RegisterStatus(e.S);
+                e.Status = camp.RegisterStatus(e.S);
 
                 // add repeating unset_status
                 if (evnt != null)
@@ -829,7 +834,7 @@ namespace FlareEngine
                         e = evnt.Components[^1];
                         e.Type = EventComponent.UnsetStatus;
                         e.S = repeatVal;
-                        e.Status = SharedGameResources.Camp!.RegisterStatus(repeatVal);
+                        e.Status = camp.RegisterStatus(repeatVal);
 
                         repeatVal = Parse.PopFirstString(ref val);
                     }
@@ -894,7 +899,7 @@ namespace FlareEngine
                 if (!checkPair)
                 {
                     // item:quantity syntax not detected, falling back to the old syntax
-                    e.Id = SharedGameResources.Items!.VerifyID(itemStack.Item, null, !ItemManager.VerifyAllowZero, ItemManager.VerifyAllocate);
+                    e.Id = items.VerifyID(itemStack.Item, null, !ItemManager.VerifyAllowZero, ItemManager.VerifyAllocate);
                     e.Data[0].Int = Math.Max(Parse.PopFirstInt(ref val), 1);
                 }
                 else
@@ -1144,7 +1149,7 @@ namespace FlareEngine
                     e.Data[0].Int = EventComponent.RandomStatusModeAppend;
 
                     e.S = Parse.PopFirstString(ref val);
-                    e.Status = SharedGameResources.Camp!.RegisterStatus(e.S);
+                    e.Status = camp.RegisterStatus(e.S);
 
                     // add repeating random_status
                     if (evnt != null)
@@ -1157,7 +1162,7 @@ namespace FlareEngine
                             e.Type = EventComponent.RandomStatus;
                             e.Data[0].Int = EventComponent.RandomStatusModeAppend;
                             e.S = repeatVal;
-                            e.Status = SharedGameResources.Camp!.RegisterStatus(repeatVal);
+                            e.Status = camp.RegisterStatus(repeatVal);
 
                             repeatVal = Parse.PopFirstString(ref val);
                         }
@@ -1236,6 +1241,8 @@ namespace FlareEngine
 
         public void ExecuteScript(string filename, float x, float y)
         {
+            var mapr = SharedGameResources.Mapr!;
+
             using FileParser scriptFile = new FileParser();
             Queue<Event> scriptEvnt = new Queue<Event>();
 
@@ -1323,13 +1330,13 @@ namespace FlareEngine
                 EventComponent? ecPower = evnt.GetComponent(EventComponent.Power);
                 if (ecPower != null)
                 {
-                    ecPower.Data[0].Int = SharedGameResources.Mapr!.AddEventStatBlock(evnt);
+                    ecPower.Data[0].Int = mapr.AddEventStatBlock(evnt);
                 }
 
                 if (evnt.Delay.Duration > 0)
                 {
                     // handle delayed events
-                    SharedGameResources.Mapr!.DelayedEvents.Add(new Event(evnt));
+                    mapr.DelayedEvents.Add(new Event(evnt));
                 }
                 else if (IsActive(evnt))
                 {
@@ -1361,6 +1368,20 @@ namespace FlareEngine
         /// </summary>
         private bool ExecuteEventInternal(Event ev, bool skipDelay)
         {
+            var mapr = SharedGameResources.Mapr!;
+            var camp = SharedGameResources.Camp!;
+            var pc = SharedGameResources.Pc!;
+            var msg = SharedResources.Msg!;
+            var snd = SharedResources.Snd!;
+            var loot = SharedGameResources.Loot!;
+            var items = SharedGameResources.Items!;
+            var entitym = SharedGameResources.Entitym!;
+            var menu = SharedGameResources.Menu!;
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+            var mods = SharedResources.Mods!;
+
             // skip executing events that are on cooldown
             if (!ev.Delay.IsEnd() || !ev.Cooldown.IsEnd()) return false;
 
@@ -1379,7 +1400,7 @@ namespace FlareEngine
             if (ev.Delay.Duration > 0 && !skipDelay)
             {
                 ev.Delay.Reset(Timer.Begin);
-                SharedGameResources.Mapr!.DelayedEvents.Add(new Event(ev));
+                mapr.DelayedEvents.Add(new Event(ev));
                 ev.Cooldown.Reset(Timer.Begin);
 
                 return !ev.KeepAfterTrigger;
@@ -1405,11 +1426,11 @@ namespace FlareEngine
 
                 if (ec.Type == EventComponent.SetStatus)
                 {
-                    SharedGameResources.Camp!.SetStatus(ec.Status);
+                    camp.SetStatus(ec.Status);
                 }
                 else if (ec.Type == EventComponent.UnsetStatus)
                 {
-                    SharedGameResources.Camp!.UnsetStatus(ec.Status);
+                    camp.UnsetStatus(ec.Status);
                 }
                 else if (ec.Type == EventComponent.Intermap)
                 {
@@ -1424,38 +1445,38 @@ namespace FlareEngine
                         ec.Data[1].Int = randomEc.Data[1].Int;
                     }
 
-                    if (Filesystem.FileExists(SharedResources.Mods!.Locate(ec.S)))
+                    if (Filesystem.FileExists(mods.Locate(ec.S)))
                     {
-                        SharedGameResources.Mapr!.Teleportation = true;
-                        SharedGameResources.Mapr.TeleportMapname = ec.S;
+                        mapr.Teleportation = true;
+                        mapr.TeleportMapname = ec.S;
 
                         if (ec.Data[0].Int == -1 && ec.Data[1].Int == -1)
                         {
                             // the teleport destination will be set to the map's hero_pos once the map is loaded
-                            SharedGameResources.Mapr.TeleportDestination.X = -1;
-                            SharedGameResources.Mapr.TeleportDestination.Y = -1;
-                            SharedGameResources.Mapr.TeleportDestinationId = ec.Data[3].Int;
+                            mapr.TeleportDestination.X = -1;
+                            mapr.TeleportDestination.Y = -1;
+                            mapr.TeleportDestinationId = ec.Data[3].Int;
                         }
                         else
                         {
-                            SharedGameResources.Mapr.TeleportDestination.X = (float)ec.Data[0].Int + 0.5f;
-                            SharedGameResources.Mapr.TeleportDestination.Y = (float)ec.Data[1].Int + 0.5f;
-                            SharedGameResources.Mapr.TeleportDestinationId = 0;
+                            mapr.TeleportDestination.X = (float)ec.Data[0].Int + 0.5f;
+                            mapr.TeleportDestination.Y = (float)ec.Data[1].Int + 0.5f;
+                            mapr.TeleportDestinationId = 0;
                         }
                     }
                     else
                     {
                         ev.KeepAfterTrigger = false;
-                        SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.Get("Unknown destination"), Avatar.MsgUnique);
+                        pc.LogMsg(msg.Get("Unknown destination"), Avatar.MsgUnique);
                         Utils.LogInfo("EventManager: Unknown intermap destination (%s)", ec.S);
                     }
                 }
                 else if (ec.Type == EventComponent.Intramap)
                 {
-                    SharedGameResources.Mapr!.Teleportation = true;
-                    SharedGameResources.Mapr.TeleportMapname = "";
-                    SharedGameResources.Mapr.TeleportDestination.X = (float)ec.Data[0].Int + 0.5f;
-                    SharedGameResources.Mapr.TeleportDestination.Y = (float)ec.Data[1].Int + 0.5f;
+                    mapr.Teleportation = true;
+                    mapr.TeleportMapname = "";
+                    mapr.TeleportDestination.X = (float)ec.Data[0].Int + 0.5f;
+                    mapr.TeleportDestination.Y = (float)ec.Data[1].Int + 0.5f;
                 }
                 else if (ec.Type == EventComponent.Mapmod)
                 {
@@ -1465,25 +1486,25 @@ namespace FlareEngine
 
                     if (ec.S == "collision")
                     {
-                        if (tileX >= 0 && tileX < SharedGameResources.Mapr!.W && tileY >= 0 && tileY < SharedGameResources.Mapr.H)
+                        if (tileX >= 0 && tileX < mapr.W && tileY >= 0 && tileY < mapr.H)
                         {
-                            SharedGameResources.Mapr.Collider.Colmap[tileX][tileY] = tileId;
-                            SharedGameResources.Mapr.MapChange = true;
+                            mapr.Collider.Colmap[tileX][tileY] = tileId;
+                            mapr.MapChange = true;
                         }
                         else
                             Utils.LogError("EventManager: Mapmod at position (%d, %d) is out of bounds 0-255.", tileX, tileY);
                     }
                     else
                     {
-                        int index = SharedGameResources.Mapr!.Layernames.IndexOf(ec.S);
-                        if (index == -1) index = SharedGameResources.Mapr.Layernames.Count;
+                        int index = mapr.Layernames.IndexOf(ec.S);
+                        if (index == -1) index = mapr.Layernames.Count;
 
-                        if (!SharedGameResources.Mapr.IsValidTile(tileId))
+                        if (!mapr.IsValidTile(tileId))
                             Utils.LogError("EventManager: Mapmod at position (%d, %d) contains invalid tile id (%d).", tileX, tileY, tileId);
-                        else if (index >= SharedGameResources.Mapr.Layers.Count)
+                        else if (index >= mapr.Layers.Count)
                             Utils.LogError("EventManager: Mapmod at position (%d, %d) is on an invalid layer.", tileX, tileY);
-                        else if (tileX >= 0 && tileX < SharedGameResources.Mapr.W && tileY >= 0 && tileY < SharedGameResources.Mapr.H)
-                            SharedGameResources.Mapr.Layers[index][tileX][tileY] = tileId;
+                        else if (tileX >= 0 && tileX < mapr.W && tileY >= 0 && tileY < mapr.H)
+                            mapr.Layers[index][tileX][tileY] = tileId;
                         else
                             Utils.LogError("EventManager: Mapmod at position (%d, %d) is out of bounds 0-255.", tileX, tileY);
                     }
@@ -1497,20 +1518,20 @@ namespace FlareEngine
 
                     if (ec.S == "collision")
                     {
-                        if (tileX >= 0 && tileX < SharedGameResources.Mapr!.W && tileY >= 0 && tileY < SharedGameResources.Mapr.H)
+                        if (tileX >= 0 && tileX < mapr.W && tileY >= 0 && tileY < mapr.H)
                         {
                             // List<T> 不支持像 C++ 引用那样返回可写的元素别名，这里改为
                             // "先读出快照、再按同样条件写回"的等价写法（详见转换报告）。
-                            ushort mapTile = SharedGameResources.Mapr.Collider.Colmap[tileX][tileY];
+                            ushort mapTile = mapr.Collider.Colmap[tileX][tileY];
                             if (mapTile == tileA)
                             {
-                                SharedGameResources.Mapr.Collider.Colmap[tileX][tileY] = tileB;
-                                SharedGameResources.Mapr.MapChange = true;
+                                mapr.Collider.Colmap[tileX][tileY] = tileB;
+                                mapr.MapChange = true;
                             }
                             else if (mapTile == tileB)
                             {
-                                SharedGameResources.Mapr.Collider.Colmap[tileX][tileY] = tileA;
-                                SharedGameResources.Mapr.MapChange = true;
+                                mapr.Collider.Colmap[tileX][tileY] = tileA;
+                                mapr.MapChange = true;
                             }
                         }
                         else
@@ -1518,18 +1539,18 @@ namespace FlareEngine
                     }
                     else
                     {
-                        int index = SharedGameResources.Mapr!.Layernames.IndexOf(ec.S);
-                        if (index == -1) index = SharedGameResources.Mapr.Layernames.Count;
+                        int index = mapr.Layernames.IndexOf(ec.S);
+                        if (index == -1) index = mapr.Layernames.Count;
 
-                        if (!SharedGameResources.Mapr.IsValidTile(tileA))
+                        if (!mapr.IsValidTile(tileA))
                             Utils.LogError("EventManager: Mapmod at position (%d, %d) contains invalid tile id (%d).", tileX, tileY, tileA);
-                        else if (!SharedGameResources.Mapr.IsValidTile(tileB))
+                        else if (!mapr.IsValidTile(tileB))
                             Utils.LogError("EventManager: Mapmod at position (%d, %d) contains invalid tile id (%d).", tileX, tileY, tileB);
-                        else if (index >= SharedGameResources.Mapr.Layers.Count)
+                        else if (index >= mapr.Layers.Count)
                             Utils.LogError("EventManager: Mapmod at position (%d, %d) is on an invalid layer.", tileX, tileY);
-                        else if (tileX >= 0 && tileX < SharedGameResources.Mapr.W && tileY >= 0 && tileY < SharedGameResources.Mapr.H)
+                        else if (tileX >= 0 && tileX < mapr.W && tileY >= 0 && tileY < mapr.H)
                         {
-                            ushort mapTile = SharedGameResources.Mapr.Layers[index][tileX][tileY];
+                            ushort mapTile = mapr.Layers[index][tileX][tileY];
                             if (mapTile == tileA)
                             {
                                 mapTile = tileB;
@@ -1538,7 +1559,7 @@ namespace FlareEngine
                             {
                                 mapTile = tileA;
                             }
-                            SharedGameResources.Mapr.Layers[index][tileX][tileY] = mapTile;
+                            mapr.Layers[index][tileX][tileY] = mapTile;
                         }
                         else
                             Utils.LogError("EventManager: Mapmod at position (%d, %d) is out of bounds 0-255.", tileX, tileY);
@@ -1567,10 +1588,10 @@ namespace FlareEngine
                     if ((ev.ActivateType == Event.ActivateOnLoad && !ec.Data[3].Bool) || ec.Data[2].Bool)
                         loop = true;
 
-                    SoundID sid = SharedResources.Snd!.Load(ec.S, "MapRenderer background soundfx");
+                    SoundID sid = snd.Load(ec.S, "MapRenderer background soundfx");
 
-                    SharedResources.Snd.Play(sid, SoundManager.DefaultChannel, pos, loop);
-                    SharedGameResources.Mapr!.Sids.Add(sid);
+                    snd.Play(sid, SoundManager.DefaultChannel, pos, loop);
+                    mapr.Sids.Add(sid);
                 }
                 else if (ec.Type == EventComponent.Loot)
                 {
@@ -1587,8 +1608,8 @@ namespace FlareEngine
 
                     if (mapLoot == null)
                     {
-                        SharedGameResources.Mapr!.Loot.Add(new MapRenderer.MapLoot());
-                        mapLoot = SharedGameResources.Mapr.Loot[^1];
+                        mapr.Loot.Add(new MapRenderer.MapLoot());
+                        mapLoot = mapr.Loot[^1];
                     }
                     if (mapLoot != null)
                     {
@@ -1598,36 +1619,36 @@ namespace FlareEngine
                 }
                 else if (ec.Type == EventComponent.Msg)
                 {
-                    SharedGameResources.Pc!.LogMsg(ec.S, Avatar.MsgUnique);
+                    pc.LogMsg(ec.S, Avatar.MsgUnique);
                 }
                 else if (ec.Type == EventComponent.Shakycam)
                 {
-                    SharedGameResources.Mapr!.Cam.ShakeTimer.Duration = (uint)ec.Data[0].Int;
-                    SharedResources.Inpt!.JoystickRumble(InputState.JoystickRumbleStrength, InputState.JoystickRumbleStrength, (uint)((ec.Data[0].Int * 1000) / SharedResources.Settings!.MaxFramesPerSec));
+                    mapr.Cam.ShakeTimer.Duration = (uint)ec.Data[0].Int;
+                    inpt.JoystickRumble(InputState.JoystickRumbleStrength, InputState.JoystickRumbleStrength, (uint)((ec.Data[0].Int * 1000) / settings.MaxFramesPerSec));
                 }
                 else if (ec.Type == EventComponent.RemoveCurrency)
                 {
-                    SharedGameResources.Camp!.RemoveCurrency(ec.Data[0].Int);
+                    camp.RemoveCurrency(ec.Data[0].Int);
                 }
                 else if (ec.Type == EventComponent.RemoveItem)
                 {
-                    SharedGameResources.Camp!.RemoveItem(new ItemStack(ec.Id, ec.Data[0].Int));
+                    camp.RemoveItem(new ItemStack(ec.Id, ec.Data[0].Int));
                 }
                 else if (ec.Type == EventComponent.RewardXp)
                 {
-                    SharedGameResources.Camp!.RewardXp((float)ec.Data[0].Int, CampaignManager.XpShowMsg);
+                    camp.RewardXp((float)ec.Data[0].Int, CampaignManager.XpShowMsg);
                 }
                 else if (ec.Type == EventComponent.RewardCurrency)
                 {
-                    SharedGameResources.Camp!.RewardCurrency(ec.Data[0].Int);
+                    camp.RewardCurrency(ec.Data[0].Int);
                 }
                 else if (ec.Type == EventComponent.RewardItem)
                 {
                     List<ItemStack> exStacks = new List<ItemStack>();
-                    SharedGameResources.Items!.GetExtendedStacks(ec.Id, (uint)ec.Data[0].Int, exStacks);
+                    items.GetExtendedStacks(ec.Id, (uint)ec.Data[0].Int, exStacks);
                     for (int j = 0; j < exStacks.Count; ++j)
                     {
-                        SharedGameResources.Camp!.RewardItem(exStacks[j]);
+                        camp.RewardItem(exStacks[j]);
                     }
                 }
                 else if (ec.Type == EventComponent.RewardLoot)
@@ -1643,32 +1664,32 @@ namespace FlareEngine
                     }
 
                     randomTable.Add(new EventComponent());
-                    SharedGameResources.Loot!.ParseLoot(ref ec.S, randomTable[^1], randomTable);
+                    loot.ParseLoot(ref ec.S, randomTable[^1], randomTable);
 
                     uint randCount = (uint)MathUtils.RandBetween(randomTableCount.X, randomTableCount.Y);
                     List<ItemStack> randItemstacks = new List<ItemStack>();
                     for (uint j = 0; j < randCount; ++j)
                     {
-                        SharedGameResources.Loot.CheckLoot(randomTable, null, randItemstacks);
+                        loot.CheckLoot(randomTable, null, randItemstacks);
                     }
                     for (int j = 0; j < randItemstacks.Count; ++j)
                     {
-                        if (randItemstacks[j].Item == SharedResources.Eset!.Misc.CurrencyId)
-                            SharedGameResources.Camp!.RewardCurrency(randItemstacks[j].Quantity);
+                        if (randItemstacks[j].Item == eset.Misc.CurrencyId)
+                            camp.RewardCurrency(randItemstacks[j].Quantity);
                         else
-                            SharedGameResources.Camp!.RewardItem(randItemstacks[j]);
+                            camp.RewardItem(randItemstacks[j]);
                     }
                 }
                 else if (ec.Type == EventComponent.Restore)
                 {
-                    SharedGameResources.Camp!.RestoreHpMp(ec.S);
+                    camp.RestoreHpMp(ec.S);
                 }
                 else if (ec.Type == EventComponent.Spawn)
                 {
                     Int2 spawnPos = default;
                     spawnPos.X = ec.Data[0].Int;
                     spawnPos.Y = ec.Data[1].Int;
-                    SharedGameResources.Entitym!.Spawn(ec.S, spawnPos, ev.GetComponent(EventComponent.SpawnLevel));
+                    entitym.Spawn(ec.S, spawnPos, ev.GetComponent(EventComponent.SpawnLevel));
                 }
                 else if (ec.Type == EventComponent.Power)
                 {
@@ -1680,8 +1701,8 @@ namespace FlareEngine
                         // targets hero option
                         if (ecPath.Data[4].Bool)
                         {
-                            target.X = SharedGameResources.Pc!.Stats.Pos.X;
-                            target.Y = SharedGameResources.Pc.Stats.Pos.Y;
+                            target.X = pc.Stats.Pos.X;
+                            target.Y = pc.Stats.Pos.Y;
                         }
                         // targets fixed path option
                         else
@@ -1699,30 +1720,30 @@ namespace FlareEngine
 
                     // ec->id is power id
                     // ec->data[0] is statblock index
-                    SharedGameResources.Mapr!.ActivatePower(ec.Id, (uint)ec.Data[0].Int, target);
+                    mapr.ActivatePower(ec.Id, (uint)ec.Data[0].Int, target);
                 }
                 else if (ec.Type == EventComponent.Stash)
                 {
-                    SharedGameResources.Mapr!.Stash = ec.Data[0].Bool;
-                    if (SharedGameResources.Mapr.Stash)
+                    mapr.Stash = ec.Data[0].Bool;
+                    if (mapr.Stash)
                     {
-                        SharedGameResources.Mapr.StashPos.X = (float)ev.Location.X + 0.5f;
-                        SharedGameResources.Mapr.StashPos.Y = (float)ev.Location.Y + 0.5f;
+                        mapr.StashPos.X = (float)ev.Location.X + 0.5f;
+                        mapr.StashPos.Y = (float)ev.Location.Y + 0.5f;
                     }
                 }
                 else if (ec.Type == EventComponent.Npc)
                 {
-                    SharedGameResources.Mapr!.EventNpc = ec.S;
+                    mapr.EventNpc = ec.S;
                 }
                 else if (ec.Type == EventComponent.Music)
                 {
-                    SharedGameResources.Mapr!.MusicFilename = ec.S;
-                    SharedGameResources.Mapr.LoadMusic();
+                    mapr.MusicFilename = ec.S;
+                    mapr.LoadMusic();
                 }
                 else if (ec.Type == EventComponent.Cutscene)
                 {
-                    SharedGameResources.Mapr!.Cutscene = true;
-                    SharedGameResources.Mapr.CutsceneFile = ec.S;
+                    mapr.Cutscene = true;
+                    mapr.CutsceneFile = ec.S;
                 }
                 else if (ec.Type == EventComponent.Repeat)
                 {
@@ -1730,66 +1751,66 @@ namespace FlareEngine
                 }
                 else if (ec.Type == EventComponent.SaveGame)
                 {
-                    SharedGameResources.Mapr!.SaveGame = ec.Data[0].Bool;
+                    mapr.SaveGame = ec.Data[0].Bool;
                 }
                 else if (ec.Type == EventComponent.NpcID)
                 {
-                    SharedGameResources.Mapr!.NpcId = ec.Data[0].Int;
+                    mapr.NpcId = ec.Data[0].Int;
                 }
                 else if (ec.Type == EventComponent.Book)
                 {
-                    SharedGameResources.Mapr!.ShowBook = ec.S;
+                    mapr.ShowBook = ec.S;
                 }
                 else if (ec.Type == EventComponent.Script)
                 {
                     if (ev.Center.X != -1 && ev.Center.Y != -1)
                         ExecuteScript(ec.S, ev.Center.X, ev.Center.Y);
                     else
-                        ExecuteScript(ec.S, SharedGameResources.Pc!.Stats.Pos.X, SharedGameResources.Pc.Stats.Pos.Y);
+                        ExecuteScript(ec.S, pc.Stats.Pos.X, pc.Stats.Pos.Y);
                 }
                 else if (ec.Type == EventComponent.Respec)
                 {
                     bool useEngineDefaults = ec.Data[1].Bool;
                     EngineSettings.HeroClassesSettings.HeroClass? pcClass;
-                    pcClass = SharedResources.Eset!.HeroClasses.GetByName(SharedGameResources.Pc!.Stats.CharacterClass);
+                    pcClass = eset.HeroClasses.GetByName(pc.Stats.CharacterClass);
 
                     if (ec.Data[0].Int == 3)
                     {
                         // xp
-                        SharedGameResources.Pc.Stats.Level = 1;
-                        SharedGameResources.Pc.Stats.Xp = 0;
+                        pc.Stats.Level = 1;
+                        pc.Stats.Xp = 0;
                     }
                     if (ec.Data[0].Int >= 2)
                     {
                         // stats
-                        for (int j = 0; j < SharedResources.Eset.PrimaryStats.Stats.Count; ++j)
+                        for (int j = 0; j < eset.PrimaryStats.Stats.Count; ++j)
                         {
-                            SharedGameResources.Pc.Stats.Primary[j] = 1;
-                            SharedGameResources.Pc.Stats.PrimaryAdditional[j] = 0;
+                            pc.Stats.Primary[j] = 1;
+                            pc.Stats.PrimaryAdditional[j] = 0;
 
                             if (pcClass != null && !useEngineDefaults)
                             {
-                                SharedGameResources.Pc.Stats.Primary[j] += pcClass.Primary[j];
-                                SharedGameResources.Pc.Stats.PrimaryStarting[j] = SharedGameResources.Pc.Stats.Primary[j];
+                                pc.Stats.Primary[j] += pcClass.Primary[j];
+                                pc.Stats.PrimaryStarting[j] = pc.Stats.Primary[j];
                             }
                         }
 
-                        SharedGameResources.Pc.Stats.Recalc();
-                        SharedGameResources.Menu!.Inv!.ApplyEquipment();
-                        SharedGameResources.Pc.Stats.Logic();
+                        pc.Stats.Recalc();
+                        menu.Inv!.ApplyEquipment();
+                        pc.Stats.Logic();
                     }
                     if (ec.Data[0].Int >= 1)
                     {
                         // powers
-                        SharedGameResources.Pc.Stats.PowersList.Clear();
-                        SharedGameResources.Pc.Stats.PowersPassive.Clear();
-                        SharedGameResources.Pc.Stats.Effects.ClearEffects();
+                        pc.Stats.PowersList.Clear();
+                        pc.Stats.PowersPassive.Clear();
+                        pc.Stats.Effects.ClearEffects();
                         SharedGameResources.MenuPowers!.ResetToBasePowers();
                         if (pcClass != null && !useEngineDefaults)
                         {
                             for (int j = 0; j < pcClass.Powers.Count; j++)
                             {
-                                SharedGameResources.Pc.Stats.PowersList.Add(pcClass.Powers[j]);
+                                pc.Stats.PowersList.Add(pcClass.Powers[j]);
                             }
                         }
                         SharedGameResources.MenuPowers.SetUnlockedPowers();
@@ -1797,30 +1818,30 @@ namespace FlareEngine
                         SharedGameResources.MenuAct!.Clear(MenuActionBar.ClearSkipItems);
                         if (pcClass != null && !useEngineDefaults)
                         {
-                            SharedGameResources.Menu!.Act!.Set(pcClass.Hotkeys, MenuActionBar.SetSkipEmpty);
+                            menu.Act!.Set(pcClass.Hotkeys, MenuActionBar.SetSkipEmpty);
                         }
-                        SharedGameResources.Menu!.Pow!.NewPowerNotification = false;
+                        menu.Pow!.NewPowerNotification = false;
 
-                        SharedGameResources.Pc.Respawn = true; // re-applies equipment, also revives the player
-                        SharedGameResources.Pc.Stats.RefreshStats = true;
+                        pc.Respawn = true; // re-applies equipment, also revives the player
+                        pc.Stats.RefreshStats = true;
                     }
                 }
                 else if (ec.Type == EventComponent.ParallaxLayers)
                 {
-                    SharedGameResources.Mapr!.SetMapParallax(ec.S);
+                    mapr.SetMapParallax(ec.S);
                 }
                 else if (ec.Type == EventComponent.RandomStatus)
                 {
                     if (ec.Data[0].Int == EventComponent.RandomStatusModeAppend)
-                        SharedGameResources.Camp!.RandomStatusAppend(ec.Status);
+                        camp.RandomStatusAppend(ec.Status);
                     else if (ec.Data[0].Int == EventComponent.RandomStatusModeClear)
-                        SharedGameResources.Camp!.RandomStatusClear();
+                        camp.RandomStatusClear();
                     else if (ec.Data[0].Int == EventComponent.RandomStatusModeRoll)
-                        SharedGameResources.Camp!.RandomStatusRoll();
+                        camp.RandomStatusRoll();
                     else if (ec.Data[0].Int == EventComponent.RandomStatusModeSet)
-                        SharedGameResources.Camp!.RandomStatusSet();
+                        camp.RandomStatusSet();
                     else if (ec.Data[0].Int == EventComponent.RandomStatusModeUnset)
-                        SharedGameResources.Camp!.RandomStatusUnset();
+                        camp.RandomStatusUnset();
                 }
             }
             return !ev.KeepAfterTrigger;
@@ -1828,17 +1849,19 @@ namespace FlareEngine
 
         private EventComponent GetRandomMapFromFile(string fname)
         {
+            var mapr = SharedGameResources.Mapr!;
+
             // map pool is the same, so pick the next one in the "playlist"
-            if (fname == SharedGameResources.Mapr!.IntermapRandomFilename && SharedGameResources.Mapr.IntermapRandomQueue.Count > 0)
+            if (fname == mapr.IntermapRandomFilename && mapr.IntermapRandomQueue.Count > 0)
             {
-                EventComponent ec = SharedGameResources.Mapr.IntermapRandomQueue.Dequeue();
+                EventComponent ec = mapr.IntermapRandomQueue.Dequeue();
                 return ec;
             }
 
             // starting a new map pool, so clear the queue
-            while (SharedGameResources.Mapr.IntermapRandomQueue.Count > 0)
+            while (mapr.IntermapRandomQueue.Count > 0)
             {
-                SharedGameResources.Mapr.IntermapRandomQueue.Dequeue();
+                mapr.IntermapRandomQueue.Dequeue();
             }
 
             using FileParser infile = new FileParser();
@@ -1854,7 +1877,7 @@ namespace FlareEngine
                     {
                         EventComponent ec = new EventComponent();
                         ec.S = Parse.PopFirstString(ref infile.Val);
-                        if (ecList.Count == 0 || ec.S != SharedGameResources.Mapr.Filename)
+                        if (ecList.Count == 0 || ec.S != mapr.Filename)
                         {
                             ec.Data[0].Int = -1;
                             ec.Data[1].Int = -1;
@@ -1876,21 +1899,21 @@ namespace FlareEngine
 
             if (ecList.Count == 0)
             {
-                SharedGameResources.Mapr.IntermapRandomFilename = "";
+                mapr.IntermapRandomFilename = "";
                 return new EventComponent();
             }
             else
             {
-                SharedGameResources.Mapr.IntermapRandomFilename = fname;
+                mapr.IntermapRandomFilename = fname;
 
                 while (ecList.Count > 0)
                 {
                     int index = Program.Rng.Next() % ecList.Count;
-                    SharedGameResources.Mapr.IntermapRandomQueue.Enqueue(new EventComponent(ecList[index]));
+                    mapr.IntermapRandomQueue.Enqueue(new EventComponent(ecList[index]));
                     ecList.RemoveAt(index);
                 }
 
-                EventComponent ec = SharedGameResources.Mapr.IntermapRandomQueue.Dequeue();
+                EventComponent ec = mapr.IntermapRandomQueue.Dequeue();
                 return ec;
             }
         }

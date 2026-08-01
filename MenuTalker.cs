@@ -81,6 +81,8 @@ namespace FlareEngine
 
         public MenuTalker()
         {
+            var font = SharedResources.Font!;
+
             _portrait = null;
             _heroName = "";
             _heroClass = "";
@@ -89,12 +91,12 @@ namespace FlareEngine
             _firstInteraction = false;
             _fontWho = "font_regular";
             _fontDialog = "font_regular";
-            _topicColorNormal = SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus);
-            _topicColorHover = SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal);
-            _topicColorPressed = SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled);
-            _tradeColorNormal = SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus);
-            _tradeColorHover = SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal);
-            _tradeColorPressed = SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled);
+            _topicColorNormal = font.GetColor(FontEngine.ColorMenuBonus);
+            _topicColorHover = font.GetColor(FontEngine.ColorWidgetNormal);
+            _topicColorPressed = font.GetColor(FontEngine.ColorWidgetDisabled);
+            _tradeColorNormal = font.GetColor(FontEngine.ColorMenuBonus);
+            _tradeColorHover = font.GetColor(FontEngine.ColorWidgetNormal);
+            _tradeColorPressed = font.GetColor(FontEngine.ColorWidgetDisabled);
             Npc = null;
             AdvanceButton = new WidgetButton(WidgetButton.DirRightFile);
             CloseButton = new WidgetButton(WidgetButton.CloseFile);
@@ -158,7 +160,7 @@ namespace FlareEngine
 
             _labelName = new WidgetLabel();
             _labelName.SetBasePos(_textPos.X + _textOffset.X, _textPos.Y + _textOffset.Y, Utils.AlignTopLeft);
-            _labelName.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            _labelName.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             _textbox = new WidgetScrollBox(_textPos.Width, _textPos.Height - (_textOffset.Y * 2));
             _textbox.SetBasePos(_textPos.X, _textPos.Y + _textOffset.Y, Utils.AlignTopLeft);
@@ -241,10 +243,12 @@ namespace FlareEngine
         /// </summary>
         public void Logic()
         {
+            var inpt = SharedResources.Inpt!;
+
             if (!Visible || Npc == null)
                 return;
 
-            if (!SharedResources.Inpt!.UsingMouse() && Tablist.GetCurrent() == -1)
+            if (!inpt.UsingMouse() && Tablist.GetCurrent() == -1)
             {
                 Tablist.SetCurrent(_textbox);
             }
@@ -265,10 +269,10 @@ namespace FlareEngine
                     NextDialog();
                 }
             }
-            else if ((AdvanceButton.Enabled || CloseButton.Enabled) && SharedResources.Inpt.Pressing[Input.Accept] && !SharedResources.Inpt.Lock[Input.Accept])
+            else if ((AdvanceButton.Enabled || CloseButton.Enabled) && inpt.Pressing[Input.Accept] && !inpt.Lock[Input.Accept])
             {
                 // pressed next/more
-                SharedResources.Inpt.Lock[Input.Accept] = true;
+                inpt.Lock[Input.Accept] = true;
                 if (CloseButton.Enabled)
                 {
                     NextDialog();
@@ -283,7 +287,7 @@ namespace FlareEngine
             {
                 _textbox!.Logic();
 
-                Int2 mouse = _textbox.InputAssist(SharedResources.Inpt.Mouse);
+                Int2 mouse = _textbox.InputAssist(inpt.Mouse);
                 for (int i = 0; i < _actions.Count; ++i)
                 {
                     if (_actions[i].Btn!.CheckClickAt(mouse.X, mouse.Y))
@@ -296,9 +300,9 @@ namespace FlareEngine
                 Rectangle lockArea = _dialogPos;
                 lockArea.X += WindowArea.X;
                 lockArea.Y += WindowArea.Y;
-                if (SharedResources.Inpt.Pressing[Input.Main1] && !SharedResources.Inpt.Lock[Input.Main1] && Utils.IsWithinRect(lockArea, SharedResources.Inpt.Mouse))
+                if (inpt.Pressing[Input.Main1] && !inpt.Lock[Input.Main1] && Utils.IsWithinRect(lockArea, inpt.Mouse))
                 {
-                    SharedResources.Inpt.Lock[Input.Main1] = true;
+                    inpt.Lock[Input.Main1] = true;
                 }
             }
         }
@@ -337,6 +341,9 @@ namespace FlareEngine
 
         public void CreateBuffer()
         {
+            var pc = SharedGameResources.Pc!;
+            var font = SharedResources.Font!;
+
             ClearActionButtons();
 
             if ((uint)_dialogNode >= Npc!.Dialog.Count || _eventCursor >= Npc.Dialog[_dialogNode].Count)
@@ -369,20 +376,20 @@ namespace FlareEngine
             _labelName.SetFont(_fontWho);
 
 
-            line = Utils.SubstituteVarsInString(Npc.Dialog[_dialogNode][(int)_eventCursor].S, SharedGameResources.Pc);
+            line = Utils.SubstituteVarsInString(Npc.Dialog[_dialogNode][(int)_eventCursor].S, pc);
 
             // render dialog text to the scrollbox buffer
-            Int2 lineSize = SharedResources.Font!.CalcSizeWrapped(line, _textbox!.Pos.Width - (_textOffset.X * 2));
+            Int2 lineSize = font.CalcSizeWrapped(line, _textbox!.Pos.Width - (_textOffset.X * 2));
             _textbox.Resize(_textbox.Pos.Width, lineSize.Y + buttonHeight);
-            SharedResources.Font.SetFont(_fontDialog);
-            SharedResources.Font.Render(
+            font.SetFont(_fontDialog);
+            font.Render(
                 line,
                 _textOffset.X,
                 0,
                 FontEngine.JustifyLeft,
                 _textbox.Contents!.GetGraphics()!,
                 _textPos.Width - _textOffset.X * 2,
-                SharedResources.Font.GetColor(FontEngine.ColorMenuNormal),
+                font.GetColor(FontEngine.ColorMenuNormal),
                 !FontEngine.ShadowOffset
             );
 
@@ -419,6 +426,8 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             if (!Visible) return;
             Rectangle src = default;
             Rectangle dest = default;
@@ -453,7 +462,7 @@ namespace FlareEngine
 
                         Npc.NpcPortrait.SetClipFromRect(src);
                         Npc.NpcPortrait.SetDestFromRect(dest);
-                        SharedResources.RenderDevice!.Render(Npc.NpcPortrait);
+                        renderDevice.Render(Npc.NpcPortrait);
                     }
                 }
                 else if (etype == EventComponent.NpcDialogYou)
@@ -466,7 +475,7 @@ namespace FlareEngine
                         dest.Y = offsetY + _portraitYou.Y;
                         Npc.HeroPortrait.SetClipFromRect(src);
                         Npc.HeroPortrait.SetDestFromRect(dest);
-                        SharedResources.RenderDevice!.Render(Npc.HeroPortrait);
+                        renderDevice.Render(Npc.HeroPortrait);
                     }
                     else if (_portrait != null)
                     {
@@ -476,7 +485,7 @@ namespace FlareEngine
                         dest.Y = offsetY + _portraitYou.Y;
                         _portrait.SetClipFromRect(src);
                         _portrait.SetDestFromRect(dest);
-                        SharedResources.RenderDevice!.Render(_portrait);
+                        renderDevice.Render(_portrait);
                     }
                 }
             }
@@ -543,6 +552,8 @@ namespace FlareEngine
 
         private void CreateActionButtons(int nodeId)
         {
+            var msg = SharedResources.Msg!;
+
             if (Npc == null)
                 return;
 
@@ -566,7 +577,7 @@ namespace FlareEngine
                 string topic = Npc.GetDialogTopic(nodes[i - 1]);
                 if (topic == "")
                 {
-                    topic = SharedResources.Msg!.GetV("<dialog node %d>", nodes[i - 1]);
+                    topic = msg.GetV("<dialog node %d>", nodes[i - 1]);
                 }
 
                 AddAction(topic, nodes[i - 1], !Action.VendorTrade);
@@ -575,7 +586,7 @@ namespace FlareEngine
             // add "Trade" topic
             if (nodeId == -1 && Npc.CheckVendor())
             {
-                AddAction(SharedResources.Msg!.Get("Trade"), Action.NoNode, Action.VendorTrade);
+                AddAction(msg.Get("Trade"), Action.NoNode, Action.VendorTrade);
             }
 
             for (int i = 0; i < _actions.Count; ++i)
@@ -597,6 +608,9 @@ namespace FlareEngine
 
         private void ExecuteAction(int index)
         {
+            var menu = SharedGameResources.Menu!;
+            var pc = SharedGameResources.Pc!;
+
             if (index >= _actions.Count)
                 return;
 
@@ -609,9 +623,9 @@ namespace FlareEngine
 
                 // begin trading
                 NPC? tempNpc = Npc;
-                SharedGameResources.Menu!.CloseAll();
-                SharedGameResources.Menu.Vendor!.SetNPC(tempNpc);
-                SharedGameResources.Menu.Inv!.Visible = true;
+                menu.CloseAll();
+                menu.Vendor!.SetNPC(tempNpc);
+                menu.Inv!.Visible = true;
             }
             else if (nodeId != -1)
             {
@@ -619,7 +633,7 @@ namespace FlareEngine
                 ChooseDialogNode(nodeId);
                 if (Npc != null && NpcFromMap)
                 {
-                    SharedGameResources.Pc!.AllowMovement = Npc.CheckMovement(nodeId);
+                    pc.AllowMovement = Npc.CheckMovement(nodeId);
                 }
             }
         }

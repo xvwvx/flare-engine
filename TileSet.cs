@@ -113,8 +113,9 @@ namespace FlareEngine
 
             if (filename.Length == 0)
                 return;
-
-            Image? graphics = SharedResources.RenderDevice!.LoadImage(filename, RenderDevice.ErrorNormal);
+            
+            var renderDevice = SharedResources.RenderDevice!;
+            Image? graphics = renderDevice.LoadImage(filename, RenderDevice.ErrorNormal);
             if (graphics != null)
             {
                 sprite = graphics.CreateSprite();
@@ -124,6 +125,8 @@ namespace FlareEngine
 
         public void Load(string filename)
         {
+            var eset = SharedResources.Eset!;
+
             if (_currentFilename == filename) return;
 
             Reset();
@@ -239,8 +242,8 @@ namespace FlareEngine
                 Tiles[i].Tile.SetClipFromRect(tileClips[i]);
                 Tiles[i].Offset = tileOffsets[i];
 
-                MaxSizeX = Math.Max(MaxSizeX, (Tiles[i].Tile!.GetClip().Width / SharedResources.Eset!.Tileset.TileW) + 1);
-                MaxSizeY = Math.Max(MaxSizeY, (Tiles[i].Tile!.GetClip().Height / SharedResources.Eset!.Tileset.TileH) + 1);
+                MaxSizeX = Math.Max(MaxSizeX, (Tiles[i].Tile!.GetClip().Width / eset.Tileset.TileW) + 1);
+                MaxSizeY = Math.Max(MaxSizeY, (Tiles[i].Tile!.GetClip().Height / eset.Tileset.TileH) + 1);
             }
 
             _currentFilename = filename;

@@ -129,6 +129,10 @@ namespace FlareEngine
 
         public MenuActionBar()
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
             _spriteEmptyslot = null;
             SfxUnableToCast = 0;
             TooltipLength = global::FlareEngine.MenuPowers.TooltipLongMenu;
@@ -163,10 +167,10 @@ namespace FlareEngine
                 _menus[i]!.Pos.Height = 0;
             }
 
-            MenuTitles[MenuCharacter] = SharedResources.Msg!.Get("Character");
-            MenuTitles[MenuInventory] = SharedResources.Msg.Get("Inventory");
-            MenuTitles[MenuPowers] = SharedResources.Msg.Get("Powers");
-            MenuTitles[MenuLog] = SharedResources.Msg.Get("Log");
+            MenuTitles[MenuCharacter] = msg.Get("Character");
+            MenuTitles[MenuInventory] = msg.Get("Inventory");
+            MenuTitles[MenuPowers] = msg.Get("Powers");
+            MenuTitles[MenuLog] = msg.Get("Log");
 
             // Read data from config file
             using FileParser infile = new FileParser();
@@ -225,7 +229,7 @@ namespace FlareEngine
                         int x = Parse.PopFirstInt(ref slotVal);
                         int y = Parse.PopFirstInt(ref slotVal);
                         _menus[MenuCharacter]!.SetBasePos(x, y, Utils.AlignTopLeft);
-                        _menus[MenuCharacter]!.Pos.Width = _menus[MenuCharacter]!.Pos.Height = SharedResources.Eset!.Resolutions.IconSize;
+                        _menus[MenuCharacter]!.Pos.Width = _menus[MenuCharacter]!.Pos.Height = eset.Resolutions.IconSize;
                     }
                     // @ATTR inv_menu|point|Position for the Inventory menu button.
                     else if (infile.Key == "inv_menu")
@@ -234,7 +238,7 @@ namespace FlareEngine
                         int x = Parse.PopFirstInt(ref slotVal);
                         int y = Parse.PopFirstInt(ref slotVal);
                         _menus[MenuInventory]!.SetBasePos(x, y, Utils.AlignTopLeft);
-                        _menus[MenuInventory]!.Pos.Width = _menus[MenuInventory]!.Pos.Height = SharedResources.Eset!.Resolutions.IconSize;
+                        _menus[MenuInventory]!.Pos.Width = _menus[MenuInventory]!.Pos.Height = eset.Resolutions.IconSize;
                     }
                     // @ATTR powers_menu|point|Position for the Powers menu button.
                     else if (infile.Key == "powers_menu")
@@ -243,7 +247,7 @@ namespace FlareEngine
                         int x = Parse.PopFirstInt(ref slotVal);
                         int y = Parse.PopFirstInt(ref slotVal);
                         _menus[MenuPowers]!.SetBasePos(x, y, Utils.AlignTopLeft);
-                        _menus[MenuPowers]!.Pos.Width = _menus[MenuPowers]!.Pos.Height = SharedResources.Eset!.Resolutions.IconSize;
+                        _menus[MenuPowers]!.Pos.Width = _menus[MenuPowers]!.Pos.Height = eset.Resolutions.IconSize;
                     }
                     // @ATTR log_menu|point|Position for the Log menu button.
                     else if (infile.Key == "log_menu")
@@ -252,7 +256,7 @@ namespace FlareEngine
                         int x = Parse.PopFirstInt(ref slotVal);
                         int y = Parse.PopFirstInt(ref slotVal);
                         _menus[MenuLog]!.SetBasePos(x, y, Utils.AlignTopLeft);
-                        _menus[MenuLog]!.Pos.Width = _menus[MenuLog]!.Pos.Height = SharedResources.Eset!.Resolutions.IconSize;
+                        _menus[MenuLog]!.Pos.Width = _menus[MenuLog]!.Pos.Height = eset.Resolutions.IconSize;
                     }
                     // @ATTR tooltip_length|["short", "long_menu", "long_all"]|The length of power descriptions in tooltips. 'short' will display only the power name. 'long_menu' (the default setting) will display full tooltips, but only for powers that are in the Powers menu. 'long_all' will display full tooltips for all powers.
                     else if (infile.Key == "tooltip_length")
@@ -305,8 +309,8 @@ namespace FlareEngine
 
             LoadGraphics();
 
-            if (SharedResources.Eset!.Misc.SfxUnableToCast != "")
-                SfxUnableToCast = SharedResources.Snd!.Load(SharedResources.Eset.Misc.SfxUnableToCast, "MenuActionBar unable to cast");
+            if (eset.Misc.SfxUnableToCast != "")
+                SfxUnableToCast = snd.Load(eset.Misc.SfxUnableToCast, "MenuActionBar unable to cast");
 
             Align();
 
@@ -345,6 +349,9 @@ namespace FlareEngine
 
         public override void Align()
         {
+            var msg = SharedResources.Msg!;
+            var inpt = SharedResources.Inpt!;
+
             base.Align();
 
             for (uint i = 0; i < SlotsCount; i++)
@@ -364,7 +371,7 @@ namespace FlareEngine
             {
                 if (i < Slots.Count && Slots[(int)i] != null)
                 {
-                    Labels[(int)i] = SharedResources.Msg!.GetV("Hotkey: %s", SharedResources.Inpt!.GetBindingString((int)i + Input.Bar1));
+                    Labels[(int)i] = msg.GetV("Hotkey: %s", inpt.GetBindingString((int)i + Input.Bar1));
                 }
             }
 
@@ -375,18 +382,18 @@ namespace FlareEngine
                     Settings settings = SharedResources.Settings!;
                     if (settings.MouseMove && ((i == SlotMain2 && settings.MouseMoveSwap) || (i == SlotMain1 && !settings.MouseMoveSwap)))
                     {
-                        Labels[(int)i] = SharedResources.Msg!.GetV("Hotkey: %s", SharedResources.Inpt!.GetBindingString(Input.Shift) + " + " + SharedResources.Inpt!.GetBindingString((int)i - SlotMain1 + Input.Main1));
+                        Labels[(int)i] = msg.GetV("Hotkey: %s", inpt.GetBindingString(Input.Shift) + " + " + inpt.GetBindingString((int)i - SlotMain1 + Input.Main1));
                     }
                     else
                     {
-                        Labels[(int)i] = SharedResources.Msg!.GetV("Hotkey: %s", SharedResources.Inpt!.GetBindingString((int)i - SlotMain1 + Input.Main1));
+                        Labels[(int)i] = msg.GetV("Hotkey: %s", inpt.GetBindingString((int)i - SlotMain1 + Input.Main1));
                     }
                 }
             }
             for (uint i = 0; i < MenuLabels.Count; i++)
             {
                 _menus[i]!.SetPos(WindowArea.X, WindowArea.Y);
-                MenuLabels[(int)i] = SharedResources.Msg!.GetV("Hotkey: %s", SharedResources.Inpt!.GetBindingString((int)i + Input.Character));
+                MenuLabels[(int)i] = msg.GetV("Hotkey: %s", inpt.GetBindingString((int)i + Input.Character));
             }
         }
 
@@ -409,12 +416,14 @@ namespace FlareEngine
 
         public void Clear(bool skipItems)
         {
+            var powers = SharedGameResources.Powers!;
+
             // clear action bar
             for (uint i = 0; i < SlotsCount; i++)
             {
-                if (skipItems && SharedGameResources.Powers!.IsValid(HotkeysMod[(int)i]))
+                if (skipItems && powers.IsValid(HotkeysMod[(int)i]))
                 {
-                    if (SharedGameResources.Powers!.Powers[HotkeysMod[(int)i]]!.RequiredItems.Count != 0)
+                    if (powers.Powers[HotkeysMod[(int)i]]!.RequiredItems.Count != 0)
                     {
                         continue;
                     }
@@ -642,8 +651,12 @@ namespace FlareEngine
         /// </summary>
         public void RenderTooltips(Int2 position)
         {
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+            var tooltipm = SharedResources.Tooltipm!;
+            var menu = SharedGameResources.Menu!;
             Avatar pc = SharedGameResources.Pc!;
-            if (SharedResources.Inpt!.UsingMouse() && (pc.UsingMain1 || pc.UsingMain2))
+            if (inpt.UsingMouse() && (pc.UsingMain1 || pc.UsingMain2))
                 return;
 
             TooltipData tipData = new TooltipData();
@@ -653,7 +666,7 @@ namespace FlareEngine
             {
                 if (_menus[i]!.Enabled && Utils.IsWithinRect(_menus[i]!.Pos, position))
                 {
-                    if (SharedResources.Settings!.Colorblind && RequiresAttention[i])
+                    if (settings.Colorblind && RequiresAttention[i])
                         tipData.AddText(MenuTitles[i] + " (*)");
                     else
                         tipData.AddText(MenuTitles[i]);
@@ -663,7 +676,7 @@ namespace FlareEngine
                         tipData.AddText(MenuLabels[(int)i]);
                     }
 
-                    SharedResources.Tooltipm!.Push(tipData, position, TooltipData.StyleFloat);
+                    tooltipm.Push(tipData, position, TooltipData.StyleFloat);
                     break;
                 }
             }
@@ -675,13 +688,13 @@ namespace FlareEngine
                 {
                     if (HotkeysMod[(int)i] != 0)
                     {
-                        SharedGameResources.Menu!.Pow!.CreateTooltipFromActionBar(tipData, i, TooltipLength);
+                        menu.Pow!.CreateTooltipFromActionBar(tipData, i, TooltipLength);
                     }
                     tipData.AddText(Labels[(int)i]);
                 }
             }
 
-            SharedResources.Tooltipm!.Push(tipData, position, TooltipData.StyleFloat);
+            tooltipm.Push(tipData, position, TooltipData.StyleFloat);
         }
 
         /// <summary>
@@ -761,6 +774,9 @@ namespace FlareEngine
             Avatar pc = SharedGameResources.Pc!;
             PowerManager powers = SharedGameResources.Powers!;
             MapRenderer mapr = SharedGameResources.Mapr!;
+            MessageEngine msg = SharedResources.Msg!;
+            EngineSettings eset = SharedResources.Eset!;
+            SoundManager snd = SharedResources.Snd!;
             MenuManager menu = SharedGameResources.Menu!;
 
             bool enableMmAttack = (!settings.MouseMove || inpt.Pressing[Input.Shift] || inpt.UsingTouchscreen());
@@ -881,22 +897,22 @@ namespace FlareEngine
                     bool notEnoughResources = false;
                     if (pc.Stats.Mp < power.RequiresMp && SlotFailCooldown[(int)i] == 0)
                     {
-                        pc.LogMsg(SharedResources.Msg!.Get("Not enough MP."), Avatar.MsgNormal);
+                        pc.LogMsg(msg.Get("Not enough MP."), Avatar.MsgNormal);
                         notEnoughResources = true;
                     }
-                    for (int j = 0; j < SharedResources.Eset!.ResourceStats.Stats.Count; ++j)
+                    for (int j = 0; j < eset.ResourceStats.Stats.Count; ++j)
                     {
                         if (pc.Stats.ResourceStats[j] < power.RequiresResourceStat[j] && SlotFailCooldown[(int)i] == 0)
                         {
-                            pc.LogMsg(SharedResources.Eset.ResourceStats.Stats[j].TextLogLow, Avatar.MsgNormal);
+                            pc.LogMsg(eset.ResourceStats.Stats[j].TextLogLow, Avatar.MsgNormal);
                             notEnoughResources = true;
                         }
                     }
 
                     if (notEnoughResources)
                     {
-                        SlotFailCooldown[(int)i] = SharedResources.Settings!.MaxFramesPerSec;
-                        SharedResources.Snd!.Play(SfxUnableToCast, "ACT_NO_MP", SoundManager.NoPos, !SoundManager.Loop);
+                        SlotFailCooldown[(int)i] = settings.MaxFramesPerSec;
+                        snd.Play(SfxUnableToCast, "ACT_NO_MP", SoundManager.NoPos, !SoundManager.Loop);
                         continue;
                     }
 
@@ -938,7 +954,7 @@ namespace FlareEngine
                         else
                         {
                             if (power.AimAssist)
-                                action.Target = Utils.ScreenToMap(inpt.Mouse.X, inpt.Mouse.Y + SharedResources.Eset.Misc.AimAssist, mapr.Cam.Pos.X, mapr.Cam.Pos.Y);
+                                action.Target = Utils.ScreenToMap(inpt.Mouse.X, inpt.Mouse.Y + eset.Misc.AimAssist, mapr.Cam.Pos.X, mapr.Cam.Pos.Y);
                             else
                                 action.Target = Utils.ScreenToMap(inpt.Mouse.X, inpt.Mouse.Y, mapr.Cam.Pos.X, mapr.Cam.Pos.Y);
                         }

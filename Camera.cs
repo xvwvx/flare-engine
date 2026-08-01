@@ -28,11 +28,13 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var eset = SharedResources.Eset!;
+
             // gradulally move camera towards target
 
             float camDelta = Utils.CalcDist(Pos, _target);
-            float camDx = (Utils.CalcDist(new Vector2(Pos.X, _target.Y), _target)) / SharedResources.Eset!.Misc.CameraSpeed;
-            float camDy = (Utils.CalcDist(new Vector2(_target.X, Pos.Y), _target)) / SharedResources.Eset!.Misc.CameraSpeed;
+            float camDx = (Utils.CalcDist(new Vector2(Pos.X, _target.Y), _target)) / eset.Misc.CameraSpeed;
+            float camDy = (Utils.CalcDist(new Vector2(_target.X, Pos.Y), _target)) / eset.Misc.CameraSpeed;
 
             if (_prevCamTarget.X == _target.X && _prevCamTarget.Y == _target.Y)
             {
@@ -61,8 +63,8 @@ namespace FlareEngine
                         float fastDx = _camThreshold * MathF.Cos(alpha);
                         float fastDy = _camThreshold * MathF.Sin(alpha);
 
-                        _prevCamDx = fastDx / SharedResources.Eset!.Misc.CameraSpeed;
-                        _prevCamDy = fastDy / SharedResources.Eset!.Misc.CameraSpeed;
+                        _prevCamDx = fastDx / eset.Misc.CameraSpeed;
+                        _prevCamDy = fastDy / eset.Misc.CameraSpeed;
                     }
                 }
             }

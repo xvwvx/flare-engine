@@ -223,6 +223,7 @@ namespace FlareEngine
 
         private void WriteEnemies(StreamWriter mapFile)
         {
+            var eset = SharedResources.Eset!;
             for (int i = 0; i < _map.EnemyGroups.Count; ++i)
             {
                 MapGroup group = _map.EnemyGroups[i];
@@ -354,9 +355,9 @@ namespace FlareEngine
                     {
                         mapFile.Write("source_level," + group.SpawnLevel.Ratio.ToString(CultureInfo.InvariantCulture));
                     }
-                    else if (group.SpawnLevel.Mode == SpawnLevel.ModeStat && group.SpawnLevel.Stat < SharedResources.Eset!.PrimaryStats.Stats.Count)
+                    else if (group.SpawnLevel.Mode == SpawnLevel.ModeStat && group.SpawnLevel.Stat < eset.PrimaryStats.Stats.Count)
                     {
-                        mapFile.Write("source_stat," + group.SpawnLevel.Ratio.ToString(CultureInfo.InvariantCulture) + "," + SharedResources.Eset.PrimaryStats.Stats[group.SpawnLevel.Stat].Id);
+                        mapFile.Write("source_stat," + group.SpawnLevel.Ratio.ToString(CultureInfo.InvariantCulture) + "," + eset.PrimaryStats.Stats[group.SpawnLevel.Stat].Id);
                     }
 
                     mapFile.Write("\n");
@@ -459,6 +460,7 @@ namespace FlareEngine
 
         private void WriteEvents(StreamWriter mapFile)
         {
+            var settings = SharedResources.Settings!;
             for (int i = 0; i < _map.Events.Count; i++)
             {
                 Event ev = _map.Events[i];
@@ -515,10 +517,10 @@ namespace FlareEngine
                 if (ev.Cooldown.Duration > 0)
                 {
                     string suffix = "ms";
-                    int value = (int)(1000.0f * (float)ev.Cooldown.Duration / SharedResources.Settings!.MaxFramesPerSec);
+                    int value = (int)(1000.0f * (float)ev.Cooldown.Duration / settings.MaxFramesPerSec);
                     if (value % 1000 == 0)
                     {
-                        value = (int)(ev.Cooldown.Duration / SharedResources.Settings.MaxFramesPerSec);
+                        value = (int)(ev.Cooldown.Duration / settings.MaxFramesPerSec);
                         suffix = "s";
                     }
                     mapFile.Write("cooldown=" + value.ToString(CultureInfo.InvariantCulture) + suffix + "\n");
@@ -527,10 +529,10 @@ namespace FlareEngine
                 if (ev.Delay.Duration > 0)
                 {
                     string suffix = "ms";
-                    int value = (int)(1000.0f * (float)ev.Delay.Duration / SharedResources.Settings.MaxFramesPerSec);
+                    int value = (int)(1000.0f * (float)ev.Delay.Duration / settings.MaxFramesPerSec);
                     if (value % 1000 == 0)
                     {
-                        value = (int)(ev.Delay.Duration / SharedResources.Settings.MaxFramesPerSec);
+                        value = (int)(ev.Delay.Duration / settings.MaxFramesPerSec);
                         suffix = "s";
                     }
                     mapFile.Write("delay=" + value.ToString(CultureInfo.InvariantCulture) + suffix + "\n");
@@ -549,6 +551,8 @@ namespace FlareEngine
 
         private void WriteEventComponents(StreamWriter mapFile, int eventID)
         {
+            var eventm = SharedGameResources.Eventm!;
+            var settings = SharedResources.Settings!;
             List<EventComponent> components = _map.Events[eventID].Components;
             for (int i = 0; i < components.Count; i++)
             {
@@ -615,7 +619,7 @@ namespace FlareEngine
                         mapFile.Write("," + e.Data[0].Int.ToString(CultureInfo.InvariantCulture) + "," + e.Data[1].Int.ToString(CultureInfo.InvariantCulture));
                         if (e.Data[3].Int != 0)
                         {
-                            mapFile.Write("," + SharedGameResources.Eventm!.GetIntermapIDString((uint)e.Data[3].Int));
+                            mapFile.Write("," + eventm.GetIntermapIDString((uint)e.Data[3].Int));
                         }
                     }
 
@@ -623,7 +627,7 @@ namespace FlareEngine
                 }
                 else if (e.Type == EventComponent.IntermapID)
                 {
-                    mapFile.Write(SharedGameResources.Eventm!.GetIntermapIDString((uint)e.Data[0].Int) + "\n");
+                    mapFile.Write(eventm.GetIntermapIDString((uint)e.Data[0].Int) + "\n");
                 }
                 else if (e.Type == EventComponent.Intramap)
                 {
@@ -675,10 +679,10 @@ namespace FlareEngine
                 else if (e.Type == EventComponent.Shakycam)
                 {
                     string suffix = "ms";
-                    int value = (int)(1000.0f * e.Data[0].Float / SharedResources.Settings!.MaxFramesPerSec);
+                    int value = (int)(1000.0f * e.Data[0].Float / settings.MaxFramesPerSec);
                     if (value % 1000 == 0)
                     {
-                        value = e.Data[0].Int / SharedResources.Settings.MaxFramesPerSec;
+                        value = e.Data[0].Int / settings.MaxFramesPerSec;
                         suffix = "s";
                     }
                     mapFile.Write(value.ToString(CultureInfo.InvariantCulture) + suffix + "\n");

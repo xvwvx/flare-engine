@@ -122,9 +122,12 @@ namespace FlareEngine
 
         public void LoadMusic()
         {
-            if (!SharedResources.Settings!.Audio) return;
+            var settings = SharedResources.Settings!;
+            var snd = SharedResources.Snd!;
 
-            if (SharedResources.Settings.MusicVolume > 0)
+            if (!settings.Audio) return;
+
+            if (settings.MusicVolume > 0)
             {
                 string musicFilename = "";
                 using FileParser infile = new FileParser();
@@ -141,11 +144,11 @@ namespace FlareEngine
                 }
 
                 // 加载并播放音乐
-                SharedResources.Snd!.LoadMusic(musicFilename);
+                snd.LoadMusic(musicFilename);
             }
             else
             {
-                SharedResources.Snd!.StopMusic();
+                snd.StopMusic();
             }
         }
 
@@ -231,19 +234,25 @@ namespace FlareEngine
 
         public void Logic()
         {
-            SharedResources.Snd!.Logic();
+            var snd = SharedResources.Snd!;
+            var curs = SharedResources.Curs!;
+            var tooltipm = SharedResources.Tooltipm!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var inpt = SharedResources.Inpt!;
+
+            snd.Logic();
 
             // reset the mouse cursor
-            SharedResources.Curs!.Logic();
+            curs.Logic();
 
             // reset the global tooltip
-            SharedResources.Tooltipm!.Clear();
+            tooltipm.Clear();
 
             // Check if a the game state is to be changed and change it if necessary, deleting the old state
             GameState? newState = _currentState!.GetRequestedGameState();
             if (newState != null)
             {
-                if (_currentState.ReloadBackgrounds || SharedResources.RenderDevice!.ReloadGraphics())
+                if (_currentState.ReloadBackgrounds || renderDevice.ReloadGraphics())
                     LoadBackgroundList();
 
                 _currentState.Dispose();
@@ -255,7 +264,7 @@ namespace FlareEngine
 
                 // if this game state does not provide music, use the title theme
                 if (!_currentState.HasMusic)
-                    if (!SharedResources.Snd!.IsPlayingMusic())
+                    if (!snd.IsPlayingMusic())
                         LoadMusic();
 
                 // if this game state shows a background image, load it here
@@ -277,7 +286,7 @@ namespace FlareEngine
             }
 
             // resize background image when window is resized
-            if ((SharedResources.Inpt!.WindowResized || _currentState.ForceRefreshBackground) && _currentState.HasBackground)
+            if ((inpt.WindowResized || _currentState.ForceRefreshBackground) && _currentState.HasBackground)
             {
                 RefreshBackground();
                 RefreshBackgroundFrame();
@@ -298,7 +307,10 @@ namespace FlareEngine
 
         public void ShowFPS(float fps)
         {
-            if (SharedResources.Settings!.ShowFps && SharedResources.Settings.ShowHud)
+            var settings = SharedResources.Settings!;
+            var msg = SharedResources.Msg!;
+
+            if (settings.ShowFps && settings.ShowHud)
             {
                 if (_labelFps == null) _labelFps = new WidgetLabel();
                 if (_fpsUpdate.IsEnd())
@@ -307,7 +319,7 @@ namespace FlareEngine
 
                     float avgFps = (fps + _lastFps) / 2f;
                     _lastFps = fps;
-                    string sfps = SharedResources.Msg!.GetV("%s FPS", Utils.FloatToString(avgFps, 2));
+                    string sfps = msg.GetV("%s FPS", Utils.FloatToString(avgFps, 2));
                     Rectangle pos = _fpsPosition;
                     _labelFps.SetPos(pos.X, pos.Y);
                     _labelFps.SetText(sfps);
@@ -329,7 +341,11 @@ namespace FlareEngine
 
         public void Render()
         {
-            SharedResources.RenderDevice!.LoadQueuedImages();
+            var renderDevice = SharedResources.RenderDevice!;
+            var tooltipm = SharedResources.Tooltipm!;
+            var curs = SharedResources.Curs!;
+
+            renderDevice.LoadQueuedImages();
 
             if (SharedResources.Anim != null)
                 SharedResources.Anim.CheckAnimationsInit();
@@ -337,17 +353,17 @@ namespace FlareEngine
             // display background
             if (_background != null && _currentState!.HasBackground)
             {
-                SharedResources.RenderDevice.Render(_background);
+                renderDevice.Render(_background);
             }
 
             if (_backgroundFrame != null && _currentState.HasFrameBackground)
             {
-                SharedResources.RenderDevice.Render(_backgroundFrame);
+                renderDevice.Render(_backgroundFrame);
             }
 
             _currentState.Render();
-            SharedResources.Tooltipm!.Render();
-            SharedResources.Curs!.Render();
+            tooltipm.Render();
+            curs.Render();
         }
 
         private void LoadBackgroundList()

@@ -105,12 +105,15 @@ namespace FlareEngine
         /// </summary>
         public void Load(string filename)
         {
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             _currentFilename = filename;
 
             if (_loaded)
                 Clear();
 
-            if (!SharedResources.Settings!.ParallaxLayers)
+            if (!settings.ParallaxLayers)
                 return;
 
             // @CLASS MapParallax|Description of maps/parallax/
@@ -130,7 +133,7 @@ namespace FlareEngine
                     if (infile.Key == "image")
                     {
                         // @ATTR layer.image|filename|Image file to use as a scrolling background.
-                        Image? graphics = SharedResources.RenderDevice!.LoadImage(infile.Val, RenderDevice.ErrorNormal);
+                        Image? graphics = renderDevice.LoadImage(infile.Val, RenderDevice.ErrorNormal);
                         if (graphics != null)
                         {
                             _layers[^1].Sprite = graphics.CreateSprite();
@@ -140,13 +143,13 @@ namespace FlareEngine
                     else if (infile.Key == "speed")
                     {
                         // @ATTR layer.speed|float|Speed at which the background will move relative to the camera.
-                        _layers[^1].Speed = (Settings.LogicFps * Parse.ToFloat(infile.Val)) / SharedResources.Settings!.MaxFramesPerSec;
+                        _layers[^1].Speed = (Settings.LogicFps * Parse.ToFloat(infile.Val)) / settings.MaxFramesPerSec;
                     }
                     else if (infile.Key == "fixed_speed")
                     {
                         // @ATTR layer.fixed_speed|float, float : X speed, Y speed|Speed at which the background will move independent of the camera movement.
-                        _layers[^1].FixedSpeed.X = (Settings.LogicFps * Parse.PopFirstFloat(ref infile.Val)) / SharedResources.Settings!.MaxFramesPerSec;
-                        _layers[^1].FixedSpeed.Y = (Settings.LogicFps * Parse.PopFirstFloat(ref infile.Val)) / SharedResources.Settings!.MaxFramesPerSec;
+                        _layers[^1].FixedSpeed.X = (Settings.LogicFps * Parse.PopFirstFloat(ref infile.Val)) / settings.MaxFramesPerSec;
+                        _layers[^1].FixedSpeed.Y = (Settings.LogicFps * Parse.PopFirstFloat(ref infile.Val)) / settings.MaxFramesPerSec;
                     }
                     else if (infile.Key == "map_layer")
                     {

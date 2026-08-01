@@ -72,6 +72,7 @@ namespace FlareEngine
             MenuStash stash = menu.Stash!;
             MenuLog questlog = menu.Questlog!;
             MenuHUDLog hudlog = menu.Hudlog!;
+            MessageEngine msg = SharedResources.Msg!;
 
             // if needed, create the save file structure
             Utils.CreateSaveDir(GameSlot);
@@ -310,8 +311,8 @@ namespace FlareEngine
             settings.PrevSaveSlot = GameSlot - 1;
 
             // display a log message saying that we saved the game
-            questlog.Add(SharedResources.Msg!.Get("Game saved."), MenuLog.TypeMessages, WidgetLog.MsgNormal);
-            hudlog.Add(SharedResources.Msg.Get("Game saved."), MenuHUDLog.MsgNormal);
+            questlog.Add(msg.Get("Game saved."), MenuLog.TypeMessages, WidgetLog.MsgNormal);
+            hudlog.Add(msg.Get("Game saved."), MenuHUDLog.MsgNormal);
         }
 
         /// <summary>保存扩展物品（extended_items.txt）�</summary>

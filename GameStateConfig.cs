@@ -64,33 +64,42 @@ namespace FlareEngine
 
         public void LogicAccept()
         {
+            var msg = SharedResources.Msg!;
+            var snd = SharedResources.Snd!;
+            var mods = SharedResources.Mods!;
+            var inpt = SharedResources.Inpt!;
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var tooltipm = SharedResources.Tooltipm;
+            var renderDevice = SharedResources.RenderDevice!;
+
             string newRenderDevice = _menuConfig!.RenderDevice;
             bool frameLimitChanged = _menuConfig.SetFrameLimit();
 
-            SharedResources.Inpt!.SaveKeyBindings();
+            inpt.SaveKeyBindings();
 
             if (_menuConfig.SetMods())
             {
-                SharedResources.Snd!.UnloadMusic();
+                snd.UnloadMusic();
                 ReloadMusic = true;
                 ReloadBackgrounds = true;
-                SharedResources.Mods?.Dispose();
+                mods?.Dispose();
                 SharedResources.Mods = new ModManager(null);
-                SharedResources.Settings!.PrevSaveSlot = -1;
+                settings.PrevSaveSlot = -1;
             }
-            SharedResources.Msg?.Dispose();
+            msg.Dispose();
             SharedResources.Msg = new MessageEngine();
 
             // if mods changed, we may need to use a different set of keybinds, so reload them here
-            SharedResources.Inpt.LoadKeyBindings(InputState.LoadUserBinds);
+            inpt.LoadKeyBindings(InputState.LoadUserBinds);
 
-            SharedResources.Inpt.SetCommonStrings();
-            SharedResources.Eset!.Load();
+            inpt.SetCommonStrings();
+            eset.Load();
             Stats.Init();
             RefreshFont();
-            if ((SharedResources.Settings.EnableJoystick) && (SharedResources.Inpt.GetNumJoysticks() > 0))
+            if ((settings.EnableJoystick) && (inpt.GetNumJoysticks() > 0))
             {
-                SharedResources.Inpt.InitJoystick();
+                inpt.InitJoystick();
             }
             _menuConfig.Cleanup();
 
@@ -102,20 +111,20 @@ namespace FlareEngine
                 LoadingTip = null;
             }
 
-            SharedResources.Tooltipm?.Dispose();
+            tooltipm?.Dispose();
 
             // we can't replace the render device in-place, so soft-reset the game
             // same goes for changing the frame limit
-            if (newRenderDevice != SharedResources.Settings.RenderDeviceName || frameLimitChanged)
+            if (newRenderDevice != settings.RenderDeviceName || frameLimitChanged)
             {
-                SharedResources.Settings.RenderDeviceName = newRenderDevice;
-                SharedResources.Inpt.Done = true;
-                SharedResources.Settings.SoftReset = true;
+                settings.RenderDeviceName = newRenderDevice;
+                inpt.Done = true;
+                settings.SoftReset = true;
             }
 
-            SharedResources.RenderDevice!.CreateContext();
+            renderDevice.CreateContext();
             SharedResources.Tooltipm = new TooltipManager();
-            SharedResources.Settings.SaveSettings();
+            settings.SaveSettings();
             SetRequestedGameState(new GameStateTitle());
         }
 
@@ -131,9 +140,11 @@ namespace FlareEngine
             RefreshFont();
             _menuConfig!.Update();
             _menuConfig.Cleanup();
-            SharedResources.RenderDevice!.SetFullscreen(SharedResources.Settings.Fullscreen);
-            SharedResources.RenderDevice.WindowResize();
-            SharedResources.RenderDevice.UpdateTitleBar();
+            var renderDevice = SharedResources.RenderDevice!;
+            var settings = SharedResources.Settings!;
+            renderDevice.SetFullscreen(settings.Fullscreen);
+            renderDevice.WindowResize();
+            renderDevice.UpdateTitleBar();
             ShowLoading();
             SetRequestedGameState(new GameStateTitle());
         }

@@ -104,11 +104,12 @@ namespace FlareEngine
 
         public void LoadAnimation(string gfx)
         {
+            var anim = SharedResources.Anim!;
             _gfx = gfx;
             if (!string.IsNullOrEmpty(_gfx))
             {
-                SharedResources.Anim!.IncreaseCount(_gfx);
-                AnimationSet? animationSet = SharedResources.Anim.GetAnimationSet(_gfx);
+                anim.IncreaseCount(_gfx);
+                AnimationSet? animationSet = anim.GetAnimationSet(_gfx);
                 Animation = animationSet!.GetAnimation("");
             }
             else

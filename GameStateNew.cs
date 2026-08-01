@@ -70,6 +70,11 @@ namespace FlareEngine
 
         public GameStateNew()
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var font = SharedResources.Font!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             _currentOption = 0;
             _portraitImage = null;
             _portraitBorder = null;
@@ -86,10 +91,10 @@ namespace FlareEngine
 
             // set up buttons
             _buttonExit = new WidgetButton(WidgetButton.DefaultFile);
-            _buttonExit.SetLabel(SharedResources.Msg!.Get("Cancel"));
+            _buttonExit.SetLabel(msg.Get("Cancel"));
 
             _buttonCreate = new WidgetButton(WidgetButton.DefaultFile);
-            _buttonCreate.SetLabel(SharedResources.Msg.Get("Create"));
+            _buttonCreate.SetLabel(msg.Get("Create"));
             _buttonCreate.Enabled = false;
             _buttonCreate.Refresh();
 
@@ -97,13 +102,13 @@ namespace FlareEngine
             _buttonNext = new WidgetButton(WidgetButton.DirRightFile);
 
             _buttonRandomize = new WidgetButton(WidgetButton.DefaultFile);
-            _buttonRandomize.SetLabel(SharedResources.Msg.Get("Randomize"));
+            _buttonRandomize.SetLabel(msg.Get("Randomize"));
 
             _inputName = new WidgetInput(WidgetInput.DefaultFile);
             _inputName.MaxLength = 20;
 
             _buttonPermadeath = new WidgetCheckBox(WidgetCheckBox.DefaultFile);
-            if (SharedResources.Eset!.DeathPenalty.Permadeath)
+            if (eset.DeathPenalty.Permadeath)
             {
                 _buttonPermadeath.Enabled = false;
                 _buttonPermadeath.SetChecked(true);
@@ -116,20 +121,20 @@ namespace FlareEngine
 
             // set up labels
             _labelPortrait = new WidgetLabel();
-            _labelPortrait.SetText(SharedResources.Msg.Get("Choose a Portrait"));
-            _labelPortrait.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            _labelPortrait.SetText(msg.Get("Choose a Portrait"));
+            _labelPortrait.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             _labelName = new WidgetLabel();
-            _labelName.SetText(SharedResources.Msg.Get("Choose a Name"));
-            _labelName.SetColor(SharedResources.Font.GetColor(FontEngine.ColorMenuNormal));
+            _labelName.SetText(msg.Get("Choose a Name"));
+            _labelName.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             _labelPermadeath = new WidgetLabel();
-            _labelPermadeath.SetText(SharedResources.Msg.Get("Permadeath?"));
-            _labelPermadeath.SetColor(SharedResources.Font.GetColor(FontEngine.ColorMenuNormal));
+            _labelPermadeath.SetText(msg.Get("Permadeath?"));
+            _labelPermadeath.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             _labelClasslist = new WidgetLabel();
-            _labelClasslist.SetText(SharedResources.Msg.Get("Choose a Class"));
-            _labelClasslist.SetColor(SharedResources.Font.GetColor(FontEngine.ColorMenuNormal));
+            _labelClasslist.SetText(msg.Get("Choose a Class"));
+            _labelClasslist.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             // Some widgets default to being aligned to the menu frame
             _buttonPrev.Alignment = Utils.AlignFrameTopLeft;
@@ -292,19 +297,19 @@ namespace FlareEngine
             }
 
             // set up class list
-            for (int i = 0; i < SharedResources.Eset.HeroClasses.Classes.Count; i++)
+            for (int i = 0; i < eset.HeroClasses.Classes.Count; i++)
             {
                 if (_showClassTip)
-                    _classList.Append(SharedResources.Msg.Get(SharedResources.Eset.HeroClasses.Classes[i].Name), "");
+                    _classList.Append(msg.Get(eset.HeroClasses.Classes[i].Name), "");
                 else
-                    _classList.Append(SharedResources.Msg.Get(SharedResources.Eset.HeroClasses.Classes[i].Name), GetClassTooltip(i));
+                    _classList.Append(msg.Get(eset.HeroClasses.Classes[i].Name), GetClassTooltip(i));
             }
 
-            if (SharedResources.Eset.HeroClasses.Classes.Count != 0)
+            if (eset.HeroClasses.Classes.Count != 0)
             {
                 int classIndex = 0;
                 if (_randomClass)
-                    classIndex = Program.Rng.Next() % SharedResources.Eset.HeroClasses.Classes.Count;
+                    classIndex = Program.Rng.Next() % eset.HeroClasses.Classes.Count;
 
                 _classList.Select(classIndex);
 
@@ -347,14 +352,16 @@ namespace FlareEngine
 
             RefreshWidgets();
 
-            SharedResources.RenderDevice!.SetBackgroundColor(new Color(0, 0, 0, 0));
+            renderDevice.SetBackgroundColor(new Color(0, 0, 0, 0));
         }
 
         private void LoadGraphics()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             Image? graphics;
 
-            graphics = SharedResources.RenderDevice!.LoadImage("images/menus/portrait_border.png", RenderDevice.ErrorNormal);
+            graphics = renderDevice.LoadImage("images/menus/portrait_border.png", RenderDevice.ErrorNormal);
             if (graphics != null)
             {
                 _portraitBorder = graphics.CreateSprite();
@@ -364,13 +371,15 @@ namespace FlareEngine
 
         private void LoadPortrait(string portraitFilename)
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             Image? graphics;
 
             if (_portraitImage != null)
                 _portraitImage.Dispose();
 
             _portraitImage = null;
-            graphics = SharedResources.RenderDevice!.LoadImage(portraitFilename, RenderDevice.ErrorNormal);
+            graphics = renderDevice.LoadImage(portraitFilename, RenderDevice.ErrorNormal);
             if (graphics != null)
             {
                 _portraitImage = graphics.CreateSprite();
@@ -385,6 +394,8 @@ namespace FlareEngine
         /// <param name="filename">File containing entries for option=base,look</param>
         private void LoadOptions(string filename)
         {
+            var msg = SharedResources.Msg!;
+
             using FileParser fin = new FileParser();
             // @CLASS GameStateNew: Hero options|Description of engine/hero_options.txt
             if (!fin.Open("engine/" + filename, FileParser.ModFile, FileParser.ErrorNormal)) return;
@@ -407,7 +418,7 @@ namespace FlareEngine
                     _heroOptions[curIndex].Base = Parse.PopFirstString(ref fin.Val);
                     _heroOptions[curIndex].Head = Parse.PopFirstString(ref fin.Val);
                     _heroOptions[curIndex].Portrait = Parse.PopFirstString(ref fin.Val);
-                    _heroOptions[curIndex].Name = SharedResources.Msg!.Get(Parse.PopFirstString(ref fin.Val));
+                    _heroOptions[curIndex].Name = msg.Get(Parse.PopFirstString(ref fin.Val));
                 }
             }
             fin.Close();
@@ -435,15 +446,17 @@ namespace FlareEngine
 
         private void SetHeroOption(int dir)
         {
+            var eset = SharedResources.Eset!;
+
             List<int> availableOptions = _allOptions;
 
             // get the available options from the currently selected class
             int classIndex;
             if ((classIndex = _classList!.GetSelected()) != -1)
             {
-                if ((uint)classIndex < SharedResources.Eset!.HeroClasses.Classes.Count && SharedResources.Eset.HeroClasses.Classes[classIndex].Options.Count != 0)
+                if ((uint)classIndex < eset.HeroClasses.Classes.Count && eset.HeroClasses.Classes[classIndex].Options.Count != 0)
                 {
-                    availableOptions = SharedResources.Eset.HeroClasses.Classes[classIndex].Options;
+                    availableOptions = eset.HeroClasses.Classes[classIndex].Options;
                 }
             }
 
@@ -506,7 +519,8 @@ namespace FlareEngine
 
         public override void Logic()
         {
-            InputState inpt = SharedResources.Inpt!;
+            var inpt = SharedResources.Inpt!;
+            var eset = SharedResources.Eset!;
 
             if (inpt.WindowResized)
                 RefreshWidgets();
@@ -569,21 +583,23 @@ namespace FlareEngine
 
             if (_buttonCreate!.CheckClick())
             {
+                Avatar avatar = SharedGameResources.Pc!;
+                var saveLoad = SharedResources.SaveLoad!;
+                
                 // start the new game
                 inpt.LockAll = true;
                 _deleteItems = false;
                 ShowLoading();
                 GameStatePlay play = new GameStatePlay();
-                Avatar avatar = SharedGameResources.Pc!;
                 avatar.Stats.GfxBase = _heroOptions[_currentOption].Base;
                 avatar.Stats.GfxHead = _heroOptions[_currentOption].Head;
                 avatar.Stats.GfxPortrait = _heroOptions[_currentOption].Portrait;
                 avatar.Stats.CheckGfxPaths();
                 avatar.Stats.Name = _inputName.GetText();
                 avatar.Stats.Permadeath = _buttonPermadeath!.IsChecked;
-                SharedResources.SaveLoad!.GameSlot = GameSlot;
+                saveLoad.GameSlot = GameSlot;
                 play.ResetGame();
-                SharedResources.SaveLoad.LoadClass(_classList!.GetSelected());
+                saveLoad.LoadClass(_classList!.GetSelected());
                 SetRequestedGameState(play);
             }
 
@@ -599,9 +615,9 @@ namespace FlareEngine
 
             if (_showRandomize && _buttonRandomize!.CheckClick())
             {
-                if (SharedResources.Eset!.HeroClasses.Classes.Count != 0)
+                if (eset.HeroClasses.Classes.Count != 0)
                 {
-                    int classIndex = Program.Rng.Next() % SharedResources.Eset.HeroClasses.Classes.Count;
+                    int classIndex = Program.Rng.Next() % eset.HeroClasses.Classes.Count;
                     _classList!.Select(classIndex);
 
                     if (_showClassTip)
@@ -619,6 +635,9 @@ namespace FlareEngine
 
         public override void RefreshWidgets()
         {
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+
             _buttonExit!.SetPos(0, 0);
             _buttonCreate!.SetPos(0, 0);
 
@@ -628,8 +647,8 @@ namespace FlareEngine
             _buttonRandomize!.SetPos(0, 0);
             _classList!.SetPos(0, 0);
 
-            int frameOffsetX = (SharedResources.Settings!.ViewW - SharedResources.Eset!.Resolutions.FrameW) / 2;
-            int frameOffsetY = (SharedResources.Settings.ViewH - SharedResources.Eset.Resolutions.FrameH) / 2;
+            int frameOffsetX = (settings.ViewW - eset.Resolutions.FrameW) / 2;
+            int frameOffsetY = (settings.ViewH - eset.Resolutions.FrameH) / 2;
 
             _labelPortrait!.SetPos(frameOffsetX, frameOffsetY);
             _labelName!.SetPos(frameOffsetX, frameOffsetY);
@@ -641,6 +660,10 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             // display buttons
             _buttonExit!.Render();
             _buttonCreate!.Render();
@@ -663,17 +686,17 @@ namespace FlareEngine
             src.Width = dest.Width = _portraitPos.Width;
             src.Height = dest.Height = _portraitPos.Height;
             src.X = src.Y = 0;
-            dest.X = _portraitPos.X + (SharedResources.Settings!.ViewW - SharedResources.Eset!.Resolutions.FrameW) / 2;
-            dest.Y = _portraitPos.Y + (SharedResources.Settings.ViewH - SharedResources.Eset.Resolutions.FrameH) / 2;
+            dest.X = _portraitPos.X + (settings.ViewW - eset.Resolutions.FrameW) / 2;
+            dest.Y = _portraitPos.Y + (settings.ViewH - eset.Resolutions.FrameH) / 2;
 
             if (_portraitImage != null)
             {
                 _portraitImage.SetClipFromRect(src);
                 _portraitImage.SetDestFromRect(dest);
-                SharedResources.RenderDevice!.Render(_portraitImage);
+                renderDevice.Render(_portraitImage);
                 _portraitBorder!.SetClipFromRect(src);
                 _portraitBorder.SetDestFromRect(dest);
-                SharedResources.RenderDevice.Render(_portraitBorder);
+                renderDevice.Render(_portraitBorder);
             }
 
             // display labels
@@ -701,11 +724,14 @@ namespace FlareEngine
 
         private string GetClassTooltip(int index)
         {
-            if ((uint)index >= SharedResources.Eset!.HeroClasses.Classes.Count)
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+
+            if ((uint)index >= eset.HeroClasses.Classes.Count)
                 return "";
 
             string tooltip = "";
-            if (SharedResources.Eset.HeroClasses.Classes[index].Description != "") tooltip += SharedResources.Msg!.Get(SharedResources.Eset.HeroClasses.Classes[index].Description);
+            if (eset.HeroClasses.Classes[index].Description != "") tooltip += msg.Get(eset.HeroClasses.Classes[index].Description);
             return tooltip;
         }
 

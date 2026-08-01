@@ -40,6 +40,9 @@ namespace FlareEngine
 
         public MenuNumPicker()
         {
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+
             _value = 0;
             _valueMin = 0;
             _valueMax = int.MaxValue;
@@ -50,7 +53,7 @@ namespace FlareEngine
             CancelClicked = false;
 
             _buttonOk = new WidgetButton(WidgetButton.DefaultFile);
-            _buttonOk.SetLabel(SharedResources.Msg!.Get("OK"));
+            _buttonOk.SetLabel(msg.Get("OK"));
 
             _buttonUp = new WidgetButton(WidgetButton.DirUpFile);
             _buttonDown = new WidgetButton(WidgetButton.DirDownFile);
@@ -61,8 +64,8 @@ namespace FlareEngine
             _inputBox.OnlyNumbers = true;
 
             _label = new WidgetLabel();
-            _label.SetText(SharedResources.Msg.Get("Enter amount:"));
-            _label.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            _label.SetText(msg.Get("Enter amount:"));
+            _label.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             // Load config settings
             using FileParser infile = new FileParser();
@@ -177,9 +180,10 @@ namespace FlareEngine
 
                 _inputBox.Logic();
 
-                if (SharedResources.Inpt!.Pressing[Input.Cancel] && !SharedResources.Inpt.Lock[Input.Cancel])
+                var inpt = SharedResources.Inpt!;
+                if (inpt.Pressing[Input.Cancel] && !inpt.Lock[Input.Cancel])
                 {
-                    SharedResources.Inpt.Lock[Input.Cancel] = true;
+                    inpt.Lock[Input.Cancel] = true;
                     CancelClicked = true;
                 }
                 else if (_buttonClose!.CheckClick())

@@ -327,6 +327,10 @@ namespace FlareEngine
         /// </summary>
         public void LoadKeyBindings(bool loadUserBinds = LoadUserBinds)
         {
+            var mods = SharedResources.Mods!;
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+
             using FileParser infile = new FileParser();
             bool openedFile = false;
             bool cleanupPathUser = false;
@@ -341,13 +345,13 @@ namespace FlareEngine
             FileVersion.Z = VersionInfo.Min.Z;
 
             // first check for mod keybinds
-            if (SharedResources.Mods!.Locate("engine/default_keybindings.txt") != "")
+            if (mods.Locate("engine/default_keybindings.txt") != "")
             {
-                if (loadUserBinds && SharedResources.Settings!.Game == "" && infile.Open(SharedResources.Settings.PathUser + "saves/" + SharedResources.Eset!.Misc.SavePrefix + "/keybindings.txt", !FileParser.ModFile, FileParser.ErrorNone))
+                if (loadUserBinds && settings.Game == "" && infile.Open(settings.PathUser + "saves/" + eset.Misc.SavePrefix + "/keybindings.txt", !FileParser.ModFile, FileParser.ErrorNone))
                 {
                     openedFile = true;
                 }
-                else if (loadUserBinds && SharedResources.Settings.Game != "" && infile.Open(SharedResources.Settings.PathConf + "keybindings.txt", !FileParser.ModFile, FileParser.ErrorNone))
+                else if (loadUserBinds && settings.Game != "" && infile.Open(settings.PathConf + "keybindings.txt", !FileParser.ModFile, FileParser.ErrorNone))
                 {
                     openedFile = true;
                     cleanupPathUser = true;
@@ -360,7 +364,7 @@ namespace FlareEngine
             else
             {
                 // if there are no mod keybinds, fall back to global config
-                if (loadUserBinds && infile.Open(SharedResources.Settings!.PathConf + "keybindings.txt", !FileParser.ModFile, FileParser.ErrorNone))
+                if (loadUserBinds && infile.Open(settings.PathConf + "keybindings.txt", !FileParser.ModFile, FileParser.ErrorNone))
                 {
                     openedFile = true;
                 }
@@ -371,10 +375,10 @@ namespace FlareEngine
             if (cleanupPathUser)
             {
                 // clean up mod keybinds if engine/default_keybindings.txt is not present
-                if (Filesystem.FileExists(SharedResources.Settings!.PathUser + "saves/" + SharedResources.Eset!.Misc.SavePrefix + "/keybindings.txt"))
+                if (Filesystem.FileExists(settings.PathUser + "saves/" + eset.Misc.SavePrefix + "/keybindings.txt"))
                 {
                     Utils.LogInfo("InputState: Found unexpected save prefix keybinding file. Removing it now.");
-                    Filesystem.RemoveFile(SharedResources.Settings.PathUser + "saves/" + SharedResources.Eset.Misc.SavePrefix + "/keybindings.txt");
+                    Filesystem.RemoveFile(settings.PathUser + "saves/" + eset.Misc.SavePrefix + "/keybindings.txt");
                 }
             }
 
@@ -497,22 +501,26 @@ namespace FlareEngine
         /// </summary>
         public void SaveKeyBindings()
         {
+            var mods = SharedResources.Mods!;
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+
             string outPath;
-            if (SharedResources.Mods!.Locate("engine/default_keybindings.txt") != "")
+            if (mods.Locate("engine/default_keybindings.txt") != "")
             {
-                if (SharedResources.Settings!.Game == "")
+                if (settings.Game == "")
                 {
-                    Filesystem.CreateDir(SharedResources.Settings.PathUser + "saves/" + SharedResources.Eset!.Misc.SavePrefix);
-                    outPath = SharedResources.Settings.PathUser + "saves/" + SharedResources.Eset.Misc.SavePrefix + "/keybindings.txt";
+                    Filesystem.CreateDir(settings.PathUser + "saves/" + eset.Misc.SavePrefix);
+                    outPath = settings.PathUser + "saves/" + eset.Misc.SavePrefix + "/keybindings.txt";
                 }
                 else
                 {
-                    outPath = SharedResources.Settings.PathConf + "keybindings.txt";
+                    outPath = settings.PathConf + "keybindings.txt";
                 }
             }
             else
             {
-                outPath = SharedResources.Settings!.PathConf + "keybindings.txt";
+                outPath = settings.PathConf + "keybindings.txt";
             }
 
             StreamWriter? outfile;
@@ -685,16 +693,18 @@ namespace FlareEngine
         /// </summary>
         protected Int2 ScaleMouse(uint x, uint y)
         {
-            if (SharedResources.Settings!.MouseScaled)
+            var settings = SharedResources.Settings!;
+
+            if (settings.MouseScaled)
             {
                 return new Int2((int)x, (int)y);
             }
 
             Int2 scaledMouse = default;
-            int offsetY = (int)(((SharedResources.Settings.ScreenH - SharedResources.Settings.ViewH / SharedResources.Settings.ViewScaling) / 2) * SharedResources.Settings.ViewScaling);
+            int offsetY = (int)(((settings.ScreenH - settings.ViewH / settings.ViewScaling) / 2) * settings.ViewScaling);
 
-            scaledMouse.X = (int)((float)x * SharedResources.Settings.ViewScaling);
-            scaledMouse.Y = (int)((float)y * SharedResources.Settings.ViewScaling) - offsetY;
+            scaledMouse.X = (int)((float)x * settings.ViewScaling);
+            scaledMouse.Y = (int)((float)y * settings.ViewScaling) - offsetY;
 
             return scaledMouse;
         }

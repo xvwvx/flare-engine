@@ -68,11 +68,13 @@ namespace FlareEngine
         // C++: Image* AnimationMedia::getImageFromKey(const std::string& key)
         public Image? GetImageFromKey(string key)
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             if (_sprites.TryGetValue(key, out Image? img))
             {
                 if (img == null)
                 {
-                    img = SharedResources.RenderDevice!.LoadImage(_paths[key], RenderDevice.ErrorNormal);
+                    img = renderDevice.LoadImage(_paths[key], RenderDevice.ErrorNormal);
                     _sprites[key] = img;
                     if (img == null)
                     {
@@ -89,7 +91,7 @@ namespace FlareEngine
                 // “缺失”或“存在但为 null”两种情况，语义与原始 sprites[first_key] 完全等价。
                 if (!_sprites.TryGetValue(_firstKey, out Image? firstImg) || firstImg == null)
                 {
-                    firstImg = SharedResources.RenderDevice!.LoadImage(_firstPath, RenderDevice.ErrorNormal);
+                    firstImg = renderDevice.LoadImage(_firstPath, RenderDevice.ErrorNormal);
                     _sprites[_firstKey] = firstImg;
                 }
                 return firstImg;

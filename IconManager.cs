@@ -115,10 +115,13 @@ namespace FlareEngine
 
         private bool LoadIconSet(IconSet iconSet, string filename, int firstId)
         {
-            if (SharedResources.RenderDevice == null || SharedResources.Eset!.Resolutions.IconSize == 0)
+            var renderDevice = SharedResources.RenderDevice;
+            var eset = SharedResources.Eset!;
+
+            if (renderDevice == null || eset.Resolutions.IconSize == 0)
                 return false;
 
-            Image? graphics = SharedResources.RenderDevice!.LoadImage(filename, RenderDevice.ErrorNormal);
+            Image? graphics = renderDevice!.LoadImage(filename, RenderDevice.ErrorNormal);
             if (graphics != null)
             {
                 iconSet.Gfx = graphics.CreateSprite();
@@ -127,8 +130,8 @@ namespace FlareEngine
 
             if (iconSet.Gfx != null)
             {
-                int rows = iconSet.Gfx.GetGraphicsHeight() / SharedResources.Eset.Resolutions.IconSize;
-                iconSet.Columns = iconSet.Gfx.GetGraphicsWidth() / SharedResources.Eset.Resolutions.IconSize;
+                int rows = iconSet.Gfx.GetGraphicsHeight() / eset.Resolutions.IconSize;
+                iconSet.Columns = iconSet.Gfx.GetGraphicsWidth() / eset.Resolutions.IconSize;
 
                 if (iconSet.Columns == 0)
                 {
@@ -169,10 +172,11 @@ namespace FlareEngine
                 }
             }
 
+            var eset = SharedResources.Eset!;
             int offsetId = iconId - _currentSet!.IdBegin;
-            _currentSrc.X = (offsetId % _currentSet.Columns) * SharedResources.Eset!.Resolutions.IconSize;
-            _currentSrc.Y = (offsetId / _currentSet.Columns) * SharedResources.Eset.Resolutions.IconSize;
-            _currentSrc.Width = _currentSrc.Height = SharedResources.Eset.Resolutions.IconSize;
+            _currentSrc.X = (offsetId % _currentSet.Columns) * eset.Resolutions.IconSize;
+            _currentSrc.Y = (offsetId / _currentSet.Columns) * eset.Resolutions.IconSize;
+            _currentSrc.Width = _currentSrc.Height = eset.Resolutions.IconSize;
             _currentSet.Gfx!.SetClipFromRect(_currentSrc);
 
             _currentDest.X = destPos.X;

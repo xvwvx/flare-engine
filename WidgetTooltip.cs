@@ -22,8 +22,9 @@ namespace FlareEngine
 
         public WidgetTooltip()
         {
+            var renderDevice = SharedResources.RenderDevice!;
             Parent = null;
-            _background = SharedResources.RenderDevice!.LoadImage("images/menus/tooltips.png", RenderDevice.ErrorNone);
+            _background = renderDevice.LoadImage("images/menus/tooltips.png", RenderDevice.ErrorNone);
             _spriteBuf = null;
         }
 
@@ -49,13 +50,16 @@ namespace FlareEngine
         /// </summary>
         public Int2 CalcPosition(byte style, Int2 pos, Int2 size)
         {
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+
             Int2 tipPos = default;
 
             // TopLabel style is fixed and centered over the origin
             if (style == TooltipData.StyleTopLabel)
             {
                 tipPos.X = pos.X - size.X / 2;
-                tipPos.Y = pos.Y - SharedResources.Eset!.Tooltips.Offset;
+                tipPos.Y = pos.Y - eset.Tooltips.Offset;
             }
             // Float style changes position based on the screen quadrant of the origin
             // (usually used for tooltips which are long and we don't want them to overflow
@@ -74,75 +78,75 @@ namespace FlareEngine
                 }
 
                 // upper left
-                if (pos.X < SharedResources.Settings!.ViewWHalf && pos.Y < SharedResources.Settings.ViewHHalf)
+                if (pos.X < settings.ViewWHalf && pos.Y < settings.ViewHHalf)
                 {
                     if (Parent != null)
                     {
-                        if (root != null && root.Bounds.X > SharedResources.Settings.ViewW - (root.Bounds.X + root.Bounds.Width))
+                        if (root != null && root.Bounds.X > settings.ViewW - (root.Bounds.X + root.Bounds.Width))
                             tipPos.X = Parent.Bounds.X - size.X;
                         else
                             tipPos.X = Parent.Bounds.X + Parent.Bounds.Width;
                     }
                     else
-                        tipPos.X = pos.X + SharedResources.Eset!.Tooltips.Offset;
+                        tipPos.X = pos.X + eset.Tooltips.Offset;
 
-                    tipPos.Y = pos.Y + SharedResources.Eset!.Tooltips.Offset;
+                    tipPos.Y = pos.Y + eset.Tooltips.Offset;
                 }
                 // upper right
-                else if (pos.X >= SharedResources.Settings!.ViewWHalf && pos.Y < SharedResources.Settings.ViewHHalf)
+                else if (pos.X >= settings.ViewWHalf && pos.Y < settings.ViewHHalf)
                 {
                     if (Parent != null)
                     {
-                        if (root != null && root.Bounds.X < SharedResources.Settings.ViewW - (root.Bounds.X + root.Bounds.Width))
+                        if (root != null && root.Bounds.X < settings.ViewW - (root.Bounds.X + root.Bounds.Width))
                             tipPos.X = Parent.Bounds.X + Parent.Bounds.Width;
                         else
                             tipPos.X = Parent.Bounds.X - size.X;
                     }
                     else
-                        tipPos.X = pos.X - SharedResources.Eset!.Tooltips.Offset - size.X;
+                        tipPos.X = pos.X - eset.Tooltips.Offset - size.X;
 
-                    tipPos.Y = pos.Y + SharedResources.Eset!.Tooltips.Offset;
+                    tipPos.Y = pos.Y + eset.Tooltips.Offset;
                 }
                 // lower left
-                else if (pos.X < SharedResources.Settings!.ViewWHalf && pos.Y >= SharedResources.Settings.ViewHHalf)
+                else if (pos.X < settings.ViewWHalf && pos.Y >= settings.ViewHHalf)
                 {
                     if (Parent != null)
                     {
-                        if (root != null && root.Bounds.X > SharedResources.Settings.ViewW - (root.Bounds.X + root.Bounds.Width))
+                        if (root != null && root.Bounds.X > settings.ViewW - (root.Bounds.X + root.Bounds.Width))
                             tipPos.X = Parent.Bounds.X - size.X;
                         else
                             tipPos.X = Parent.Bounds.X + Parent.Bounds.Width;
                     }
                     else
-                        tipPos.X = pos.X + SharedResources.Eset!.Tooltips.Offset;
+                        tipPos.X = pos.X + eset.Tooltips.Offset;
 
-                    tipPos.Y = pos.Y - SharedResources.Eset!.Tooltips.Offset - size.Y;
+                    tipPos.Y = pos.Y - eset.Tooltips.Offset - size.Y;
                 }
                 // lower right
-                else if (pos.X >= SharedResources.Settings!.ViewWHalf && pos.Y >= SharedResources.Settings.ViewHHalf)
+                else if (pos.X >= settings.ViewWHalf && pos.Y >= settings.ViewHHalf)
                 {
                     if (Parent != null)
                     {
-                        if (root != null && root.Bounds.X < SharedResources.Settings.ViewW - (root.Bounds.X + root.Bounds.Width))
+                        if (root != null && root.Bounds.X < settings.ViewW - (root.Bounds.X + root.Bounds.Width))
                             tipPos.X = Parent.Bounds.X + Parent.Bounds.Width;
                         else
                             tipPos.X = Parent.Bounds.X - size.X;
                     }
                     else
-                        tipPos.X = pos.X - SharedResources.Eset!.Tooltips.Offset - size.X;
+                        tipPos.X = pos.X - eset.Tooltips.Offset - size.X;
 
-                    tipPos.Y = pos.Y - SharedResources.Eset!.Tooltips.Offset - size.Y;
+                    tipPos.Y = pos.Y - eset.Tooltips.Offset - size.Y;
                 }
 
                 // very large tooltips might still be off screen at this point
                 // so we try to constrain them to the screen bounds
                 // we give priority to being able to read the top-left of the tooltip over the bottom-right
                 // EXCEPTION: If the tooltip is a child of another, we don't constrain the x-axis
-                if (tipPos.X + size.X > SharedResources.Settings!.ViewW && Parent == null)
-                    tipPos.X = SharedResources.Settings.ViewW - size.X;
+                if (tipPos.X + size.X > settings.ViewW && Parent == null)
+                    tipPos.X = settings.ViewW - size.X;
 
-                if (tipPos.Y + size.Y > SharedResources.Settings.ViewH)
-                    tipPos.Y = SharedResources.Settings.ViewH - size.Y;
+                if (tipPos.Y + size.Y > settings.ViewH)
+                    tipPos.Y = settings.ViewH - size.Y;
 
                 if (tipPos.X < 0 && Parent == null)
                     tipPos.X = 0;
@@ -151,17 +155,17 @@ namespace FlareEngine
                     tipPos.Y = 0;
 
                 // try clamping x offset to middle of screen. This prevents most cases where child tips would go offscreen
-                if (pos.X < SharedResources.Settings!.ViewWHalf && Parent == null && tipPos.X + size.X > SharedResources.Settings.ViewWHalf)
+                if (pos.X < settings.ViewWHalf && Parent == null && tipPos.X + size.X > settings.ViewWHalf)
                 {
-                    Rectangle testRect = new Rectangle(SharedResources.Settings.ViewWHalf - size.X, tipPos.Y, size.X, size.Y);
+                    Rectangle testRect = new Rectangle(settings.ViewWHalf - size.X, tipPos.Y, size.X, size.Y);
                     if (!Utils.IsWithinRect(testRect, pos))
-                        tipPos.X -= (tipPos.X + size.X - SharedResources.Settings.ViewWHalf);
+                        tipPos.X -= (tipPos.X + size.X - settings.ViewWHalf);
                 }
-                else if (pos.X >= SharedResources.Settings!.ViewWHalf && Parent == null && tipPos.X < SharedResources.Settings.ViewWHalf)
+                else if (pos.X >= settings.ViewWHalf && Parent == null && tipPos.X < settings.ViewWHalf)
                 {
-                    Rectangle testRect = new Rectangle(SharedResources.Settings.ViewWHalf, tipPos.Y, size.X, size.Y);
+                    Rectangle testRect = new Rectangle(settings.ViewWHalf, tipPos.Y, size.X, size.Y);
                     if (!Utils.IsWithinRect(testRect, pos))
-                        tipPos.X += (SharedResources.Settings.ViewWHalf - tipPos.X);
+                        tipPos.X += (settings.ViewWHalf - tipPos.X);
                 }
             }
             else if (style == TooltipData.StyleAbsolute)
@@ -216,6 +220,10 @@ namespace FlareEngine
         /// </summary>
         public bool CreateBuffer(TooltipData tip)
         {
+            var eset = SharedResources.Eset!;
+            var font = SharedResources.Font!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             if (tip.Lines.Count == 0)
             {
                 tip.Lines.Clear();
@@ -232,10 +240,10 @@ namespace FlareEngine
                 fulltext = fulltext + "\n" + tip.Lines[i];
             }
 
-            SharedResources.Font!.SetFont("font_regular");
+            font.SetFont("font_regular");
 
             // calculate the full size to display a multi-line tooltip
-            Int2 size = SharedResources.Font.CalcSizeWrapped(fulltext, SharedResources.Eset!.Tooltips.Width - (SharedResources.Eset.Tooltips.Margin * 2));
+            Int2 size = font.CalcSizeWrapped(fulltext, eset.Tooltips.Width - (eset.Tooltips.Margin * 2));
 
             // WARNING: dynamic memory allocation. Be careful of memory leaks.
             if (_spriteBuf != null)
@@ -245,7 +253,7 @@ namespace FlareEngine
             }
 
             Image? graphics;
-            graphics = SharedResources.RenderDevice!.CreateImage(size.X + (SharedResources.Eset!.Tooltips.Margin * 2), size.Y + (SharedResources.Eset.Tooltips.Margin * 2));
+            graphics = renderDevice.CreateImage(size.X + (eset.Tooltips.Margin * 2), size.Y + (eset.Tooltips.Margin * 2));
 
             if (graphics == null)
             {
@@ -266,50 +274,50 @@ namespace FlareEngine
                 // top left
                 src.X = 0;
                 src.Y = 0;
-                src.Width = graphics.GetWidth() - SharedResources.Eset!.Tooltips.BackgroundBorder;
-                src.Height = graphics.GetHeight() - SharedResources.Eset!.Tooltips.BackgroundBorder;
+                src.Width = graphics.GetWidth() - eset.Tooltips.BackgroundBorder;
+                src.Height = graphics.GetHeight() - eset.Tooltips.BackgroundBorder;
                 dest.X = 0;
                 dest.Y = 0;
-                SharedResources.RenderDevice!.RenderToImage(_background, src, graphics, dest);
+                renderDevice.RenderToImage(_background, src, graphics, dest);
 
                 // right
-                src.X = _background.GetWidth() - SharedResources.Eset!.Tooltips.BackgroundBorder;
+                src.X = _background.GetWidth() - eset.Tooltips.BackgroundBorder;
                 src.Y = 0;
-                src.Width = SharedResources.Eset!.Tooltips.BackgroundBorder;
-                src.Height = graphics.GetHeight() - SharedResources.Eset!.Tooltips.BackgroundBorder;
-                dest.X = graphics.GetWidth() - SharedResources.Eset!.Tooltips.BackgroundBorder;
+                src.Width = eset.Tooltips.BackgroundBorder;
+                src.Height = graphics.GetHeight() - eset.Tooltips.BackgroundBorder;
+                dest.X = graphics.GetWidth() - eset.Tooltips.BackgroundBorder;
                 dest.Y = 0;
-                SharedResources.RenderDevice!.RenderToImage(_background, src, graphics, dest);
+                renderDevice.RenderToImage(_background, src, graphics, dest);
 
                 // bottom
                 src.X = 0;
-                src.Y = _background.GetHeight() - SharedResources.Eset!.Tooltips.BackgroundBorder;
-                src.Width = graphics.GetWidth() - SharedResources.Eset!.Tooltips.BackgroundBorder;
-                src.Height = SharedResources.Eset!.Tooltips.BackgroundBorder;
+                src.Y = _background.GetHeight() - eset.Tooltips.BackgroundBorder;
+                src.Width = graphics.GetWidth() - eset.Tooltips.BackgroundBorder;
+                src.Height = eset.Tooltips.BackgroundBorder;
                 dest.X = 0;
-                dest.Y = graphics.GetHeight() - SharedResources.Eset!.Tooltips.BackgroundBorder;
-                SharedResources.RenderDevice!.RenderToImage(_background, src, graphics, dest);
+                dest.Y = graphics.GetHeight() - eset.Tooltips.BackgroundBorder;
+                renderDevice.RenderToImage(_background, src, graphics, dest);
 
                 // bottom right
-                src.X = _background.GetWidth() - SharedResources.Eset!.Tooltips.BackgroundBorder;
-                src.Y = _background.GetHeight() - SharedResources.Eset!.Tooltips.BackgroundBorder;
-                src.Width = SharedResources.Eset!.Tooltips.BackgroundBorder;
-                src.Height = SharedResources.Eset!.Tooltips.BackgroundBorder;
-                dest.X = graphics.GetWidth() - SharedResources.Eset!.Tooltips.BackgroundBorder;
-                dest.Y = graphics.GetHeight() - SharedResources.Eset!.Tooltips.BackgroundBorder;
-                SharedResources.RenderDevice!.RenderToImage(_background, src, graphics, dest);
+                src.X = _background.GetWidth() - eset.Tooltips.BackgroundBorder;
+                src.Y = _background.GetHeight() - eset.Tooltips.BackgroundBorder;
+                src.Width = eset.Tooltips.BackgroundBorder;
+                src.Height = eset.Tooltips.BackgroundBorder;
+                dest.X = graphics.GetWidth() - eset.Tooltips.BackgroundBorder;
+                dest.Y = graphics.GetHeight() - eset.Tooltips.BackgroundBorder;
+                renderDevice.RenderToImage(_background, src, graphics, dest);
             }
 
-            int cursorY = SharedResources.Eset!.Tooltips.Margin;
+            int cursorY = eset.Tooltips.Margin;
 
             for (int i = 0; i < tip.Lines.Count; i++)
             {
                 if (_background != null)
-                    SharedResources.Font!.RenderShadowed(tip.Lines[i], SharedResources.Eset!.Tooltips.Margin, cursorY, FontEngine.JustifyLeft, graphics, size.X, tip.Colors[i]);
+                    font.RenderShadowed(tip.Lines[i], eset.Tooltips.Margin, cursorY, FontEngine.JustifyLeft, graphics, size.X, tip.Colors[i]);
                 else
-                    SharedResources.Font!.Render(tip.Lines[i], SharedResources.Eset!.Tooltips.Margin, cursorY, FontEngine.JustifyLeft, graphics, size.X, tip.Colors[i], !FontEngine.ShadowOffset);
+                    font.Render(tip.Lines[i], eset.Tooltips.Margin, cursorY, FontEngine.JustifyLeft, graphics, size.X, tip.Colors[i], !FontEngine.ShadowOffset);
 
-                cursorY = SharedResources.Font!.CursorY;
+                cursorY = font.CursorY;
             }
 
             _spriteBuf = graphics.CreateSprite();

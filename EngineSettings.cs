@@ -741,12 +741,13 @@ namespace FlareEngine
 
                 public HeroClass()
                 {
+                    var eset = SharedResources.Eset;
                     Name = "";
                     Description = "";
                     Currency = 0;
                     Equipment = "";
                     Carried = "";
-                    int primaryCount = SharedResources.Eset != null ? SharedResources.Eset.PrimaryStats.Stats.Count : 0;
+                    int primaryCount = eset != null ? eset.PrimaryStats.Stats.Count : 0;
                     Primary = new List<int>(new int[primaryCount]);
                     Hotkeys = new List<PowerID>(new PowerID[MenuActionBar.SlotMax]);
                     Powers = new List<PowerID>();
@@ -763,6 +764,9 @@ namespace FlareEngine
 
             public void Load()
             {
+                var eset = SharedResources.Eset!;
+                var msg = SharedResources.Msg!;
+
                 Classes.Clear();
 
                 HeroClass temp = new HeroClass();
@@ -853,9 +857,9 @@ namespace FlareEngine
                         else if (infile.Key == "primary")
                         {
                             string primStat = Parse.PopFirstString(ref infile.Val);
-                            int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(primStat);
+                            int primStatIndex = eset.PrimaryStats.GetIndexByID(primStat);
 
-                            if (primStatIndex != SharedResources.Eset.PrimaryStats.Stats.Count)
+                            if (primStatIndex != eset.PrimaryStats.Stats.Count)
                             {
                                 current.Primary[primStatIndex] = Parse.ToInt(infile.Val);
                             }
@@ -924,7 +928,7 @@ namespace FlareEngine
                 {
                     HeroClass c = new HeroClass();
                     c.Name = "Adventurer";
-                    SharedResources.Msg!.Get("Adventurer"); // this is needed for translation
+                    msg.Get("Adventurer"); // this is needed for translation
                     Classes.Add(c);
                 }
             }
@@ -976,6 +980,7 @@ namespace FlareEngine
 
             public void Load()
             {
+                var msg = SharedResources.Msg!;
                 Types.Clear();
                 Count = 0;
 
@@ -1025,15 +1030,15 @@ namespace FlareEngine
                         }
                         else if (infile.Key == "name")
                         {
-                            current.Name = SharedResources.Msg!.Get(infile.Val);
+                            current.Name = msg.Get(infile.Val);
                         }
                         else if (infile.Key == "name_short")
                         {
-                            current.NameShort = SharedResources.Msg!.Get(infile.Val);
+                            current.NameShort = msg.Get(infile.Val);
                         }
                         else if (infile.Key == "description")
                         {
-                            current.Description = SharedResources.Msg!.Get(infile.Val);
+                            current.Description = msg.Get(infile.Val);
                         }
                         else if (infile.Key == "min")
                         {
@@ -1105,7 +1110,7 @@ namespace FlareEngine
                                 current.Id = infile.Val;
                             }
                         }
-                        else if (infile.Key == "name") current.Name = SharedResources.Msg!.Get(infile.Val);
+                        else if (infile.Key == "name") current.Name = msg.Get(infile.Val);
                         else infile.Error("EngineSettings: '%s' is not a valid key.", infile.Key);
                     }
                     infile.Close();
@@ -1141,15 +1146,15 @@ namespace FlareEngine
                     }
                     if (string.IsNullOrEmpty(Types[i].NameMin))
                     {
-                        Types[i].NameMin = SharedResources.Msg!.GetV("%s (Min.)", Types[i].Name);
+                        Types[i].NameMin = msg.GetV("%s (Min.)", Types[i].Name);
                     }
                     if (string.IsNullOrEmpty(Types[i].NameMax))
                     {
-                        Types[i].NameMax = SharedResources.Msg!.GetV("%s (Max.)", Types[i].Name);
+                        Types[i].NameMax = msg.GetV("%s (Max.)", Types[i].Name);
                     }
                     if (string.IsNullOrEmpty(Types[i].NameResist))
                     {
-                        Types[i].NameResist = SharedResources.Msg!.GetV("Resist Damage (%s)", Types[i].NameShort);
+                        Types[i].NameResist = msg.GetV("Resist Damage (%s)", Types[i].NameShort);
                     }
                 }
             }
@@ -1264,9 +1269,11 @@ namespace FlareEngine
 
             public void Load()
             {
+                var eset = SharedResources.Eset!;
+                var msg = SharedResources.Msg!;
                 TooltipMargin = 0;
                 AutopickupCurrency = false;
-                AutopickupRange = SharedResources.Eset!.Misc.InteractRange;
+                AutopickupRange = eset.Misc.InteractRange;
                 Currency = "Gold";
                 VendorRatioBuy = 1.0f;
                 VendorRatioSell = 0.25f;
@@ -1297,7 +1304,7 @@ namespace FlareEngine
                         }
                         else if (infile.Key == "currency_name")
                         {
-                            Currency = SharedResources.Msg!.Get(infile.Val);
+                            Currency = msg.Get(infile.Val);
                         }
                         else if (infile.Key == "vendor_ratio_buy")
                         {
@@ -1469,6 +1476,8 @@ namespace FlareEngine
 
             public void Load()
             {
+                var font = SharedResources.Font!;
+
                 // reset to defaults
                 SelectionRectColor = new Color(255, 248, 220, 255);
                 SelectionRectCornerSize = 4;
@@ -1478,10 +1487,10 @@ namespace FlareEngine
                 TabTextPadding = 0;
 
                 SlotQuantityLabel = new LabelInfo();
-                SlotQuantityColor = SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal);
+                SlotQuantityColor = font.GetColor(FontEngine.ColorWidgetNormal);
                 SlotQuantityBgColor = new Color(0, 0, 0, 0);
                 SlotHotkeyLabel = new LabelInfo();
-                SlotHotkeyColor = SharedResources.Font.GetColor(FontEngine.ColorWidgetNormal);
+                SlotHotkeyColor = font.GetColor(FontEngine.ColorWidgetNormal);
                 SlotHotkeyLabel.Hidden = true;
                 SlotHotkeyBgColor = new Color(0, 0, 0, 0);
 
@@ -1789,6 +1798,8 @@ namespace FlareEngine
 
             public void Load()
             {
+                var msg = SharedResources.Msg!;
+
                 Stats.Clear();
                 StatCountValue = 0;
                 EffectCountValue = 0;
@@ -1848,23 +1859,23 @@ namespace FlareEngine
 
                         else if (infile.Key == "menu_filename") current.MenuFilename = infile.Val;
 
-                        else if (infile.Key == "text_base") current.Text[StatBase] = SharedResources.Msg!.Get(infile.Val);
-                        else if (infile.Key == "text_base_desc") current.TextDesc[StatBase] = SharedResources.Msg!.Get(infile.Val);
+                        else if (infile.Key == "text_base") current.Text[StatBase] = msg.Get(infile.Val);
+                        else if (infile.Key == "text_base_desc") current.TextDesc[StatBase] = msg.Get(infile.Val);
 
-                        else if (infile.Key == "text_regen") current.Text[StatRegen] = SharedResources.Msg!.Get(infile.Val);
-                        else if (infile.Key == "text_regen_desc") current.TextDesc[StatRegen] = SharedResources.Msg!.Get(infile.Val);
+                        else if (infile.Key == "text_regen") current.Text[StatRegen] = msg.Get(infile.Val);
+                        else if (infile.Key == "text_regen_desc") current.TextDesc[StatRegen] = msg.Get(infile.Val);
 
-                        else if (infile.Key == "text_steal") current.Text[StatSteal] = SharedResources.Msg!.Get(infile.Val);
-                        else if (infile.Key == "text_steal_desc") current.TextDesc[StatSteal] = SharedResources.Msg!.Get(infile.Val);
+                        else if (infile.Key == "text_steal") current.Text[StatSteal] = msg.Get(infile.Val);
+                        else if (infile.Key == "text_steal_desc") current.TextDesc[StatSteal] = msg.Get(infile.Val);
 
-                        else if (infile.Key == "text_resist_steal") current.Text[StatResistSteal] = SharedResources.Msg!.Get(infile.Val);
-                        else if (infile.Key == "text_resist_steal_desc") current.TextDesc[StatResistSteal] = SharedResources.Msg!.Get(infile.Val);
+                        else if (infile.Key == "text_resist_steal") current.Text[StatResistSteal] = msg.Get(infile.Val);
+                        else if (infile.Key == "text_resist_steal_desc") current.TextDesc[StatResistSteal] = msg.Get(infile.Val);
 
-                        else if (infile.Key == "text_combat_heal") current.TextCombatHeal = SharedResources.Msg!.Get(infile.Val);
-                        else if (infile.Key == "text_log_restore") current.TextLogRestore = SharedResources.Msg!.Get(infile.Val);
-                        else if (infile.Key == "text_log_low") current.TextLogLow = SharedResources.Msg!.Get(infile.Val);
-                        else if (infile.Key == "text_tooltip_heal") current.TextTooltipHeal = SharedResources.Msg!.Get(infile.Val);
-                        else if (infile.Key == "text_tooltip_cost") current.TextTooltipCost = SharedResources.Msg!.Get(infile.Val);
+                        else if (infile.Key == "text_combat_heal") current.TextCombatHeal = msg.Get(infile.Val);
+                        else if (infile.Key == "text_log_restore") current.TextLogRestore = msg.Get(infile.Val);
+                        else if (infile.Key == "text_log_low") current.TextLogLow = msg.Get(infile.Val);
+                        else if (infile.Key == "text_tooltip_heal") current.TextTooltipHeal = msg.Get(infile.Val);
+                        else if (infile.Key == "text_tooltip_cost") current.TextTooltipCost = msg.Get(infile.Val);
 
                         else infile.Error("EngineSettings: '%s' is not a valid key.", infile.Key);
                     }

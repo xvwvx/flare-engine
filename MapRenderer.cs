@@ -144,10 +144,12 @@ namespace FlareEngine
             _tset.Dispose();
             _mapParallax.Dispose();
 
-            SharedResources.Snd!.Reset();
+            var snd = SharedResources.Snd!;
+
+            snd.Reset();
             while (Sids.Count > 0)
             {
-                SharedResources.Snd.Unload(Sids[^1]);
+                snd.Unload(Sids[^1]);
                 Sids.RemoveAt(Sids.Count - 1);
             }
 
@@ -244,19 +246,24 @@ namespace FlareEngine
 
         public new int Load(string fname)
         {
-            SharedResources.Snd!.Reset();
+            var snd = SharedResources.Snd!;
+            var comb = SharedResources.Comb!;
+            var powers = SharedGameResources.Powers!;
+            var fow = SharedGameResources.Fow!;
+
+            snd.Reset();
             while (Sids.Count > 0)
             {
-                SharedResources.Snd.Unload(Sids[^1]);
+                snd.Unload(Sids[^1]);
                 Sids.RemoveAt(Sids.Count - 1);
             }
 
-            while (SharedGameResources.Powers!.MapEnemies.Count > 0)
+            while (powers.MapEnemies.Count > 0)
             {
-                SharedGameResources.Powers.MapEnemies.Dequeue();
+                powers.MapEnemies.Dequeue();
             }
 
-            SharedResources.Comb!.Clear();
+            comb.Clear();
 
             _showTooltip = false;
             IsSpawnMap = (fname == "maps/spawn.txt");
@@ -290,9 +297,9 @@ namespace FlareEngine
                 for (ushort i = 0; i < Layers.Count; ++i)
                 {
                     if (Layernames[i] == "fow_dark")
-                        SharedGameResources.Fow!.DarkLayerId = i;
+                        fow.DarkLayerId = i;
                     if (Layernames[i] == "fow_fog")
-                        SharedGameResources.Fow!.FogLayerId = i;
+                        fow.FogLayerId = i;
                 }
             }
 
@@ -315,12 +322,12 @@ namespace FlareEngine
 
                         if (Fogofwar == FogOfWar.TypeOverlay)
                         {
-                            if (i == SharedGameResources.Fow!.DarkLayerId) tileSet = SharedGameResources.Fow.TsetDark;
-                            if (i == SharedGameResources.Fow.FogLayerId) tileSet = SharedGameResources.Fow.TsetFog;
+                            if (i == fow.DarkLayerId) tileSet = fow.TsetDark;
+                            if (i == fow.FogLayerId) tileSet = fow.TsetFog;
                         }
                         if (Fogofwar != 0)
                         {
-                            if (i == SharedGameResources.Fow!.DarkLayerId || i == SharedGameResources.Fow.FogLayerId)
+                            if (i == fow.DarkLayerId || i == fow.FogLayerId)
                                 continue;
                         }
 
@@ -355,30 +362,35 @@ namespace FlareEngine
 
         public void LoadMusic()
         {
-            if (!SharedResources.Settings!.Audio) return;
+            var settings = SharedResources.Settings!;
+            var snd = SharedResources.Snd!;
 
-            if (SharedResources.Settings.MusicVolume > 0)
+            if (!settings.Audio) return;
+
+            if (settings.MusicVolume > 0)
             {
-                SharedResources.Snd!.LoadMusic(MusicFilename);
+                snd.LoadMusic(MusicFilename);
             }
             else
             {
-                SharedResources.Snd!.StopMusic();
+                snd.StopMusic();
             }
         }
 
         public void Logic(bool paused)
         {
+            var fow = SharedGameResources.Fow!;
+
             if (Fogofwar != 0)
             {
-                SharedGameResources.Fow!.Logic();
+                fow.Logic();
             }
 
             _tset.Logic();
             if (Fogofwar == FogOfWar.TypeOverlay)
             {
-                SharedGameResources.Fow!.TsetDark.Logic();
-                SharedGameResources.Fow.TsetFog.Logic();
+                fow.TsetDark.Logic();
+                fow.TsetFog.Logic();
             }
 
             if (paused)
@@ -492,9 +504,15 @@ namespace FlareEngine
             short i;
             short j;
             Int2 dest;
+
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var fow = SharedGameResources.Fow!;
+
             Int2 upperleft = Utils.ScreenToMap(0, 0, Cam.Shake.X, Cam.Shake.Y).ToInt2();
-            short maxTilesWidth = (short)((SharedResources.Settings!.ViewW / SharedResources.Eset!.Tileset.TileW) + 2 * _tset.MaxSizeX);
-            short maxTilesHeight = (short)((2 * SharedResources.Settings.ViewH / SharedResources.Eset.Tileset.TileH) + 2 * (_tset.MaxSizeY + 1));
+            short maxTilesWidth = (short)((settings.ViewW / eset.Tileset.TileW) + 2 * _tset.MaxSizeX);
+            short maxTilesHeight = (short)((2 * settings.ViewH / eset.Tileset.TileH) + 2 * (_tset.MaxSizeY + 1));
 
             j = (short)(upperleft.Y - _tset.MaxSizeY / 2 + _tset.MaxSizeX);
             i = (short)(upperleft.X - _tset.MaxSizeY / 2 - _tset.MaxSizeX);
@@ -527,7 +545,7 @@ namespace FlareEngine
                     --j;
                     ++i;
                     ++tilesWidth;
-                    p.X += SharedResources.Eset!.Tileset.TileW;
+                    p.X += eset.Tileset.TileW;
 
                     ushort currentTile = layerdata[i][j];
                     if (currentTile != 0)
@@ -540,9 +558,9 @@ namespace FlareEngine
 
                             if (Fogofwar == FogOfWar.TypeOverlay)
                             {
-                                if (!ReferenceEquals(layerdata, Layers[(int)SharedGameResources.Fow!.DarkLayerId]))
+                                if (!ReferenceEquals(layerdata, Layers[(int)fow.DarkLayerId]))
                                 {
-                                    if (Layers[(int)SharedGameResources.Fow.DarkLayerId][i][j] == FogOfWar.TileHidden)
+                                    if (Layers[(int)fow.DarkLayerId][i][j] == FogOfWar.TileHidden)
                                     {
                                         Int2 tL = Utils.ScreenToMap(dest.X, dest.Y, Cam.Shake.X, Cam.Shake.Y).ToInt2();
                                         Int2 tR = Utils.ScreenToMap(dest.X + tile.Tile.GetClip().Width, dest.Y, Cam.Shake.X, Cam.Shake.Y).ToInt2();
@@ -569,13 +587,13 @@ namespace FlareEngine
                                         if (bR.Y < 0) bR.Y = 0;
                                         if (bR.Y >= H) bR.Y = H - 1;
 
-                                        if (Layers[(int)SharedGameResources.Fow!.DarkLayerId][tL.X][tL.Y] == FogOfWar.TileHidden)
+                                        if (Layers[(int)fow.DarkLayerId][tL.X][tL.Y] == FogOfWar.TileHidden)
                                         {
-                                            if (Layers[(int)SharedGameResources.Fow.DarkLayerId][tR.X][tR.Y] == FogOfWar.TileHidden)
+                                            if (Layers[(int)fow.DarkLayerId][tR.X][tR.Y] == FogOfWar.TileHidden)
                                             {
-                                                if (Layers[(int)SharedGameResources.Fow.DarkLayerId][bL.X][bL.Y] == FogOfWar.TileHidden)
+                                                if (Layers[(int)fow.DarkLayerId][bL.X][bL.Y] == FogOfWar.TileHidden)
                                                 {
-                                                    if (Layers[(int)SharedGameResources.Fow.DarkLayerId][bR.X][bR.Y] == FogOfWar.TileHidden)
+                                                    if (Layers[(int)fow.DarkLayerId][bR.X][bR.Y] == FogOfWar.TileHidden)
                                                     {
                                                         continue;
                                                     }
@@ -589,14 +607,14 @@ namespace FlareEngine
                             tile.Tile.SetDestFromPoint(dest);
                             if (Fogofwar == FogOfWar.TypeTint)
                             {
-                                tile.Tile.ColorMod = SharedGameResources.Fow!.GetTileColorMod(i, j);
+                                tile.Tile.ColorMod = fow.GetTileColorMod(i, j);
                             }
                             tile.Tile.AlphaMod = 255;
-                            if (SharedResources.Settings!.FadeWalls && SharedResources.Eset!.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, layerdata))
+                            if (settings.FadeWalls && eset.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, layerdata))
                             {
                                 FadeOverlapTile(tile, i, j, layerdata);
                             }
-                            SharedResources.RenderDevice!.Render(tile.Tile);
+                            renderDevice.Render(tile.Tile);
                         }
                     }
                 }
@@ -615,13 +633,18 @@ namespace FlareEngine
                 DrawRenderable(r, it);
         }
 
-                private void RenderIsoFrontObjects(List<Renderable> r)
+        private void RenderIsoFrontObjects(List<Renderable> r)
         {
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var fow = SharedGameResources.Fow!;
+
             Int2 dest;
 
             Int2 upperleft = Utils.ScreenToMap(0, 0, Cam.Shake.X, Cam.Shake.Y).ToInt2();
-            short maxTilesWidth = (short)((SharedResources.Settings!.ViewW / SharedResources.Eset!.Tileset.TileW) + 2 * _tset.MaxSizeX);
-            short maxTilesHeight = (short)(((SharedResources.Settings.ViewH / SharedResources.Eset.Tileset.TileH) + 2 * _tset.MaxSizeY) * 2);
+            short maxTilesWidth = (short)((settings.ViewW / eset.Tileset.TileW) + 2 * _tset.MaxSizeX);
+            short maxTilesHeight = (short)(((settings.ViewH / eset.Tileset.TileH) + 2 * _tset.MaxSizeY) * 2);
 
             int rCursor = 0;
             int rEnd = r.Count;
@@ -677,7 +700,7 @@ namespace FlareEngine
                     --j;
                     ++i;
                     ++tilesWidth;
-                    p.X += SharedResources.Eset!.Tileset.TileW;
+                    p.X += eset.Tileset.TileW;
 
                     bool drawTile = true;
 
@@ -713,9 +736,9 @@ namespace FlareEngine
 
                                 if (Fogofwar == FogOfWar.TypeOverlay)
                                 {
-                                    if (!ReferenceEquals(currentLayer, Layers[(int)SharedGameResources.Fow!.DarkLayerId]))
+                                    if (!ReferenceEquals(currentLayer, Layers[(int)fow.DarkLayerId]))
                                     {
-                                        if (Layers[(int)SharedGameResources.Fow.DarkLayerId][i][j] == FogOfWar.TileHidden)
+                                        if (Layers[(int)fow.DarkLayerId][i][j] == FogOfWar.TileHidden)
                                         {
                                             Int2 tL = Utils.ScreenToMap(dest.X, dest.Y, Cam.Shake.X, Cam.Shake.Y).ToInt2();
                                             Int2 tR = Utils.ScreenToMap(dest.X + tile.Tile.GetClip().Width, dest.Y, Cam.Shake.X, Cam.Shake.Y).ToInt2();
@@ -742,13 +765,13 @@ namespace FlareEngine
                                             if (bR.Y < 0) bR.Y = 0;
                                             if (bR.Y >= H) bR.Y = H - 1;
 
-                                            if (Layers[(int)SharedGameResources.Fow!.DarkLayerId][tL.X][tL.Y] == FogOfWar.TileHidden)
+                                            if (Layers[(int)fow.DarkLayerId][tL.X][tL.Y] == FogOfWar.TileHidden)
                                             {
-                                                if (Layers[(int)SharedGameResources.Fow.DarkLayerId][tR.X][tR.Y] == FogOfWar.TileHidden)
+                                                if (Layers[(int)fow.DarkLayerId][tR.X][tR.Y] == FogOfWar.TileHidden)
                                                 {
-                                                    if (Layers[(int)SharedGameResources.Fow.DarkLayerId][bL.X][bL.Y] == FogOfWar.TileHidden)
+                                                    if (Layers[(int)fow.DarkLayerId][bL.X][bL.Y] == FogOfWar.TileHidden)
                                                     {
-                                                        if (Layers[(int)SharedGameResources.Fow.DarkLayerId][bR.X][bR.Y] == FogOfWar.TileHidden)
+                                                        if (Layers[(int)fow.DarkLayerId][bR.X][bR.Y] == FogOfWar.TileHidden)
                                                         {
                                                             continue;
                                                         }
@@ -761,14 +784,14 @@ namespace FlareEngine
 
                                 if (Fogofwar == FogOfWar.TypeTint)
                                 {
-                                    tile.Tile.ColorMod = SharedGameResources.Fow!.GetTileColorMod(i, j);
+                                    tile.Tile.ColorMod = fow.GetTileColorMod(i, j);
                                 }
                                 tile.Tile.AlphaMod = 255;
-                                if (SharedResources.Settings!.FadeWalls && SharedResources.Eset!.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, currentLayer))
+                                if (settings.FadeWalls && eset.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, currentLayer))
                                 {
                                     FadeOverlapTile(tile, i, j, currentLayer);
                                 }
-                                SharedResources.RenderDevice!.Render(tile.Tile);
+                                renderDevice.Render(tile.Tile);
                                 drawnTiles[i][j] = 1;
                             }
                         }
@@ -866,14 +889,14 @@ namespace FlareEngine
                                 tile.Tile.SetDestFromPoint(dest);
                                 if (Fogofwar == FogOfWar.TypeTint)
                                 {
-                                    tile.Tile.ColorMod = SharedGameResources.Fow!.GetTileColorMod(i, j);
+                                    tile.Tile.ColorMod = fow.GetTileColorMod(i, j);
                                 }
                                 tile.Tile.AlphaMod = 255;
-                                if (SharedResources.Settings!.FadeWalls && SharedResources.Eset!.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero((short)(i - 2), (short)(j + 2), currentLayer))
+                                if (settings.FadeWalls && eset.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero((short)(i - 2), (short)(j + 2), currentLayer))
                                 {
                                     FadeOverlapTile(tile, (short)(i - 2), (short)(j + 2), currentLayer);
                                 }
-                                SharedResources.RenderDevice!.Render(tile.Tile);
+                                renderDevice.Render(tile.Tile);
                                 drawnTiles[i - 2][j + 2] = 1;
                             }
                         }
@@ -897,14 +920,14 @@ namespace FlareEngine
                                 tile.Tile.SetDestFromPoint(dest);
                                 if (Fogofwar == FogOfWar.TypeTint)
                                 {
-                                    tile.Tile.ColorMod = SharedGameResources.Fow!.GetTileColorMod(i, j);
+                                    tile.Tile.ColorMod = fow.GetTileColorMod(i, j);
                                 }
                                 tile.Tile.AlphaMod = 255;
-                                if (SharedResources.Settings!.FadeWalls && SharedResources.Eset!.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, currentLayer))
+                                if (settings.FadeWalls && eset.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, currentLayer))
                                 {
                                     FadeOverlapTile(tile, i, j, currentLayer);
                                 }
-                                SharedResources.RenderDevice!.Render(tile.Tile);
+                                renderDevice.Render(tile.Tile);
                                 drawnTiles[i][j] = 1;
                             }
                         }
@@ -991,12 +1014,18 @@ namespace FlareEngine
         private void RenderOrthoLayer(List<List<ushort>> layerdata, TileSet tileSet)
         {
             Int2 dest;
+
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var fow = SharedGameResources.Fow!;
+
             Int2 upperleft = Utils.ScreenToMap(0, 0, Cam.Shake.X, Cam.Shake.Y).ToInt2();
 
             short startj = (short)Math.Max(0, upperleft.Y);
             short starti = (short)Math.Max(0, upperleft.X);
-            short maxTilesWidth = (short)Math.Min(W, starti + (SharedResources.Settings!.ViewW / SharedResources.Eset!.Tileset.TileW) + 2 * _tset.MaxSizeX);
-            short maxTilesHeight = (short)Math.Min(H, startj + (SharedResources.Settings.ViewH / SharedResources.Eset.Tileset.TileH) + 2 * _tset.MaxSizeY);
+            short maxTilesWidth = (short)Math.Min(W, starti + (settings.ViewW / eset.Tileset.TileW) + 2 * _tset.MaxSizeX);
+            short maxTilesHeight = (short)Math.Min(H, startj + (settings.ViewH / eset.Tileset.TileH) + 2 * _tset.MaxSizeY);
 
             short i;
             short j;
@@ -1020,9 +1049,9 @@ namespace FlareEngine
 
                             if (Fogofwar == FogOfWar.TypeOverlay)
                             {
-                                if (!ReferenceEquals(layerdata, Layers[(int)SharedGameResources.Fow!.DarkLayerId]))
+                                if (!ReferenceEquals(layerdata, Layers[(int)fow.DarkLayerId]))
                                 {
-                                    if (Layers[(int)SharedGameResources.Fow.DarkLayerId][i][j] == FogOfWar.TileHidden)
+                                    if (Layers[(int)fow.DarkLayerId][i][j] == FogOfWar.TileHidden)
                                     {
                                         Int2 tL = Utils.ScreenToMap(dest.X, dest.Y, Cam.Shake.X, Cam.Shake.Y).ToInt2();
                                         Int2 tR = Utils.ScreenToMap(dest.X + tile.Tile.GetClip().Width, dest.Y, Cam.Shake.X, Cam.Shake.Y).ToInt2();
@@ -1049,13 +1078,13 @@ namespace FlareEngine
                                         if (bR.Y < 0) bR.Y = 0;
                                         if (bR.Y >= H) bR.Y = H - 1;
 
-                                        if (Layers[(int)SharedGameResources.Fow!.DarkLayerId][tL.X][tL.Y] == FogOfWar.TileHidden)
+                                        if (Layers[(int)fow.DarkLayerId][tL.X][tL.Y] == FogOfWar.TileHidden)
                                         {
-                                            if (Layers[(int)SharedGameResources.Fow.DarkLayerId][tR.X][tR.Y] == FogOfWar.TileHidden)
+                                            if (Layers[(int)fow.DarkLayerId][tR.X][tR.Y] == FogOfWar.TileHidden)
                                             {
-                                                if (Layers[(int)SharedGameResources.Fow.DarkLayerId][bL.X][bL.Y] == FogOfWar.TileHidden)
+                                                if (Layers[(int)fow.DarkLayerId][bL.X][bL.Y] == FogOfWar.TileHidden)
                                                 {
-                                                    if (Layers[(int)SharedGameResources.Fow.DarkLayerId][bR.X][bR.Y] == FogOfWar.TileHidden)
+                                                    if (Layers[(int)fow.DarkLayerId][bR.X][bR.Y] == FogOfWar.TileHidden)
                                                     {
                                                         skipTileRender = true;
                                                     }
@@ -1071,18 +1100,18 @@ namespace FlareEngine
                             {
                                 if (Fogofwar == FogOfWar.TypeTint)
                                 {
-                                    tile.Tile.ColorMod = SharedGameResources.Fow!.GetTileColorMod(i, j);
+                                    tile.Tile.ColorMod = fow.GetTileColorMod(i, j);
                                 }
                                 tile.Tile.AlphaMod = 255;
-                                if (SharedResources.Settings!.FadeWalls && SharedResources.Eset!.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, layerdata))
+                                if (settings.FadeWalls && eset.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, layerdata))
                                 {
                                     FadeOverlapTile(tile, i, j, layerdata);
                                 }
-                                SharedResources.RenderDevice!.Render(tile.Tile);
+                                renderDevice.Render(tile.Tile);
                             }
                         }
                     }
-                    p.X += SharedResources.Eset!.Tileset.TileW;
+                    p.X += eset.Tileset.TileW;
                 }
             }
         }
@@ -1101,12 +1130,17 @@ namespace FlareEngine
             int rCursor = 0;
             int rEnd = r.Count;
 
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var fow = SharedGameResources.Fow!;
+
             Int2 upperleft = Utils.ScreenToMap(0, 0, Cam.Shake.X, Cam.Shake.Y).ToInt2();
 
             short startj = (short)Math.Max(0, upperleft.Y);
             short starti = (short)Math.Max(0, upperleft.X);
-            short maxTilesWidth = (short)Math.Min(W, starti + (SharedResources.Settings!.ViewW / SharedResources.Eset!.Tileset.TileW) + 2 * _tset.MaxSizeX);
-            short maxTilesHeight = (short)Math.Min(H, startj + (SharedResources.Settings.ViewH / SharedResources.Eset.Tileset.TileH) + 2 * _tset.MaxSizeY);
+            short maxTilesWidth = (short)Math.Min(W, starti + (settings.ViewW / eset.Tileset.TileW) + 2 * _tset.MaxSizeX);
+            short maxTilesHeight = (short)Math.Min(H, startj + (settings.ViewH / eset.Tileset.TileH) + 2 * _tset.MaxSizeY);
 
             while (rCursor < rEnd && (int)r[rCursor].MapPos.Y < startj)
                 ++rCursor;
@@ -1134,9 +1168,9 @@ namespace FlareEngine
 
                             if (Fogofwar == FogOfWar.TypeOverlay)
                             {
-                                if (!ReferenceEquals(Layers[(int)IndexObjectlayer], Layers[(int)SharedGameResources.Fow!.DarkLayerId]))
+                                if (!ReferenceEquals(Layers[(int)IndexObjectlayer], Layers[(int)fow.DarkLayerId]))
                                 {
-                                    if (Layers[(int)SharedGameResources.Fow.DarkLayerId][i][j] == FogOfWar.TileHidden)
+                                    if (Layers[(int)fow.DarkLayerId][i][j] == FogOfWar.TileHidden)
                                     {
                                         Int2 tL = Utils.ScreenToMap(dest.X, dest.Y, Cam.Shake.X, Cam.Shake.Y).ToInt2();
                                         Int2 tR = Utils.ScreenToMap(dest.X + tile.Tile.GetClip().Width, dest.Y, Cam.Shake.X, Cam.Shake.Y).ToInt2();
@@ -1163,13 +1197,13 @@ namespace FlareEngine
                                         if (bR.Y < 0) bR.Y = 0;
                                         if (bR.Y >= H) bR.Y = H - 1;
 
-                                        if (Layers[(int)SharedGameResources.Fow!.DarkLayerId][tL.X][tL.Y] == FogOfWar.TileHidden)
+                                        if (Layers[(int)fow.DarkLayerId][tL.X][tL.Y] == FogOfWar.TileHidden)
                                         {
-                                            if (Layers[(int)SharedGameResources.Fow.DarkLayerId][tR.X][tR.Y] == FogOfWar.TileHidden)
+                                            if (Layers[(int)fow.DarkLayerId][tR.X][tR.Y] == FogOfWar.TileHidden)
                                             {
-                                                if (Layers[(int)SharedGameResources.Fow.DarkLayerId][bL.X][bL.Y] == FogOfWar.TileHidden)
+                                                if (Layers[(int)fow.DarkLayerId][bL.X][bL.Y] == FogOfWar.TileHidden)
                                                 {
-                                                    if (Layers[(int)SharedGameResources.Fow.DarkLayerId][bR.X][bR.Y] == FogOfWar.TileHidden)
+                                                    if (Layers[(int)fow.DarkLayerId][bR.X][bR.Y] == FogOfWar.TileHidden)
                                                     {
                                                         skipTileRender = true;
                                                     }
@@ -1184,18 +1218,18 @@ namespace FlareEngine
                             {
                                 if (Fogofwar == FogOfWar.TypeTint)
                                 {
-                                    tile.Tile.ColorMod = SharedGameResources.Fow!.GetTileColorMod(i, j);
+                                    tile.Tile.ColorMod = fow.GetTileColorMod(i, j);
                                 }
                                 tile.Tile.AlphaMod = 255;
-                                if (SharedResources.Settings!.FadeWalls && SharedResources.Eset!.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, Layers[(int)IndexObjectlayer]))
+                                if (settings.FadeWalls && eset.Misc.FadeWallAlpha < 255 && CheckTileOverlappingHero(i, j, Layers[(int)IndexObjectlayer]))
                                 {
                                     FadeOverlapTile(tile, i, j, Layers[(int)IndexObjectlayer]);
                                 }
-                                SharedResources.RenderDevice!.Render(tile.Tile);
+                                renderDevice.Render(tile.Tile);
                             }
                         }
                     }
-                    p.X += SharedResources.Eset!.Tileset.TileW;
+                    p.X += eset.Tileset.TileW;
 
                     while (rCursor < rEnd && (int)r[rCursor].MapPos.Y == j && (int)r[rCursor].MapPos.X < i)
                         ++rCursor;
@@ -1259,17 +1293,20 @@ namespace FlareEngine
 
         public void ExecuteOnLoadEvents()
         {
-            if (SharedResources.Settings!.LoadScript.Length > 0 && Filename != "maps/spawn.txt")
+            var settings = SharedResources.Settings!;
+            var eventm = SharedGameResources.Eventm!;
+
+            if (settings.LoadScript.Length > 0 && Filename != "maps/spawn.txt")
             {
                 Event evnt = new Event();
                 EventComponent ec = new EventComponent();
 
                 ec.Type = EventComponent.Script;
-                ec.S = SharedResources.Settings.LoadScript;
-                SharedResources.Settings.LoadScript = "";
+                ec.S = settings.LoadScript;
+                settings.LoadScript = "";
 
                 evnt.Components.Add(ec);
-                SharedGameResources.Eventm!.ExecuteEvent(evnt);
+                eventm.ExecuteEvent(evnt);
 
                 return;
             }
@@ -1278,12 +1315,12 @@ namespace FlareEngine
             {
                 --it;
 
-                if (!SharedGameResources.Eventm!.IsActive(Events[it]))
+                if (!eventm.IsActive(Events[it]))
                     continue;
 
                 if (Events[it].ActivateType == Event.ActivateOnLoad)
                 {
-                    if (SharedGameResources.Eventm.ExecuteEvent(Events[it]))
+                    if (eventm.ExecuteEvent(Events[it]))
                         Events.RemoveAt(it);
                 }
             }
@@ -1292,12 +1329,12 @@ namespace FlareEngine
             {
                 --it;
 
-                if (!SharedGameResources.Eventm!.IsActive(Events[it]))
+                if (!eventm.IsActive(Events[it]))
                     continue;
 
                 if (Events[it].ActivateType == Event.ActivateStatic)
                 {
-                    if (SharedGameResources.Eventm.ExecuteEvent(Events[it]))
+                    if (eventm.ExecuteEvent(Events[it]))
                         Events.RemoveAt(it);
                 }
             }
@@ -1305,13 +1342,15 @@ namespace FlareEngine
 
         public void ExecuteOnMapExitEvents()
         {
+            var eventm = SharedGameResources.Eventm!;
+
             for (int it = 0; it < Events.Count; ++it)
             {
-                if (!SharedGameResources.Eventm!.IsActive(Events[it]))
+                if (!eventm.IsActive(Events[it]))
                     continue;
 
                 if (Events[it].ActivateType == Event.ActivateOnMapexit)
-                    SharedGameResources.Eventm.ExecuteEvent(Events[it]);
+                    eventm.ExecuteEvent(Events[it]);
             }
         }
 
@@ -1321,23 +1360,25 @@ namespace FlareEngine
             maploc.X = (int)loc.X;
             maploc.Y = (int)loc.Y;
 
+            var eventm = SharedGameResources.Eventm!;
+
             for (int it = Events.Count; it > 0; )
             {
                 --it;
 
-                if (!SharedGameResources.Eventm!.IsActive(Events[it]))
+                if (!eventm.IsActive(Events[it]))
                     continue;
 
                 if (Events[it].ActivateType == Event.ActivateStatic)
                 {
-                    if (SharedGameResources.Eventm.ExecuteEvent(Events[it]))
+                    if (eventm.ExecuteEvent(Events[it]))
                         Events.RemoveAt(it);
                     continue;
                 }
 
                 if (Events[it].ActivateType == Event.ActivateOnClear)
                 {
-                    if (EnemiesCleared && SharedGameResources.Eventm.ExecuteEvent(Events[it]))
+                    if (EnemiesCleared && eventm.ExecuteEvent(Events[it]))
                         Events.RemoveAt(it);
                     continue;
                 }
@@ -1362,7 +1403,7 @@ namespace FlareEngine
                         if (Events[it].GetComponent(EventComponent.WasInsideEventArea) != null)
                         {
                             Events[it].DeleteAllComponents(EventComponent.WasInsideEventArea);
-                            if (SharedGameResources.Eventm.ExecuteEvent(Events[it]))
+                            if (eventm.ExecuteEvent(Events[it]))
                                 Events.RemoveAt(it);
                         }
                     }
@@ -1370,7 +1411,7 @@ namespace FlareEngine
                 else if (Events[it].ActivateType == Event.ActivateOnTrigger)
                 {
                     if (inside)
-                        if (SharedGameResources.Eventm.ExecuteEvent(Events[it]))
+                        if (eventm.ExecuteEvent(Events[it]))
                             Events.RemoveAt(it);
                 }
             }
@@ -1381,27 +1422,36 @@ namespace FlareEngine
             if (!SharedResources.Inpt!.UsingMouse())
                 return;
 
+            var inpt = SharedResources.Inpt!;
+            var pc = SharedGameResources.Pc!;
+            var settings = SharedResources.Settings!;
+            var eventm = SharedGameResources.Eventm!;
+            var eset = SharedResources.Eset!;
+            var npcs = SharedGameResources.Npcs!;
+            var curs = SharedResources.Curs!;
+            var mapr = SharedGameResources.Mapr!;
+
             _showTooltip = false;
 
-            Int2 mousePos = SharedResources.Inpt.Mouse;
-            bool mouseMoveTarget = SharedGameResources.Pc!.MmTargetObject == Avatar.MmTargetEvent && SharedGameResources.Pc.IsNearMMtarget();
-            if (mouseMoveTarget && (SharedGameResources.Pc.Stats.CurState == StatBlock.EntityStance || SharedGameResources.Pc.Stats.CurState == StatBlock.EntityMove))
+            Int2 mousePos = inpt.Mouse;
+            bool mouseMoveTarget = pc.MmTargetObject == Avatar.MmTargetEvent && pc.IsNearMMtarget();
+            if (mouseMoveTarget && (pc.Stats.CurState == StatBlock.EntityStance || pc.Stats.CurState == StatBlock.EntityMove))
             {
-                SharedGameResources.Pc.Stats.CurState = StatBlock.EntityStance;
-                mousePos = Utils.MapToScreen(SharedGameResources.Pc.MmTargetObjectPos.X, SharedGameResources.Pc.MmTargetObjectPos.Y, Cam.Shake.X, Cam.Shake.Y);
+                pc.Stats.CurState = StatBlock.EntityStance;
+                mousePos = Utils.MapToScreen(pc.MmTargetObjectPos.X, pc.MmTargetObjectPos.Y, Cam.Shake.X, Cam.Shake.Y);
             }
-            else if (SharedGameResources.Pc.MmTargetObject == Avatar.MmTargetEvent && SharedGameResources.Pc.Stats.CurState == StatBlock.EntityStance)
+            else if (pc.MmTargetObject == Avatar.MmTargetEvent && pc.Stats.CurState == StatBlock.EntityStance)
             {
-                SharedGameResources.Pc.Stats.CurState = StatBlock.EntityMove;
+                pc.Stats.CurState = StatBlock.EntityMove;
             }
 
-            int interactKey = (SharedResources.Settings!.MouseMove && SharedResources.Settings.MouseMoveSwap) ? Input.Main2 : Input.Main1;
+            int interactKey = (settings.MouseMove && settings.MouseMoveSwap) ? Input.Main2 : Input.Main1;
 
             for (int it = Events.Count; it > 0; )
             {
                 --it;
 
-                if (!SharedGameResources.Eventm!.IsActive(Events[it]))
+                if (!eventm.IsActive(Events[it]))
                     continue;
 
                 if (Events[it].Hotspot.Height == 0)
@@ -1427,16 +1477,16 @@ namespace FlareEngine
                             p = CenterTile(p);
 
                             Rectangle dest = default;
-                            if (npc.Id < SharedGameResources.Npcs!.Npcs.Count)
+                            if (npc.Id < npcs.Npcs.Count)
                             {
-                                dest = SharedGameResources.Npcs.Npcs[npc.Id].GetRenderBounds(Cam.Pos);
+                                dest = npcs.Npcs[npc.Id].GetRenderBounds(Cam.Pos);
                             }
 
                             if (Utils.IsWithinRect(dest, mousePos))
                             {
                                 matched = true;
                                 _tipPos.X = dest.X + dest.Width / 2;
-                                _tipPos.Y = p.Y - SharedResources.Eset!.Tooltips.MarginNpc;
+                                _tipPos.Y = p.Y - eset.Tooltips.MarginNpc;
                             }
                         }
                         else
@@ -1462,7 +1512,7 @@ namespace FlareEngine
                                         {
                                             matched = true;
                                             _tipPos = Utils.MapToScreen(Events[it].Center.X, Events[it].Center.Y, Cam.Shake.X, Cam.Shake.Y);
-                                            _tipPos.Y -= SharedResources.Eset!.Tileset.TileH;
+                                            _tipPos.Y -= eset.Tileset.TileH;
                                         }
                                     }
                                 }
@@ -1474,61 +1524,61 @@ namespace FlareEngine
                             CreateTooltip(Events[it].GetComponent(EventComponent.Tooltip));
 
                             if (((Events[it].ReachableFrom.Width == 0 && Events[it].ReachableFrom.Height == 0) || Utils.IsWithinRect(Events[it].ReachableFrom, new Int2((int)Cam.Pos.X, (int)Cam.Pos.Y)))
-                                    && Utils.CalcDist(SharedGameResources.Pc!.Stats.Pos, Events[it].Center) < SharedResources.Eset!.Misc.InteractRange)
+                                    && Utils.CalcDist(pc.Stats.Pos, Events[it].Center) < eset.Misc.InteractRange)
                             {
                                 if (!mouseMoveTarget)
                                 {
                                     if (isNpc)
                                     {
-                                        SharedResources.Curs!.SetCursor(CursorManager.CursorTalk);
+                                        curs.SetCursor(CursorManager.CursorTalk);
                                     }
                                     else
                                     {
-                                        SharedResources.Curs!.SetCursor(CursorManager.CursorInteract);
+                                        curs.SetCursor(CursorManager.CursorInteract);
                                     }
-                                    if (!SharedResources.Inpt!.Pressing[interactKey]) return;
-                                    else if (SharedResources.Inpt.Lock[interactKey]) return;
-                                    else if (interactKey == Input.Main1 && SharedGameResources.Pc.UsingMain1) return;
-                                    else if (interactKey == Input.Main2 && SharedGameResources.Pc.UsingMain2) return;
+                                    if (!inpt.Pressing[interactKey]) return;
+                                    else if (inpt.Lock[interactKey]) return;
+                                    else if (interactKey == Input.Main1 && pc.UsingMain1) return;
+                                    else if (interactKey == Input.Main2 && pc.UsingMain2) return;
 
-                                    SharedResources.Inpt.Lock[interactKey] = true;
+                                    inpt.Lock[interactKey] = true;
                                 }
                                 else
                                 {
-                                    SharedGameResources.Pc.MmTargetObject = Avatar.MmTargetNone;
+                                    pc.MmTargetObject = Avatar.MmTargetNone;
                                 }
 
-                                if (SharedGameResources.Eventm!.ExecuteEvent(Events[it]))
+                                if (eventm.ExecuteEvent(Events[it]))
                                     Events.RemoveAt(it);
                             }
-                            else if (SharedResources.Settings!.MouseMove)
+                            else if (settings.MouseMove)
                             {
                                 if (isNpc)
                                 {
-                                    SharedResources.Curs!.SetCursor(CursorManager.CursorTalk);
+                                    curs.SetCursor(CursorManager.CursorTalk);
                                 }
                                 else
                                 {
-                                    SharedResources.Curs!.SetCursor(CursorManager.CursorInteract);
+                                    curs.SetCursor(CursorManager.CursorInteract);
                                 }
 
-                                if (SharedResources.Inpt!.Pressing[interactKey] && !SharedResources.Inpt.Lock[interactKey])
+                                if (inpt.Pressing[interactKey] && !inpt.Lock[interactKey])
                                 {
-                                    SharedResources.Inpt.Lock[interactKey] = true;
+                                    inpt.Lock[interactKey] = true;
 
-                                    if (!SharedGameResources.Mapr!.Collider.IsValidPosition(Events[it].Center.X, Events[it].Center.Y, SharedGameResources.Pc!.Stats.MovementType, MapCollision.CollideTypeHero))
+                                    if (!mapr.Collider.IsValidPosition(Events[it].Center.X, Events[it].Center.Y, pc.Stats.MovementType, MapCollision.CollideTypeHero))
                                     {
-                                        Vector2 nearbyTarget = SharedGameResources.Mapr.Collider.GetRandomNeighbor(new Int2((int)Events[it].Center.X, (int)Events[it].Center.Y), 1, SharedGameResources.Pc.Stats.MovementType, MapCollision.CollideTypeHero);
-                                        SharedGameResources.Pc.SetDesiredMMTarget(ref nearbyTarget);
+                                        Vector2 nearbyTarget = mapr.Collider.GetRandomNeighbor(new Int2((int)Events[it].Center.X, (int)Events[it].Center.Y), 1, pc.Stats.MovementType, MapCollision.CollideTypeHero);
+                                        pc.SetDesiredMMTarget(ref nearbyTarget);
                                     }
                                     else
                                     {
                                         Vector2 center = Events[it].Center;
-                                        SharedGameResources.Pc.SetDesiredMMTarget(ref center);
+                                        pc.SetDesiredMMTarget(ref center);
                                     }
 
-                                    SharedGameResources.Pc.MmTargetObject = Avatar.MmTargetEvent;
-                                    SharedGameResources.Pc.MmTargetObjectPos = Events[it].Center;
+                                    pc.MmTargetObject = Avatar.MmTargetEvent;
+                                    pc.MmTargetObjectPos = Events[it].Center;
                                 }
                             }
                             return;
@@ -1542,7 +1592,11 @@ namespace FlareEngine
 
         public void CheckNearestEvent()
         {
-            if (!SharedResources.Inpt!.UsingMouse())
+            var inpt = SharedResources.Inpt!;
+            var eventm = SharedGameResources.Eventm!;
+            var eset = SharedResources.Eset!;
+
+            if (!inpt.UsingMouse())
                 _showTooltip = false;
 
             int nearest = -1;
@@ -1552,7 +1606,7 @@ namespace FlareEngine
             {
                 --it;
 
-                if (!SharedGameResources.Eventm!.IsActive(Events[it]))
+                if (!eventm.IsActive(Events[it]))
                     continue;
 
                 if (Events[it].Hotspot.Height == 0)
@@ -1563,7 +1617,7 @@ namespace FlareEngine
 
                 float distance = Utils.CalcDist(SharedGameResources.Pc!.Stats.Pos, Events[it].Center);
                 if (((Events[it].ReachableFrom.Width == 0 && Events[it].ReachableFrom.Height == 0) || Utils.IsWithinRect(Events[it].ReachableFrom, new Int2((int)Cam.Pos.X, (int)Cam.Pos.Y)))
-                        && distance < SharedResources.Eset!.Misc.InteractRange && distance < bestDistance)
+                        && distance < eset.Misc.InteractRange && distance < bestDistance)
                 {
                     bestDistance = distance;
                     nearest = it;
@@ -1572,25 +1626,25 @@ namespace FlareEngine
 
             if (nearest != -1)
             {
-                if (!SharedResources.Inpt!.UsingMouse() || SharedResources.Inpt.UsingTouchscreen())
+                if (!inpt.UsingMouse() || inpt.UsingTouchscreen())
                 {
                     CreateTooltip(Events[nearest].GetComponent(EventComponent.Tooltip));
                     _tipPos = Utils.MapToScreen(Events[nearest].Center.X, Events[nearest].Center.Y, Cam.Shake.X, Cam.Shake.Y);
                     if (Events[nearest].GetComponent(EventComponent.NpcHotspot) != null)
                     {
-                        _tipPos.Y -= SharedResources.Eset!.Tooltips.MarginNpc;
+                        _tipPos.Y -= eset.Tooltips.MarginNpc;
                     }
                     else
                     {
-                        _tipPos.Y -= SharedResources.Eset!.Tileset.TileH;
+                        _tipPos.Y -= eset.Tileset.TileH;
                     }
                 }
 
-                if (SharedResources.Inpt!.Pressing[Input.Accept] && !SharedResources.Inpt.Lock[Input.Accept])
+                if (inpt.Pressing[Input.Accept] && !inpt.Lock[Input.Accept])
                 {
-                    SharedResources.Inpt.Lock[Input.Accept] = true;
+                    inpt.Lock[Input.Accept] = true;
 
-                    if (SharedGameResources.Eventm!.ExecuteEvent(Events[nearest]))
+                    if (eventm.ExecuteEvent(Events[nearest]))
                         Events.RemoveAt(nearest);
                 }
             }
@@ -1657,13 +1711,15 @@ namespace FlareEngine
         {
             Int2 r = p;
 
-            if (SharedResources.Eset!.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal)
+            var eset = SharedResources.Eset!;
+
+            if (eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal)
             {
-                r.X += SharedResources.Eset.Tileset.TileWHalf;
-                r.Y += SharedResources.Eset.Tileset.TileHHalf;
+                r.X += eset.Tileset.TileWHalf;
+                r.Y += eset.Tileset.TileHHalf;
             }
             else
-                r.Y += SharedResources.Eset.Tileset.TileHHalf;
+                r.Y += eset.Tileset.TileHHalf;
             return r;
         }
 
@@ -1691,36 +1747,42 @@ namespace FlareEngine
             if (!(SharedResources.Settings!.DevMode && SharedGameResources.Menu!.Devconsole!.Visible))
                 return;
 
+            var eset = SharedResources.Eset!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var pc = SharedGameResources.Pc!;
+            var menu = SharedGameResources.Menu!;
+            var inpt = SharedResources.Inpt!;
+
             Color devCursorColor = new Color(255, 255, 0, 255);
-            Vector2 target = Utils.ScreenToMap(SharedResources.Inpt!.Mouse.X, SharedResources.Inpt.Mouse.Y, Cam.Shake.X, Cam.Shake.Y);
+            Vector2 target = Utils.ScreenToMap(inpt.Mouse.X, inpt.Mouse.Y, Cam.Shake.X, Cam.Shake.Y);
 
             if (!Collider.IsOutsideMap(MathF.Floor(target.X), MathF.Floor(target.Y)))
             {
-                if (SharedResources.Eset!.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal)
+                if (eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal)
                 {
                     Int2 pTopleft = Utils.MapToScreen(MathF.Floor(target.X), MathF.Floor(target.Y), Cam.Shake.X, Cam.Shake.Y);
-                    Int2 pBottomright = new Int2(pTopleft.X + SharedResources.Eset.Tileset.TileW, pTopleft.Y + SharedResources.Eset.Tileset.TileH);
+                    Int2 pBottomright = new Int2(pTopleft.X + eset.Tileset.TileW, pTopleft.Y + eset.Tileset.TileH);
 
-                    SharedResources.RenderDevice!.DrawRectangle(pTopleft, pBottomright, devCursorColor);
+                    renderDevice.DrawRectangle(pTopleft, pBottomright, devCursorColor);
                 }
                 else
                 {
                     Int2 pLeft = Utils.MapToScreen(MathF.Floor(target.X), MathF.Floor(target.Y + 1), Cam.Shake.X, Cam.Shake.Y);
-                    Int2 pTop = new Int2(pLeft.X + SharedResources.Eset.Tileset.TileWHalf, pLeft.Y - SharedResources.Eset.Tileset.TileHHalf);
-                    Int2 pRight = new Int2(pLeft.X + SharedResources.Eset.Tileset.TileW, pLeft.Y);
-                    Int2 pBottom = new Int2(pLeft.X + SharedResources.Eset.Tileset.TileWHalf, pLeft.Y + SharedResources.Eset.Tileset.TileHHalf);
+                    Int2 pTop = new Int2(pLeft.X + eset.Tileset.TileWHalf, pLeft.Y - eset.Tileset.TileHHalf);
+                    Int2 pRight = new Int2(pLeft.X + eset.Tileset.TileW, pLeft.Y);
+                    Int2 pBottom = new Int2(pLeft.X + eset.Tileset.TileWHalf, pLeft.Y + eset.Tileset.TileHHalf);
 
-                    SharedResources.RenderDevice!.DrawLine(pLeft.X, pLeft.Y, pTop.X, pTop.Y, devCursorColor);
-                    SharedResources.RenderDevice!.DrawLine(pTop.X, pTop.Y, pRight.X, pRight.Y, devCursorColor);
-                    SharedResources.RenderDevice!.DrawLine(pRight.X, pRight.Y, pBottom.X, pBottom.Y, devCursorColor);
-                    SharedResources.RenderDevice!.DrawLine(pBottom.X, pBottom.Y, pLeft.X, pLeft.Y, devCursorColor);
+                    renderDevice.DrawLine(pLeft.X, pLeft.Y, pTop.X, pTop.Y, devCursorColor);
+                    renderDevice.DrawLine(pTop.X, pTop.Y, pRight.X, pRight.Y, devCursorColor);
+                    renderDevice.DrawLine(pRight.X, pRight.Y, pBottom.X, pBottom.Y, devCursorColor);
+                    renderDevice.DrawLine(pBottom.X, pBottom.Y, pLeft.X, pLeft.Y, devCursorColor);
                 }
 
-                if (SharedGameResources.Menu!.Devconsole!.DistanceTimer.IsEnd())
+                if (menu.Devconsole!.DistanceTimer.IsEnd())
                 {
-                    Int2 p0 = Utils.MapToScreen(SharedGameResources.Menu.Devconsole.Target.X, SharedGameResources.Menu.Devconsole.Target.Y, Cam.Shake.X, Cam.Shake.Y);
-                    Int2 p1 = Utils.MapToScreen(SharedGameResources.Pc!.Stats.Pos.X, SharedGameResources.Pc.Stats.Pos.Y, Cam.Shake.X, Cam.Shake.Y);
-                    SharedResources.RenderDevice!.DrawLine(p0.X, p0.Y, p1.X, p1.Y, devCursorColor);
+                    Int2 p0 = Utils.MapToScreen(menu.Devconsole.Target.X, menu.Devconsole.Target.Y, Cam.Shake.X, Cam.Shake.Y);
+                    Int2 p1 = Utils.MapToScreen(pc.Stats.Pos.X, pc.Stats.Pos.Y, Cam.Shake.X, Cam.Shake.Y);
+                    renderDevice.DrawLine(p0.X, p0.Y, p1.X, p1.Y, devCursorColor);
                 }
             }
         }
@@ -1730,19 +1792,26 @@ namespace FlareEngine
             if (!(SharedResources.Settings!.DevMode && SharedResources.Settings.DevHud))
                 return;
 
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var pc = SharedGameResources.Pc!;
+            var entitym = SharedGameResources.Entitym!;
+            var hazards = SharedGameResources.Hazards!;
+
             Color colorHazard = new Color(255, 0, 0, 255);
             Color colorEntity = new Color(0, 255, 0, 255);
             Color colorCam = new Color(255, 255, 0, 255);
             Color colorPath = new Color(0, 255, 255, 255);
             Color colorPathPursue = new Color(0, 127, 127, 255);
-            int crossSize = SharedResources.Eset!.Tileset.TileHHalf / 4;
+            int crossSize = eset.Tileset.TileHHalf / 4;
 
-            int distort = SharedResources.Eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal ? 1 : 2;
+            int distort = eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal ? 1 : 2;
 
             // 绘制碰撞层（仅遍历当前可视区域，碰撞瓦片按类型着色）
             {
                 Int2 upperleft = Utils.ScreenToMap(0, 0, Cam.Shake.X, Cam.Shake.Y).ToInt2();
-                Int2 lowerright = Utils.ScreenToMap(SharedResources.Settings.ViewW, SharedResources.Settings.ViewH, Cam.Shake.X, Cam.Shake.Y).ToInt2();
+                Int2 lowerright = Utils.ScreenToMap(settings.ViewW, settings.ViewH, Cam.Shake.X, Cam.Shake.Y).ToInt2();
 
                 int margin = _tset.MaxSizeX + _tset.MaxSizeY + 2;
                 int startX = Math.Max(0, Math.Min(upperleft.X, lowerright.X) - margin);
@@ -1768,24 +1837,24 @@ namespace FlareEngine
 
             {
                 Int2 p0 = Utils.MapToScreen(Cam.Pos.X, Cam.Pos.Y, Cam.Shake.X, Cam.Shake.Y);
-                SharedResources.RenderDevice!.DrawLine(p0.X - crossSize, p0.Y, p0.X + crossSize, p0.Y, colorCam);
-                SharedResources.RenderDevice!.DrawLine(p0.X, p0.Y - crossSize, p0.X, p0.Y + crossSize, colorCam);
+                renderDevice.DrawLine(p0.X - crossSize, p0.Y, p0.X + crossSize, p0.Y, colorCam);
+                renderDevice.DrawLine(p0.X, p0.Y - crossSize, p0.X, p0.Y + crossSize, colorCam);
             }
 
             {
-                Int2 p0 = Utils.MapToScreen(SharedGameResources.Pc!.Stats.Pos.X, SharedGameResources.Pc.Stats.Pos.Y, Cam.Shake.X, Cam.Shake.Y);
-                SharedResources.RenderDevice!.DrawLine(p0.X - crossSize, p0.Y, p0.X + crossSize, p0.Y, colorEntity);
-                SharedResources.RenderDevice!.DrawLine(p0.X, p0.Y - crossSize, p0.X, p0.Y + crossSize, colorEntity);
+                Int2 p0 = Utils.MapToScreen(pc.Stats.Pos.X, pc.Stats.Pos.Y, Cam.Shake.X, Cam.Shake.Y);
+                renderDevice.DrawLine(p0.X - crossSize, p0.Y, p0.X + crossSize, p0.Y, colorEntity);
+                renderDevice.DrawLine(p0.X, p0.Y - crossSize, p0.X, p0.Y + crossSize, colorEntity);
 
-                List<Vector2> path = SharedGameResources.Pc.Path;
+                List<Vector2> path = pc.Path;
 
                 if (path.Count == 0)
                 {
-                    ref Vector2 mmTarget = ref SharedGameResources.Pc.MMTarget;
+                    ref Vector2 mmTarget = ref pc.MMTarget;
                     if (!(mmTarget.X == -1 && mmTarget.Y == -1))
                     {
                         Int2 p1 = Utils.MapToScreen(mmTarget.X, mmTarget.Y, Cam.Shake.X, Cam.Shake.Y);
-                        SharedResources.RenderDevice!.DrawLine(p0.X, p0.Y, p1.X, p1.Y, colorPathPursue);
+                        renderDevice.DrawLine(p0.X, p0.Y, p1.X, p1.Y, colorPathPursue);
                     }
                 }
                 else
@@ -1796,31 +1865,31 @@ namespace FlareEngine
                     {
                         p1 = Utils.MapToScreen(path[j].X, path[j].Y, Cam.Shake.X, Cam.Shake.Y);
                         p2 = Utils.MapToScreen(path[j + 1].X, path[j + 1].Y, Cam.Shake.X, Cam.Shake.Y);
-                        SharedResources.RenderDevice!.DrawLine(p1.X, p1.Y, p2.X, p2.Y, colorPath);
+                        renderDevice.DrawLine(p1.X, p1.Y, p2.X, p2.Y, colorPath);
                     }
                     p1 = Utils.MapToScreen(path[^1].X, path[^1].Y, Cam.Shake.X, Cam.Shake.Y);
-                    SharedResources.RenderDevice!.DrawLine(p0.X, p0.Y, p1.X, p1.Y, colorPath);
+                    renderDevice.DrawLine(p0.X, p0.Y, p1.X, p1.Y, colorPath);
                 }
             }
 
-            for (int i = 0; i < SharedGameResources.Entitym!.Entities.Count; ++i)
+            for (int i = 0; i < entitym.Entities.Count; ++i)
             {
-                Int2 p0 = Utils.MapToScreen(SharedGameResources.Entitym.Entities[i].Stats.Pos.X, SharedGameResources.Entitym.Entities[i].Stats.Pos.Y, Cam.Shake.X, Cam.Shake.Y);
-                SharedResources.RenderDevice!.DrawLine(p0.X - crossSize, p0.Y, p0.X + crossSize, p0.Y, colorEntity);
-                SharedResources.RenderDevice!.DrawLine(p0.X, p0.Y - crossSize, p0.X, p0.Y + crossSize, colorEntity);
+                Int2 p0 = Utils.MapToScreen(entitym.Entities[i].Stats.Pos.X, entitym.Entities[i].Stats.Pos.Y, Cam.Shake.X, Cam.Shake.Y);
+                renderDevice.DrawLine(p0.X - crossSize, p0.Y, p0.X + crossSize, p0.Y, colorEntity);
+                renderDevice.DrawLine(p0.X, p0.Y - crossSize, p0.X, p0.Y + crossSize, colorEntity);
 
-                if (SharedGameResources.Entitym.Entities[i].Stats.Corpse)
+                if (entitym.Entities[i].Stats.Corpse)
                     continue;
 
-                List<Vector2> path = SharedGameResources.Entitym.Entities[i].Behavior!.Path;
+                List<Vector2> path = entitym.Entities[i].Behavior!.Path;
 
                 if (path.Count == 0)
                 {
-                    Vector2 pursuePos = SharedGameResources.Entitym.Entities[i].Behavior.PursuePos;
+                    Vector2 pursuePos = entitym.Entities[i].Behavior.PursuePos;
                     if (!(pursuePos.X == -1 && pursuePos.Y == -1))
                     {
                         Int2 p1 = Utils.MapToScreen(pursuePos.X, pursuePos.Y, Cam.Shake.X, Cam.Shake.Y);
-                        SharedResources.RenderDevice!.DrawLine(p0.X, p0.Y, p1.X, p1.Y, colorPathPursue);
+                        renderDevice.DrawLine(p0.X, p0.Y, p1.X, p1.Y, colorPathPursue);
                     }
                 }
                 else
@@ -1831,25 +1900,25 @@ namespace FlareEngine
                     {
                         p1 = Utils.MapToScreen(path[j].X, path[j].Y, Cam.Shake.X, Cam.Shake.Y);
                         p2 = Utils.MapToScreen(path[j + 1].X, path[j + 1].Y, Cam.Shake.X, Cam.Shake.Y);
-                        SharedResources.RenderDevice!.DrawLine(p1.X, p1.Y, p2.X, p2.Y, colorPath);
+                        renderDevice.DrawLine(p1.X, p1.Y, p2.X, p2.Y, colorPath);
                     }
                     p1 = Utils.MapToScreen(path[^1].X, path[^1].Y, Cam.Shake.X, Cam.Shake.Y);
-                    SharedResources.RenderDevice!.DrawLine(p0.X, p0.Y, p1.X, p1.Y, colorPath);
+                    renderDevice.DrawLine(p0.X, p0.Y, p1.X, p1.Y, colorPath);
                 }
             }
 
-            for (int i = 0; i < SharedGameResources.Hazards!.H.Count; ++i)
+            for (int i = 0; i < hazards.H.Count; ++i)
             {
-                if (SharedGameResources.Hazards.H[i].DelayFrames != 0)
+                if (hazards.H[i].DelayFrames != 0)
                     continue;
 
-                Int2 p0 = Utils.MapToScreen(SharedGameResources.Hazards.H[i].Pos.X, SharedGameResources.Hazards.H[i].Pos.Y, Cam.Shake.X, Cam.Shake.Y);
-                Int2 p1 = Utils.MapToScreen(SharedGameResources.Hazards.H[i].Pos.X + SharedGameResources.Hazards.H[i].HazardPower!.Radius, SharedGameResources.Hazards.H[i].Pos.Y, Cam.Shake.X, Cam.Shake.Y);
+                Int2 p0 = Utils.MapToScreen(hazards.H[i].Pos.X, hazards.H[i].Pos.Y, Cam.Shake.X, Cam.Shake.Y);
+                Int2 p1 = Utils.MapToScreen(hazards.H[i].Pos.X + hazards.H[i].HazardPower!.Radius, hazards.H[i].Pos.Y, Cam.Shake.X, Cam.Shake.Y);
                 int radius = p1.X - p0.X;
-                SharedResources.RenderDevice!.DrawLine(p0.X - crossSize, p0.Y, p0.X + crossSize, p0.Y, colorHazard);
-                SharedResources.RenderDevice!.DrawLine(p0.X, p0.Y - crossSize, p0.X, p0.Y + crossSize, colorHazard);
+                renderDevice.DrawLine(p0.X - crossSize, p0.Y, p0.X + crossSize, p0.Y, colorHazard);
+                renderDevice.DrawLine(p0.X, p0.Y - crossSize, p0.X, p0.Y + crossSize, colorHazard);
 
-                SharedResources.RenderDevice!.DrawEllipse(p0.X - radius, p0.Y - radius / distort, p0.X + radius, p0.Y + radius / distort, colorHazard, 15);
+                renderDevice.DrawEllipse(p0.X - radius, p0.Y - radius / distort, p0.X + radius, p0.Y + radius / distort, colorHazard, 15);
             }
         }
 

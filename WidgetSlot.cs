@@ -81,14 +81,16 @@ namespace FlareEngine
             _labelHotkey = new WidgetLabel();
             _labelColorblindHighlight = new WidgetLabel();
 
-            EngineSettings eset = SharedResources.Eset!;
+            var eset = SharedResources.Eset!;
+            var font = SharedResources.Font!;
+
             _labelAmount.SetFromLabelInfo(eset.Widgets.SlotQuantityLabel);
             _labelAmount.SetColor(eset.Widgets.SlotQuantityColor);
             _labelHotkey.SetFromLabelInfo(eset.Widgets.SlotHotkeyLabel);
             _labelHotkey.SetColor(eset.Widgets.SlotHotkeyColor);
 
             _labelColorblindHighlight.SetText("*");
-            _labelColorblindHighlight.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            _labelColorblindHighlight.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             // in case the hotkey string is long (we only have a fixed set of short keynames), keep the label width to the icon size
             _labelHotkey.SetMaxWidth(eset.Resolutions.IconSize);
@@ -267,8 +269,9 @@ namespace FlareEngine
 
             _amountStr = Utils.AbbreviateKilo(_amount);
 
-            EngineSettings eset = SharedResources.Eset!;
-            IconManager icons = SharedResources.Icons!;
+            var eset = SharedResources.Eset!;
+            var icons = SharedResources.Icons!;
+            var renderDevice = SharedResources.RenderDevice!;
 
             if ((_amount > 1 || _maxAmount > 1) && !eset.Widgets.SlotQuantityLabel.Hidden)
             {
@@ -288,7 +291,7 @@ namespace FlareEngine
 
                     if (eset.Widgets.SlotQuantityBgColor.A != 0)
                     {
-                        Image? temp = SharedResources.RenderDevice!.CreateImage(r.Width, r.Height);
+                        Image? temp = renderDevice.CreateImage(r.Width, r.Height);
                         if (temp != null)
                         {
                             temp.FillWithColor(eset.Widgets.SlotQuantityBgColor);
@@ -309,9 +312,10 @@ namespace FlareEngine
         {
             _hotkey = key;
 
-            EngineSettings eset = SharedResources.Eset!;
-            IconManager icons = SharedResources.Icons!;
-            InputState inpt = SharedResources.Inpt!;
+            var eset = SharedResources.Eset!;
+            var icons = SharedResources.Icons!;
+            var inpt = SharedResources.Inpt!;
+            var renderDevice = SharedResources.RenderDevice!;
 
             if (_hotkey != -1 && !eset.Widgets.SlotHotkeyLabel.Hidden)
             {
@@ -331,7 +335,7 @@ namespace FlareEngine
 
                     if (eset.Widgets.SlotHotkeyBgColor.A != 0)
                     {
-                        Image? temp = SharedResources.RenderDevice!.CreateImage(r.Width, r.Height);
+                        Image? temp = renderDevice.CreateImage(r.Width, r.Height);
                         if (temp != null)
                         {
                             temp.FillWithColor(eset.Widgets.SlotHotkeyBgColor);

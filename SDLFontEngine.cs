@@ -95,6 +95,7 @@ namespace FlareEngine
 
         public SDLFontEngine()
         {
+            var mods = SharedResources.Mods!;
             _activeFont = null;
 
             // Initiate SDL_ttf
@@ -102,7 +103,7 @@ namespace FlareEngine
             {
                 Utils.LogError("SDLFontEngine: TTF_Init: %s", TtfGetError());
                 Utils.LogErrorDialog("SDLFontEngine: TTF_Init: %s", TtfGetError());
-                SharedResources.Mods!.ResetModConfig();
+                mods.ResetModConfig();
                 Utils.Exit(2);
             }
 
@@ -209,12 +210,12 @@ namespace FlareEngine
             {
                 SDLFontStyle style = _fontStyles[i];
 
-                string fontPath = SharedResources.Mods!.Locate(style.Path);
+                string fontPath = mods.Locate(style.Path);
 
                 // check inside the "fonts/" directory if we can't find our font
-                if (!Filesystem.FileExists(SharedResources.Mods!.Locate(style.Path)))
+                if (!Filesystem.FileExists(mods.Locate(style.Path)))
                 {
-                    fontPath = SharedResources.Mods!.Locate("fonts/" + style.Path);
+                    fontPath = mods.Locate("fonts/" + style.Path);
                     if (fontPath == "")
                         Utils.LogError("FontEngine: Could not find font file: '%s'", style.Path);
                 }
@@ -401,6 +402,8 @@ namespace FlareEngine
         /// </summary>
         protected override void RenderInternal(string text, int x, int y, int justify, Image target, Color color, bool shadow)
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             if (!IsActiveFontValid() || text == "")
                 return;
 
@@ -414,7 +417,7 @@ namespace FlareEngine
 
             // Render text into target
             // We render the same thing twice because blending with itself produces visually clearer text, especially on noisy backgrounds
-            graphics = SharedResources.RenderDevice!.RenderTextToImage(_activeFont!, text, color, _activeFont.Blend);
+            graphics = renderDevice.RenderTextToImage(_activeFont!, text, color, _activeFont.Blend);
             if (graphics != null)
             {
                 if (target != null)
@@ -422,8 +425,8 @@ namespace FlareEngine
                     Rectangle clip = default;
                     clip.Width = graphics.GetWidth();
                     clip.Height = graphics.GetHeight();
-                    SharedResources.RenderDevice!.RenderToImage(graphics, clip, target, destRect);
-                    SharedResources.RenderDevice!.RenderToImage(graphics, clip, target, destRect);
+                    renderDevice.RenderToImage(graphics, clip, target, destRect);
+                    renderDevice.RenderToImage(graphics, clip, target, destRect);
                 }
                 else
                 {
@@ -432,8 +435,8 @@ namespace FlareEngine
                     if (tempSprite != null)
                     {
                         tempSprite.SetDestFromRect(destRect);
-                        SharedResources.RenderDevice!.Render(tempSprite);
-                        SharedResources.RenderDevice!.Render(tempSprite);
+                        renderDevice.Render(tempSprite);
+                        renderDevice.Render(tempSprite);
                         tempSprite.Dispose();
                     }
                 }

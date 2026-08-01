@@ -292,6 +292,14 @@ namespace FlareEngine
 
         public MenuConfig(bool isGameState)
         {
+            var font = SharedResources.Font!;
+            var settings = SharedResources.Settings!;
+            var msg = SharedResources.Msg!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var mods = SharedResources.Mods!;
+            var eset = SharedResources.Eset!;
+            var inpt = SharedResources.Inpt!;
+
             _isGameState = isGameState;
             _enableGamestateButtons = false;
             _hero = null;
@@ -429,11 +437,11 @@ namespace FlareEngine
             BackgroundOffset = new Int2(0, TabControl.GetTabHeight() - (TabControl.GetTabHeight() / 16));
             ScrollpaneColor = new Color(0, 0, 0, 0);
             ScrollpanePadding = new Int2(8, 40);
-            ScrollpaneSeparatorColor = SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled);
-            NewRenderDevice = SharedResources.Settings!.RenderDeviceName;
-            InputConfirmTimer = new Timer((uint)(SharedResources.Settings.MaxFramesPerSec * 10));
+            ScrollpaneSeparatorColor = font.GetColor(FontEngine.ColorWidgetDisabled);
+            NewRenderDevice = settings.RenderDeviceName;
+            InputConfirmTimer = new Timer((uint)(settings.MaxFramesPerSec * 10));
             InputAction = 0;
-            KeybindTipTimer = new Timer((uint)(SharedResources.Settings.MaxFramesPerSec * 5));
+            KeybindTipTimer = new Timer((uint)(settings.MaxFramesPerSec * 5));
             KeybindTip = new WidgetTooltip();
             ClickedAccept = false;
             ClickedCancel = false;
@@ -444,45 +452,45 @@ namespace FlareEngine
             ClickedPauseSave = false;
             ShowFrameBackground = false;
 
-            InputConfirm.SetTitle(SharedResources.Msg!.Get("Assign:"));
-            InputConfirm.ActionList!.Append(SharedResources.Msg.Get("New"), "");
-            InputConfirm.ActionList.Append(SharedResources.Msg.Get("Clear"), "");
+            InputConfirm.SetTitle(msg.Get("Assign:"));
+            InputConfirm.ActionList!.Append(msg.Get("New"), "");
+            InputConfirm.ActionList.Append(msg.Get("Clear"), "");
 
-            DefaultsConfirm.SetTitle(SharedResources.Msg.Get("Reset ALL settings?"));
-            DefaultsConfirm.ActionList!.Append(SharedResources.Msg.Get("No"), "");
-            DefaultsConfirm.ActionList.Append(SharedResources.Msg.Get("Yes"), "");
+            DefaultsConfirm.SetTitle(msg.Get("Reset ALL settings?"));
+            DefaultsConfirm.ActionList!.Append(msg.Get("No"), "");
+            DefaultsConfirm.ActionList.Append(msg.Get("Yes"), "");
 
             Image? graphics;
-            graphics = SharedResources.RenderDevice!.LoadImage("images/menus/config.png", FlareEngine.RenderDevice.ErrorNormal);
+            graphics = renderDevice.LoadImage("images/menus/config.png", FlareEngine.RenderDevice.ErrorNormal);
             if (graphics != null)
             {
                 Background = graphics.CreateSprite();
                 graphics.Unref();
             }
 
-            OkButton.SetLabel(SharedResources.Msg.Get("OK"));
-            DefaultsButton.SetLabel(SharedResources.Msg.Get("Defaults"));
-            CancelButton.SetLabel(SharedResources.Msg.Get("Cancel"));
+            OkButton.SetLabel(msg.Get("OK"));
+            DefaultsButton.SetLabel(msg.Get("Defaults"));
+            CancelButton.SetLabel(msg.Get("Cancel"));
 
-            PauseContinueBtn.SetLabel(SharedResources.Msg.Get("Continue"));
+            PauseContinueBtn.SetLabel(msg.Get("Continue"));
             SetPauseExitText(EnableSaveGame);
-            PauseSaveBtn.SetLabel(SharedResources.Msg.Get("Save Game"));
+            PauseSaveBtn.SetLabel(msg.Get("Save Game"));
             SetPauseSaveEnabled(EnableSaveGame);
             PauseTimeText.SetText(Utils.GetTimeString(0));
             PauseTimeText.SetJustify(FontEngine.JustifyRight);
             PauseTimeText.SetVAlign(LabelInfo.ValignCenter);
 
             ActivemodsLstb.MultiSelect = true;
-            for (int i = 0; i < SharedResources.Mods!.ModList.Count; i++)
+            for (int i = 0; i < mods.ModList.Count; i++)
             {
-                if (SharedResources.Mods.ModList[i].Name != ModManager.FallbackMod)
-                    ActivemodsLstb.Append(SharedResources.Mods.ModList[i].Name, CreateModTooltip(SharedResources.Mods.ModList[i]));
+                if (mods.ModList[i].Name != ModManager.FallbackMod)
+                    ActivemodsLstb.Append(mods.ModList[i].Name, CreateModTooltip(mods.ModList[i]));
             }
 
             string activeGame = "";
-            for (int i = SharedResources.Mods.ModList.Count; i > 0; i--)
+            for (int i = mods.ModList.Count; i > 0; i--)
             {
-                Mod tempMod = SharedResources.Mods.ModList[i - 1];
+                Mod tempMod = mods.ModList[i - 1];
                 if (tempMod.Game.Length != 0)
                 {
                     activeGame = tempMod.Game;
@@ -493,12 +501,12 @@ namespace FlareEngine
             List<string> modGames = new List<string>();
 
             InactivemodsLstb.MultiSelect = true;
-            for (int i = 0; i < SharedResources.Mods.ModDirs.Count; i++)
+            for (int i = 0; i < mods.ModDirs.Count; i++)
             {
-                Mod tempMod = SharedResources.Mods.LoadMod(SharedResources.Mods.ModDirs[i]);
-                if (SharedResources.Mods.ModDirs[i] != ModManager.FallbackMod && (activeGame.Length == 0 || tempMod.Game != activeGame))
+                Mod tempMod = mods.LoadMod(mods.ModDirs[i]);
+                if (mods.ModDirs[i] != ModManager.FallbackMod && (activeGame.Length == 0 || tempMod.Game != activeGame))
                 {
-                    if (tempMod.Game == ModManager.FallbackGame || SharedResources.Settings.Game.Length == 0 || (SharedResources.Settings.Game.Length != 0 && SharedResources.Settings.Game == tempMod.Game))
+                    if (tempMod.Game == ModManager.FallbackGame || settings.Game.Length == 0 || (settings.Game.Length != 0 && settings.Game == tempMod.Game))
                     {
                         if (tempMod.Game.Length == 0)
                         {
@@ -512,17 +520,17 @@ namespace FlareEngine
                 }
 
                 bool skipMod = false;
-                for (int j = 0; j < SharedResources.Mods.ModList.Count; j++)
+                for (int j = 0; j < mods.ModList.Count; j++)
                 {
-                    if (SharedResources.Mods.ModDirs[i] == SharedResources.Mods.ModList[j].Name)
+                    if (mods.ModDirs[i] == mods.ModList[j].Name)
                     {
                         skipMod = true;
                         break;
                     }
                 }
-                if (!skipMod && SharedResources.Mods.ModDirs[i] != ModManager.FallbackMod)
+                if (!skipMod && mods.ModDirs[i] != ModManager.FallbackMod)
                 {
-                    InactivemodsLstb.Append(SharedResources.Mods.ModDirs[i], CreateModTooltip(tempMod));
+                    InactivemodsLstb.Append(mods.ModDirs[i], CreateModTooltip(tempMod));
                 }
             }
             InactivemodsLstb.Sort();
@@ -535,11 +543,11 @@ namespace FlareEngine
             }
             if (_modFilterUnknown)
             {
-                modGames.Add(SharedResources.Msg.Get("<unknown>"));
+                modGames.Add(msg.Get("<unknown>"));
             }
 
-            InactivemodsFilterLstb.Append(SharedResources.Msg.Get("All Mods"), "");
-            InactivemodsFilterLstb.Append(SharedResources.Msg.Get("All Core Mods"), "");
+            InactivemodsFilterLstb.Append(msg.Get("All Mods"), "");
+            InactivemodsFilterLstb.Append(msg.Get("All Core Mods"), "");
             for (int i = 0; i < modGames.Count; ++i)
             {
                 if (modGames[i].Length != 0)
@@ -556,67 +564,67 @@ namespace FlareEngine
                 KeybindsLstb[i]!.MaxVisibleActions = 1;
             }
 
-            LootTooltipLstb.Append(SharedResources.Msg.Get("Default"), SharedResources.Msg.Get("Show all loot tooltips, except for those that would be obscured by the player or an enemy. Temporarily show all loot tooltips with 'Alt'."));
-            LootTooltipLstb.Append(SharedResources.Msg.Get("Show all"), SharedResources.Msg.Get("Always show loot tooltips. Temporarily hide all loot tooltips with 'Alt'."));
-            LootTooltipLstb.Append(SharedResources.Msg.Get("Hidden"), SharedResources.Msg.Get("Always hide loot tooltips, except for when a piece of loot is hovered with the mouse cursor. Temporarily show all loot tooltips with 'Alt'."));
+            LootTooltipLstb.Append(msg.Get("Default"), msg.Get("Show all loot tooltips, except for those that would be obscured by the player or an enemy. Temporarily show all loot tooltips with 'Alt'."));
+            LootTooltipLstb.Append(msg.Get("Show all"), msg.Get("Always show loot tooltips. Temporarily hide all loot tooltips with 'Alt'."));
+            LootTooltipLstb.Append(msg.Get("Hidden"), msg.Get("Always hide loot tooltips, except for when a piece of loot is hovered with the mouse cursor. Temporarily show all loot tooltips with 'Alt'."));
 
-            MinimapLstb.Append(SharedResources.Msg.Get("Visible"), "");
-            MinimapLstb.Append(SharedResources.Msg.Get("Visible (2x zoom)"), "");
-            MinimapLstb.Append(SharedResources.Msg.Get("Hidden"), "");
+            MinimapLstb.Append(msg.Get("Visible"), "");
+            MinimapLstb.Append(msg.Get("Visible (2x zoom)"), "");
+            MinimapLstb.Append(msg.Get("Hidden"), "");
 
-            string lhpwPrefix = SharedResources.Msg.Get("Controls the type of warning to be activated when the player is below the low health threshold.");
-            string lhpwWarning1 = SharedResources.Msg.Get("- Display a message");
-            string lhpwWarning2 = SharedResources.Msg.Get("- Play a sound");
-            string lhpwWarning3 = SharedResources.Msg.Get("- Change the cursor");
+            string lhpwPrefix = msg.Get("Controls the type of warning to be activated when the player is below the low health threshold.");
+            string lhpwWarning1 = msg.Get("- Display a message");
+            string lhpwWarning2 = msg.Get("- Play a sound");
+            string lhpwWarning3 = msg.Get("- Change the cursor");
 
-            LowHpWarningLstb.Append(SharedResources.Msg.Get("Disabled"), lhpwPrefix);
-            LowHpWarningLstb.Append(SharedResources.Msg.Get("All"), lhpwPrefix + "\n\n" + lhpwWarning1 + '\n' + lhpwWarning2 + '\n' + lhpwWarning3);
-            LowHpWarningLstb.Append(SharedResources.Msg.Get("Message & Cursor"), lhpwPrefix + "\n\n" + lhpwWarning1 + '\n' + lhpwWarning3);
-            LowHpWarningLstb.Append(SharedResources.Msg.Get("Message & Sound"), lhpwPrefix + "\n\n" + lhpwWarning1 + '\n' + lhpwWarning2);
-            LowHpWarningLstb.Append(SharedResources.Msg.Get("Sound & Cursor"), lhpwPrefix + "\n\n" + lhpwWarning2 + '\n' + lhpwWarning3);
-            LowHpWarningLstb.Append(SharedResources.Msg.Get("Message"), lhpwPrefix + "\n\n" + lhpwWarning1);
-            LowHpWarningLstb.Append(SharedResources.Msg.Get("Cursor"), lhpwPrefix + "\n\n" + lhpwWarning3);
-            LowHpWarningLstb.Append(SharedResources.Msg.Get("Sound"), lhpwPrefix + "\n\n" + lhpwWarning2);
+            LowHpWarningLstb.Append(msg.Get("Disabled"), lhpwPrefix);
+            LowHpWarningLstb.Append(msg.Get("All"), lhpwPrefix + "\n\n" + lhpwWarning1 + '\n' + lhpwWarning2 + '\n' + lhpwWarning3);
+            LowHpWarningLstb.Append(msg.Get("Message & Cursor"), lhpwPrefix + "\n\n" + lhpwWarning1 + '\n' + lhpwWarning3);
+            LowHpWarningLstb.Append(msg.Get("Message & Sound"), lhpwPrefix + "\n\n" + lhpwWarning1 + '\n' + lhpwWarning2);
+            LowHpWarningLstb.Append(msg.Get("Sound & Cursor"), lhpwPrefix + "\n\n" + lhpwWarning2 + '\n' + lhpwWarning3);
+            LowHpWarningLstb.Append(msg.Get("Message"), lhpwPrefix + "\n\n" + lhpwWarning1);
+            LowHpWarningLstb.Append(msg.Get("Cursor"), lhpwPrefix + "\n\n" + lhpwWarning3);
+            LowHpWarningLstb.Append(msg.Get("Sound"), lhpwPrefix + "\n\n" + lhpwWarning2);
 
             for (int i = 1; i <= 10; ++i)
             {
-                LowHpThresholdLstb.Append((i * 5).ToString() + "%", SharedResources.Msg.Get("When the player's health drops below the given threshold, the low health notifications are triggered if one or more of them is enabled."));
+                LowHpThresholdLstb.Append((i * 5).ToString() + "%", msg.Get("When the player's health drops below the given threshold, the low health notifications are triggered if one or more of them is enabled."));
             }
 
-            string autoLootDesc = SharedResources.Msg.Get("When enabled, eligible loot will be picked up automatically when nearby.");
-            AutoLootLstb.Append(SharedResources.Msg.Get("Disabled"), autoLootDesc);
-            AutoLootLstb.Append(SharedResources.Msg.Get("Enabled"), autoLootDesc);
-            AutoLootLstb.Append(SharedResources.Msg.Get("Only currency"), autoLootDesc);
+            string autoLootDesc = msg.Get("When enabled, eligible loot will be picked up automatically when nearby.");
+            AutoLootLstb.Append(msg.Get("Disabled"), autoLootDesc);
+            AutoLootLstb.Append(msg.Get("Enabled"), autoLootDesc);
+            AutoLootLstb.Append(msg.Get("Only currency"), autoLootDesc);
 
             _frameLimits.Add(30);
             _frameLimits.Add(60);
             _frameLimits.Add(120);
             _frameLimits.Add(240);
-            if (!_frameLimits.Contains(SharedResources.Settings.MaxFramesPerSec))
-                _frameLimits.Add(SharedResources.Settings.MaxFramesPerSec);
-            ushort refreshRate = SharedResources.RenderDevice.GetRefreshRate();
+            if (!_frameLimits.Contains(settings.MaxFramesPerSec))
+                _frameLimits.Add(settings.MaxFramesPerSec);
+            ushort refreshRate = renderDevice.GetRefreshRate();
             if (refreshRate > 0 && !_frameLimits.Contains(refreshRate))
                 _frameLimits.Add(refreshRate);
 
             _frameLimits.Sort();
             for (int i = 0; i < _frameLimits.Count; ++i)
             {
-                FrameLimitLstb.Append(_frameLimits[i].ToString(), SharedResources.Msg.Get("The maximum frame rate that the game will be allowed to run at."));
+                FrameLimitLstb.Append(_frameLimits[i].ToString(), msg.Get("The maximum frame rate that the game will be allowed to run at."));
             }
 
-            string minRenderSizeTooltip = SharedResources.Msg.Get("The render size refers to the height in pixels of the surface used to draw the game. Mods define the allowed render sizes, but this option allows overriding the minimum size.");
-            MinRenderSizeLstb.Append(SharedResources.Msg.Get("Default"), minRenderSizeTooltip);
+            string minRenderSizeTooltip = msg.Get("The render size refers to the height in pixels of the surface used to draw the game. Mods define the allowed render sizes, but this option allows overriding the minimum size.");
+            MinRenderSizeLstb.Append(msg.Get("Default"), minRenderSizeTooltip);
 
-            string maxRenderSizeTooltip = SharedResources.Msg.Get("The render size refers to the height in pixels of the surface used to draw the game. Mods define the allowed render sizes, but this option allows overriding the maximum size.");
-            MaxRenderSizeLstb.Append(SharedResources.Msg.Get("Default"), maxRenderSizeTooltip);
+            string maxRenderSizeTooltip = msg.Get("The render size refers to the height in pixels of the surface used to draw the game. Mods define the allowed render sizes, but this option allows overriding the maximum size.");
+            MaxRenderSizeLstb.Append(msg.Get("Default"), maxRenderSizeTooltip);
 
-            _virtualHeights.AddRange(SharedResources.Eset!.Resolutions.VirtualHeights);
+            _virtualHeights.AddRange(eset.Resolutions.VirtualHeights);
 
-            if (SharedResources.Settings.MinRenderSize > 0 && !_virtualHeights.Contains(SharedResources.Settings.MinRenderSize))
-                _virtualHeights.Add(SharedResources.Settings.MinRenderSize);
+            if (settings.MinRenderSize > 0 && !_virtualHeights.Contains(settings.MinRenderSize))
+                _virtualHeights.Add(settings.MinRenderSize);
 
-            if (SharedResources.Settings.MaxRenderSize > 0 && !_virtualHeights.Contains(SharedResources.Settings.MaxRenderSize))
-                _virtualHeights.Add(SharedResources.Settings.MaxRenderSize);
+            if (settings.MaxRenderSize > 0 && !_virtualHeights.Contains(settings.MaxRenderSize))
+                _virtualHeights.Add(settings.MaxRenderSize);
 
             _virtualHeights.Sort();
             for (int i = 0; i < _virtualHeights.Count; ++i)
@@ -626,11 +634,11 @@ namespace FlareEngine
                 MaxRenderSizeLstb.Append(heightStr, maxRenderSizeTooltip);
             }
 
-            SharedResources.Inpt.JoysticksChanged = false;
+            inpt.JoysticksChanged = false;
 
             Init();
 
-            SharedResources.RenderDevice.SetBackgroundColor(new Color(0, 0, 0, 0));
+            renderDevice.SetBackgroundColor(new Color(0, 0, 0, 0));
         }
 
         public void Dispose()
@@ -641,14 +649,18 @@ namespace FlareEngine
 
         public void Init()
         {
-            TabControl!.SetupTab(ExitTab, SharedResources.Msg!.Get("Exit"), TablistExit);
-            TabControl.SetupTab(VideoTab, SharedResources.Msg.Get("Video"), TablistVideo);
-            TabControl.SetupTab(AudioTab, SharedResources.Msg.Get("Audio"), TablistAudio);
-            TabControl.SetupTab(GameTab, SharedResources.Msg.Get("Game"), TablistGame);
-            TabControl.SetupTab(InterfaceTab, SharedResources.Msg.Get("Interface"), TablistInterface);
-            TabControl.SetupTab(InputTab, SharedResources.Msg.Get("Input"), TablistInput);
-            TabControl.SetupTab(KeybindsTab, SharedResources.Msg.Get("Keybindings"), TablistKeybinds);
-            TabControl.SetupTab(ModsTab, SharedResources.Msg.Get("Mods"), TablistMods);
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var inpt = SharedResources.Inpt!;
+
+            TabControl!.SetupTab(ExitTab, msg.Get("Exit"), TablistExit);
+            TabControl.SetupTab(VideoTab, msg.Get("Video"), TablistVideo);
+            TabControl.SetupTab(AudioTab, msg.Get("Audio"), TablistAudio);
+            TabControl.SetupTab(GameTab, msg.Get("Game"), TablistGame);
+            TabControl.SetupTab(InterfaceTab, msg.Get("Interface"), TablistInterface);
+            TabControl.SetupTab(InputTab, msg.Get("Input"), TablistInput);
+            TabControl.SetupTab(KeybindsTab, msg.Get("Keybindings"), TablistKeybinds);
+            TabControl.SetupTab(ModsTab, msg.Get("Mods"), TablistMods);
 
             ReadConfig();
 
@@ -670,66 +682,66 @@ namespace FlareEngine
             _cfgTabs[KeybindsTab].Options = new List<ConfigOption>(new ConfigOption[InputState.KeyCountUser]);
             for (int i = 0; i < InputState.KeyCountUser; i++) _cfgTabs[KeybindsTab].Options[i] = new ConfigOption();
 
-            _cfgTabs[ExitTab].SetOptionWidgets(ExitOptionContinue, PauseContinueLb, PauseContinueBtn, SharedResources.Msg.Get("Paused"));
+            _cfgTabs[ExitTab].SetOptionWidgets(ExitOptionContinue, PauseContinueLb, PauseContinueBtn, msg.Get("Paused"));
             _cfgTabs[ExitTab].SetOptionWidgets(ExitOptionSave, PauseSaveLb, PauseSaveBtn, "");
             _cfgTabs[ExitTab].SetOptionWidgets(ExitOptionExit, PauseExitLb, PauseExitBtn, "");
-            _cfgTabs[ExitTab].SetOptionWidgets(ExitOptionTimePlayed, PauseTimeLb, PauseTimeText, SharedResources.Msg.Get("Time Played"));
+            _cfgTabs[ExitTab].SetOptionWidgets(ExitOptionTimePlayed, PauseTimeLb, PauseTimeText, msg.Get("Time Played"));
 
-            if (!(EnableSaveGame && SharedResources.Eset!.Misc.SaveAnywhere))
+            if (!(EnableSaveGame && eset.Misc.SaveAnywhere))
             {
                 _cfgTabs[ExitTab].SetOptionEnabled(ExitOptionSave, false);
             }
 
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.Renderer, RendererLb, RendererLstb, SharedResources.Msg.Get("Renderer"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.Fullscreen, FullscreenLb, FullscreenCb, SharedResources.Msg.Get("Full Screen Mode"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.Hwsurface, HwsurfaceLb, HwsurfaceCb, SharedResources.Msg.Get("Hardware surfaces"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.Vsync, VsyncLb, VsyncCb, SharedResources.Msg.Get("V-Sync"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.TextureFilter, TextureFilterLb, TextureFilterCb, SharedResources.Msg.Get("Texture Filtering"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.DpiScaling, DpiScalingLb, DpiScalingCb, SharedResources.Msg.Get("DPI scaling"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.ParallaxLayers, ParallaxLayersLb, ParallaxLayersCb, SharedResources.Msg.Get("Parallax Layers"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.MinRenderSize, MinRenderSizeLb, MinRenderSizeLstb, SharedResources.Msg.Get("Minimum Render Size"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.MaxRenderSize, MaxRenderSizeLb, MaxRenderSizeLstb, SharedResources.Msg.Get("Maximum Render Size"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.FrameLimit, FrameLimitLb, FrameLimitLstb, SharedResources.Msg.Get("Frame Limit"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.ThreadedImageLoad, ThreadedImageLoadLb, ThreadedImageLoadCb, SharedResources.Msg.Get("Threaded Image Loading"));
-            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.FadeWalls, FadeWallsLb, FadeWallsCb, SharedResources.Msg.Get("Show player behind walls"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.Renderer, RendererLb, RendererLstb, msg.Get("Renderer"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.Fullscreen, FullscreenLb, FullscreenCb, msg.Get("Full Screen Mode"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.Hwsurface, HwsurfaceLb, HwsurfaceCb, msg.Get("Hardware surfaces"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.Vsync, VsyncLb, VsyncCb, msg.Get("V-Sync"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.TextureFilter, TextureFilterLb, TextureFilterCb, msg.Get("Texture Filtering"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.DpiScaling, DpiScalingLb, DpiScalingCb, msg.Get("DPI scaling"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.ParallaxLayers, ParallaxLayersLb, ParallaxLayersCb, msg.Get("Parallax Layers"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.MinRenderSize, MinRenderSizeLb, MinRenderSizeLstb, msg.Get("Minimum Render Size"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.MaxRenderSize, MaxRenderSizeLb, MaxRenderSizeLstb, msg.Get("Maximum Render Size"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.FrameLimit, FrameLimitLb, FrameLimitLstb, msg.Get("Frame Limit"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.ThreadedImageLoad, ThreadedImageLoadLb, ThreadedImageLoadCb, msg.Get("Threaded Image Loading"));
+            _cfgTabs[VideoTab].SetOptionWidgets(Platform.Video.FadeWalls, FadeWallsLb, FadeWallsCb, msg.Get("Show player behind walls"));
 
-            _cfgTabs[AudioTab].SetOptionWidgets(Platform.Audio.Sfx, SoundVolumeLb, SoundVolumeSl, SharedResources.Msg.Get("Sound Volume"));
-            _cfgTabs[AudioTab].SetOptionWidgets(Platform.Audio.Music, MusicVolumeLb, MusicVolumeSl, SharedResources.Msg.Get("Music Volume"));
-            _cfgTabs[AudioTab].SetOptionWidgets(Platform.Audio.MuteOnFocusLoss, MuteOnFocusLossLb, MuteOnFocusLossCb, SharedResources.Msg.Get("Mute audio when window loses focus"));
+            _cfgTabs[AudioTab].SetOptionWidgets(Platform.Audio.Sfx, SoundVolumeLb, SoundVolumeSl, msg.Get("Sound Volume"));
+            _cfgTabs[AudioTab].SetOptionWidgets(Platform.Audio.Music, MusicVolumeLb, MusicVolumeSl, msg.Get("Music Volume"));
+            _cfgTabs[AudioTab].SetOptionWidgets(Platform.Audio.MuteOnFocusLoss, MuteOnFocusLossLb, MuteOnFocusLossCb, msg.Get("Mute audio when window loses focus"));
 
-            _cfgTabs[GameTab].SetOptionWidgets(Platform.Game.AutoEquip, AutoEquipLb, AutoEquipCb, SharedResources.Msg.Get("Automatically equip items"));
-            _cfgTabs[GameTab].SetOptionWidgets(Platform.Game.AutoLoot, AutoLootLb, AutoLootLstb, SharedResources.Msg.Get("Automatically pick up loot"));
-            _cfgTabs[GameTab].SetOptionWidgets(Platform.Game.LowHpWarningType, LowHpWarningLb, LowHpWarningLstb, SharedResources.Msg.Get("Low health notification"));
-            _cfgTabs[GameTab].SetOptionWidgets(Platform.Game.LowHpThreshold, LowHpThresholdLb, LowHpThresholdLstb, SharedResources.Msg.Get("Low health threshold"));
+            _cfgTabs[GameTab].SetOptionWidgets(Platform.Game.AutoEquip, AutoEquipLb, AutoEquipCb, msg.Get("Automatically equip items"));
+            _cfgTabs[GameTab].SetOptionWidgets(Platform.Game.AutoLoot, AutoLootLb, AutoLootLstb, msg.Get("Automatically pick up loot"));
+            _cfgTabs[GameTab].SetOptionWidgets(Platform.Game.LowHpWarningType, LowHpWarningLb, LowHpWarningLstb, msg.Get("Low health notification"));
+            _cfgTabs[GameTab].SetOptionWidgets(Platform.Game.LowHpThreshold, LowHpThresholdLb, LowHpThresholdLstb, msg.Get("Low health threshold"));
 
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.Language, LanguageLb, LanguageLstb, SharedResources.Msg.Get("Language"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.ShowFps, ShowFpsLb, ShowFpsCb, SharedResources.Msg.Get("Show FPS"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.HardwareCursor, HardwareCursorLb, HardwareCursorCb, SharedResources.Msg.Get("Use system mouse cursor"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.Colorblind, ColorblindLb, ColorblindCb, SharedResources.Msg.Get("Colorblind Mode"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.DevMode, DevModeLb, DevModeCb, SharedResources.Msg.Get("Developer Mode"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.Subtitles, SubtitlesLb, SubtitlesCb, SharedResources.Msg.Get("Subtitles"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.LootTooltips, LootTooltipLb, LootTooltipLstb, SharedResources.Msg.Get("Loot tooltip visibility"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.MinimapMode, MinimapLb, MinimapLstb, SharedResources.Msg.Get("Mini-map mode"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.StatbarLabels, StatbarLabelsLb, StatbarLabelsCb, SharedResources.Msg.Get("Always show stat bar labels"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.StatbarAutohide, StatbarAutohideLb, StatbarAutohideCb, SharedResources.Msg.Get("Allow stat bar auto-hiding"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.CombatText, CombatTextLb, CombatTextCb, SharedResources.Msg.Get("Show combat text"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.ItemCompareTips, ItemCompareTipsLb, ItemCompareTipsCb, SharedResources.Msg.Get("Show item comparison tooltips"));
-            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.PauseOnFocusLoss, PauseOnFocusLossLb, PauseOnFocusLossCb, SharedResources.Msg.Get("Pause game when window loses focus"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.Language, LanguageLb, LanguageLstb, msg.Get("Language"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.ShowFps, ShowFpsLb, ShowFpsCb, msg.Get("Show FPS"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.HardwareCursor, HardwareCursorLb, HardwareCursorCb, msg.Get("Use system mouse cursor"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.Colorblind, ColorblindLb, ColorblindCb, msg.Get("Colorblind Mode"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.DevMode, DevModeLb, DevModeCb, msg.Get("Developer Mode"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.Subtitles, SubtitlesLb, SubtitlesCb, msg.Get("Subtitles"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.LootTooltips, LootTooltipLb, LootTooltipLstb, msg.Get("Loot tooltip visibility"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.MinimapMode, MinimapLb, MinimapLstb, msg.Get("Mini-map mode"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.StatbarLabels, StatbarLabelsLb, StatbarLabelsCb, msg.Get("Always show stat bar labels"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.StatbarAutohide, StatbarAutohideLb, StatbarAutohideCb, msg.Get("Allow stat bar auto-hiding"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.CombatText, CombatTextLb, CombatTextCb, msg.Get("Show combat text"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.ItemCompareTips, ItemCompareTipsLb, ItemCompareTipsCb, msg.Get("Show item comparison tooltips"));
+            _cfgTabs[InterfaceTab].SetOptionWidgets(Platform.Interface.PauseOnFocusLoss, PauseOnFocusLossLb, PauseOnFocusLossCb, msg.Get("Pause game when window loses focus"));
 
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.Joystick, JoystickDeviceLb, JoystickDeviceLstb, SharedResources.Msg.Get("Joystick"));
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.MouseMove, MouseMoveLb, MouseMoveCb, SharedResources.Msg.Get("Move hero using mouse"));
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.MouseAim, MouseAimLb, MouseAimCb, SharedResources.Msg.Get("Mouse aim"));
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.NoMouse, NoMouseLb, NoMouseCb, SharedResources.Msg.Get("Do not use mouse"));
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.MouseMoveSwap, MouseMoveSwapLb, MouseMoveSwapCb, SharedResources.Msg.Get("Swap mouse movement button"));
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.MouseMoveAttack, MouseMoveAttackLb, MouseMoveAttackCb, SharedResources.Msg.Get("Attack with mouse movement"));
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.JoystickDeadzone, JoystickDeadzoneLb, JoystickDeadzoneSl, SharedResources.Msg.Get("Joystick Deadzone"));
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.JoystickRumble, JoystickRumbleLb, JoystickRumbleCb, SharedResources.Msg.Get("Joystick Rumble"));
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.TouchControls, TouchControlsLb, TouchControlsCb, SharedResources.Msg.Get("Touch Controls"));
-            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.TouchScale, TouchScaleLb, TouchScaleSl, SharedResources.Msg.Get("Touch Gamepad Scaling"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.Joystick, JoystickDeviceLb, JoystickDeviceLstb, msg.Get("Joystick"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.MouseMove, MouseMoveLb, MouseMoveCb, msg.Get("Move hero using mouse"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.MouseAim, MouseAimLb, MouseAimCb, msg.Get("Mouse aim"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.NoMouse, NoMouseLb, NoMouseCb, msg.Get("Do not use mouse"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.MouseMoveSwap, MouseMoveSwapLb, MouseMoveSwapCb, msg.Get("Swap mouse movement button"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.MouseMoveAttack, MouseMoveAttackLb, MouseMoveAttackCb, msg.Get("Attack with mouse movement"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.JoystickDeadzone, JoystickDeadzoneLb, JoystickDeadzoneSl, msg.Get("Joystick Deadzone"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.JoystickRumble, JoystickRumbleLb, JoystickRumbleCb, msg.Get("Joystick Rumble"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.TouchControls, TouchControlsLb, TouchControlsCb, msg.Get("Touch Controls"));
+            _cfgTabs[InputTab].SetOptionWidgets(Platform.Input.TouchScale, TouchScaleLb, TouchScaleSl, msg.Get("Touch Gamepad Scaling"));
 
             for (int i = 0; i < KeybindsLstb.Count; ++i)
             {
-                _cfgTabs[KeybindsTab].SetOptionWidgets(i, KeybindsLb[i], KeybindsLstb[i], SharedResources.Inpt.BindingName[i]);
+                _cfgTabs[KeybindsTab].SetOptionWidgets(i, KeybindsLb[i], KeybindsLstb[i], inpt.BindingName[i]);
                 if (i >= Input.Bar1 && i <= Input.Bar0 && !_keybindsVisibleActionbar[i - Input.Bar1])
                 {
                     _cfgTabs[KeybindsTab].SetOptionEnabled(i, false);
@@ -806,7 +818,7 @@ namespace FlareEngine
                 TabControl.SetEnabled((uint)ModsTab, false);
             }
 
-            if (!SharedResources.Eset.Misc.MouseMoveEnabled)
+            if (!eset.Misc.MouseMoveEnabled)
             {
                 _cfgTabs[InputTab].SetOptionEnabled(Platform.Input.MouseMove, false);
                 _cfgTabs[InputTab].SetOptionEnabled(Platform.Input.MouseMoveSwap, false);
@@ -841,6 +853,7 @@ namespace FlareEngine
 
         public void ReadConfig()
         {
+            var msg = SharedResources.Msg!;
             FileParser infile = new FileParser();
             if (infile.Open("menus/config.txt", FileParser.ModFile, FileParser.ErrorNormal))
             {
@@ -863,21 +876,21 @@ namespace FlareEngine
                 infile.Close();
             }
 
-            HwsurfaceCb!.Tooltip = SharedResources.Msg!.Get("Will try to store surfaces in video memory versus system memory. The effect this has on performance depends on the renderer.");
-            VsyncCb!.Tooltip = SharedResources.Msg.Get("Prevents screen tearing. Disable if you experience \"stuttering\" in windowed mode or input lag.");
-            DpiScalingCb!.Tooltip = SharedResources.Msg.Get("When enabled, this uses the screen DPI in addition to the window dimensions to scale the rendering resolution. Otherwise, only the window dimensions are used.");
-            ParallaxLayersCb!.Tooltip = SharedResources.Msg.Get("This enables parallax (non-tile) layers. Disabling this setting can improve performance in some cases.");
-            ThreadedImageLoadCb!.Tooltip = SharedResources.Msg.Get("Use multiple CPU threads when loading some images. Try disabling this option if you experience instability during loading.");
-            FadeWallsCb!.Tooltip = SharedResources.Msg.Get("Lowers the opacity of wall tiles that are covering the player. Disabling this option may improve performace in some circumstances.");
-            ColorblindCb!.Tooltip = SharedResources.Msg.Get("Provides additional text for information that is primarily conveyed through color.");
-            StatbarAutohideCb!.Tooltip = SharedResources.Msg.Get("Some mods will automatically hide the stat bars when they are inactive. Disabling this option will keep them displayed at all times.");
-            AutoEquipCb!.Tooltip = SharedResources.Msg.Get("When enabled, empty equipment slots will be filled with applicable items when they are obtained.");
-            ItemCompareTipsCb!.Tooltip = SharedResources.Msg.Get("When enabled, tooltips for equipped items of the same type are shown next to standard item tooltips.");
-            NoMouseCb!.Tooltip = SharedResources.Msg.Get("This allows the game to be controlled entirely with the keyboard (or joystick).");
-            MouseMoveSwapCb!.Tooltip = SharedResources.Msg.Get("When 'Move hero using mouse' is enabled, this setting controls if 'Main1' or 'Main2' is used to move the hero. If enabled, 'Main2' will move the hero instead of 'Main1'.");
-            MouseMoveAttackCb!.Tooltip = SharedResources.Msg.Get("When 'Move hero using mouse' is enabled, this setting controls if the Power assigned to the movement button can be used by targeting an enemy. If this setting is disabled, it is required to use 'Shift' to access the Power assigned to the movement button.");
-            MouseAimCb!.Tooltip = SharedResources.Msg.Get("The player's attacks will be aimed in the direction of the mouse cursor when this is enabled.");
-            TouchControlsCb!.Tooltip = SharedResources.Msg.Get("When enabled, a virtual gamepad will be added in-game. Other interactions, such as drag-and-drop behavior, are also altered to better suit touch input.");
+            HwsurfaceCb!.Tooltip = msg.Get("Will try to store surfaces in video memory versus system memory. The effect this has on performance depends on the renderer.");
+            VsyncCb!.Tooltip = msg.Get("Prevents screen tearing. Disable if you experience \"stuttering\" in windowed mode or input lag.");
+            DpiScalingCb!.Tooltip = msg.Get("When enabled, this uses the screen DPI in addition to the window dimensions to scale the rendering resolution. Otherwise, only the window dimensions are used.");
+            ParallaxLayersCb!.Tooltip = msg.Get("This enables parallax (non-tile) layers. Disabling this setting can improve performance in some cases.");
+            ThreadedImageLoadCb!.Tooltip = msg.Get("Use multiple CPU threads when loading some images. Try disabling this option if you experience instability during loading.");
+            FadeWallsCb!.Tooltip = msg.Get("Lowers the opacity of wall tiles that are covering the player. Disabling this option may improve performace in some circumstances.");
+            ColorblindCb!.Tooltip = msg.Get("Provides additional text for information that is primarily conveyed through color.");
+            StatbarAutohideCb!.Tooltip = msg.Get("Some mods will automatically hide the stat bars when they are inactive. Disabling this option will keep them displayed at all times.");
+            AutoEquipCb!.Tooltip = msg.Get("When enabled, empty equipment slots will be filled with applicable items when they are obtained.");
+            ItemCompareTipsCb!.Tooltip = msg.Get("When enabled, tooltips for equipped items of the same type are shown next to standard item tooltips.");
+            NoMouseCb!.Tooltip = msg.Get("This allows the game to be controlled entirely with the keyboard (or joystick).");
+            MouseMoveSwapCb!.Tooltip = msg.Get("When 'Move hero using mouse' is enabled, this setting controls if 'Main1' or 'Main2' is used to move the hero. If enabled, 'Main2' will move the hero instead of 'Main1'.");
+            MouseMoveAttackCb!.Tooltip = msg.Get("When 'Move hero using mouse' is enabled, this setting controls if the Power assigned to the movement button can be used by targeting an enemy. If this setting is disabled, it is required to use 'Shift' to access the Power assigned to the movement button.");
+            MouseAimCb!.Tooltip = msg.Get("The player's attacks will be aimed in the direction of the mouse cursor when this is enabled.");
+            TouchControlsCb!.Tooltip = msg.Get("When enabled, a virtual gamepad will be added in-game. Other interactions, such as drag-and-drop behavior, are also altered to better suit touch input.");
 
             if (infile.Open("menus/actionbar.txt", FileParser.ModFile, FileParser.ErrorNone))
             {
@@ -974,6 +987,8 @@ namespace FlareEngine
 
         public bool ParseKeyButtons(FileParser infile)
         {
+            var msg = SharedResources.Msg!;
+
             if (infile.Key == "button_ok")
             {
                 string val = infile.Val;
@@ -1012,6 +1027,7 @@ namespace FlareEngine
 
         public bool ParseKey(FileParser infile, ref int x1, ref int y1, ref int x2, ref int y2)
         {
+            var msg = SharedResources.Msg!;
             if (infile.Key == "listbox_scrollbar_offset")
             {
                 ActivemodsLstb!.ScrollbarOffset = x1;
@@ -1034,7 +1050,7 @@ namespace FlareEngine
             }
             else if (infile.Key == "activemods")
             {
-                PlaceLabeledWidget(ActivemodsLb, ActivemodsLstb, x1, y1, x2, y2, SharedResources.Msg!.Get("Active Mods"));
+                PlaceLabeledWidget(ActivemodsLb, ActivemodsLstb, x1, y1, x2, y2, msg.Get("Active Mods"));
                 ActivemodsLb!.SetJustify(FontEngine.JustifyCenter);
             }
             else if (infile.Key == "activemods_height")
@@ -1043,7 +1059,7 @@ namespace FlareEngine
             }
             else if (infile.Key == "inactivemods")
             {
-                PlaceLabeledWidget(InactivemodsLb, InactivemodsLstb, x1, y1, x2, y2, SharedResources.Msg!.Get("Available Mods"));
+                PlaceLabeledWidget(InactivemodsLb, InactivemodsLstb, x1, y1, x2, y2, msg.Get("Available Mods"));
                 InactivemodsLb!.SetJustify(FontEngine.JustifyCenter);
             }
             else if (infile.Key == "inactivemods_height")
@@ -1062,13 +1078,13 @@ namespace FlareEngine
             }
             else if (infile.Key == "activemods_deactivate")
             {
-                ActivemodsDeactivateBtn!.SetLabel(SharedResources.Msg!.Get("<< Disable"));
+                ActivemodsDeactivateBtn!.SetLabel(msg.Get("<< Disable"));
                 ActivemodsDeactivateBtn.SetBasePos(x1, y1, Utils.AlignTopLeft);
                 ActivemodsDeactivateBtn.Refresh();
             }
             else if (infile.Key == "inactivemods_activate")
             {
-                InactivemodsActivateBtn!.SetLabel(SharedResources.Msg!.Get("Enable >>"));
+                InactivemodsActivateBtn!.SetLabel(msg.Get("Enable >>"));
                 InactivemodsActivateBtn.SetBasePos(x1, y1, Utils.AlignTopLeft);
                 InactivemodsActivateBtn.Refresh();
             }
@@ -1208,27 +1224,29 @@ namespace FlareEngine
 
         public void UpdateVideo()
         {
-            FullscreenCb!.SetChecked(SharedResources.Settings!.Fullscreen);
-            HwsurfaceCb!.SetChecked(SharedResources.Settings.Hwsurface);
-            VsyncCb!.SetChecked(SharedResources.Settings.Vsync);
-            TextureFilterCb!.SetChecked(SharedResources.Settings.TextureFilter);
-            DpiScalingCb!.SetChecked(SharedResources.Settings.DpiScaling);
-            ParallaxLayersCb!.SetChecked(SharedResources.Settings.ParallaxLayers);
-            ThreadedImageLoadCb!.SetChecked(SharedResources.Settings.EnableThreadedImageLoad);
-            FadeWallsCb!.SetChecked(SharedResources.Settings.FadeWalls);
+            var settings = SharedResources.Settings!;
+
+            FullscreenCb!.SetChecked(settings.Fullscreen);
+            HwsurfaceCb!.SetChecked(settings.Hwsurface);
+            VsyncCb!.SetChecked(settings.Vsync);
+            TextureFilterCb!.SetChecked(settings.TextureFilter);
+            DpiScalingCb!.SetChecked(settings.DpiScaling);
+            ParallaxLayersCb!.SetChecked(settings.ParallaxLayers);
+            ThreadedImageLoadCb!.SetChecked(settings.EnableThreadedImageLoad);
+            FadeWallsCb!.SetChecked(settings.FadeWalls);
 
             RefreshRenderers();
 
             for (int i = 0; i < _frameLimits.Count; ++i)
             {
-                if (_frameLimits[i] == SharedResources.Settings.MaxFramesPerSec)
+                if (_frameLimits[i] == settings.MaxFramesPerSec)
                 {
                     FrameLimitLstb!.Select((uint)i);
                     break;
                 }
             }
 
-            if (SharedResources.Settings.MinRenderSize == 0)
+            if (settings.MinRenderSize == 0)
             {
                 MinRenderSizeLstb!.Select(0);
             }
@@ -1236,7 +1254,7 @@ namespace FlareEngine
             {
                 for (int i = 0; i < _virtualHeights.Count; ++i)
                 {
-                    if (_virtualHeights[i] == SharedResources.Settings.MinRenderSize)
+                    if (_virtualHeights[i] == settings.MinRenderSize)
                     {
                         MinRenderSizeLstb!.Select((uint)(i + 1));
                         break;
@@ -1244,7 +1262,7 @@ namespace FlareEngine
                 }
             }
 
-            if (SharedResources.Settings.MaxRenderSize == 0)
+            if (settings.MaxRenderSize == 0)
             {
                 MaxRenderSizeLstb!.Select(0);
             }
@@ -1252,7 +1270,7 @@ namespace FlareEngine
             {
                 for (int i = 0; i < _virtualHeights.Count; ++i)
                 {
-                    if (_virtualHeights[i] == SharedResources.Settings.MaxRenderSize)
+                    if (_virtualHeights[i] == settings.MaxRenderSize)
                     {
                         MaxRenderSizeLstb!.Select((uint)(i + 1));
                         break;
@@ -1267,48 +1285,55 @@ namespace FlareEngine
 
         public void UpdateAudio()
         {
-            if (SharedResources.Settings!.Audio)
+            var settings = SharedResources.Settings!;
+            var snd = SharedResources.Snd!;
+
+            if (settings.Audio)
             {
-                MusicVolumeSl!.Set(0, 128, SharedResources.Settings.MusicVolume);
-                SharedResources.Snd!.SetVolumeMusic(SharedResources.Settings.MusicVolume);
-                SoundVolumeSl!.Set(0, 128, SharedResources.Settings.SoundVolume);
-                SharedResources.Snd.SetVolumeSFX(SharedResources.Settings.SoundVolume);
+                MusicVolumeSl!.Set(0, 128, settings.MusicVolume);
+                snd.SetVolumeMusic(settings.MusicVolume);
+                SoundVolumeSl!.Set(0, 128, settings.SoundVolume);
+                snd.SetVolumeSFX(settings.SoundVolume);
             }
             else
             {
                 MusicVolumeSl!.Set(0, 128, 0);
                 SoundVolumeSl!.Set(0, 128, 0);
             }
-            MuteOnFocusLossCb!.SetChecked(SharedResources.Settings.MuteOnFocusLoss);
+            MuteOnFocusLossCb!.SetChecked(settings.MuteOnFocusLoss);
 
             _cfgTabs[AudioTab].Scrollbox!.Refresh();
         }
 
         public void UpdateGame()
         {
+            var settings = SharedResources.Settings!;
+
             _cfgTabs[GameTab].Scrollbox!.Refresh();
 
-            AutoEquipCb!.SetChecked(SharedResources.Settings!.AutoEquip);
-            AutoLootLstb!.Select((uint)SharedResources.Settings.AutoLoot);
-            LowHpWarningLstb!.Select((uint)SharedResources.Settings.LowHpWarningType);
-            LowHpThresholdLstb!.Select((uint)((SharedResources.Settings.LowHpThreshold / 5) - 1));
+            AutoEquipCb!.SetChecked(settings.AutoEquip);
+            AutoLootLstb!.Select((uint)settings.AutoLoot);
+            LowHpWarningLstb!.Select((uint)settings.LowHpWarningType);
+            LowHpThresholdLstb!.Select((uint)((settings.LowHpThreshold / 5) - 1));
         }
 
         public void UpdateInterface()
         {
-            ShowFpsCb!.SetChecked(SharedResources.Settings!.ShowFps);
-            ColorblindCb!.SetChecked(SharedResources.Settings.Colorblind);
-            HardwareCursorCb!.SetChecked(SharedResources.Settings.HardwareCursor);
-            DevModeCb!.SetChecked(SharedResources.Settings.DevMode);
-            SubtitlesCb!.SetChecked(SharedResources.Settings.Subtitles);
-            StatbarLabelsCb!.SetChecked(SharedResources.Settings.StatbarLabels);
-            StatbarAutohideCb!.SetChecked(SharedResources.Settings.StatbarAutohide);
-            CombatTextCb!.SetChecked(SharedResources.Settings.CombatText);
-            ItemCompareTipsCb!.SetChecked(SharedResources.Settings.ItemCompareTips);
-            PauseOnFocusLossCb!.SetChecked(SharedResources.Settings.PauseOnFocusLoss);
+            var settings = SharedResources.Settings!;
 
-            LootTooltipLstb!.Select((uint)SharedResources.Settings.LootTooltips);
-            MinimapLstb!.Select((uint)SharedResources.Settings.MinimapMode);
+            ShowFpsCb!.SetChecked(settings.ShowFps);
+            ColorblindCb!.SetChecked(settings.Colorblind);
+            HardwareCursorCb!.SetChecked(settings.HardwareCursor);
+            DevModeCb!.SetChecked(settings.DevMode);
+            SubtitlesCb!.SetChecked(settings.Subtitles);
+            StatbarLabelsCb!.SetChecked(settings.StatbarLabels);
+            StatbarAutohideCb!.SetChecked(settings.StatbarAutohide);
+            CombatTextCb!.SetChecked(settings.CombatText);
+            ItemCompareTipsCb!.SetChecked(settings.ItemCompareTips);
+            PauseOnFocusLossCb!.SetChecked(settings.PauseOnFocusLoss);
+
+            LootTooltipLstb!.Select((uint)settings.LootTooltips);
+            MinimapLstb!.Select((uint)settings.MinimapMode);
 
             RefreshLanguages();
 
@@ -1317,53 +1342,60 @@ namespace FlareEngine
 
         public void UpdateInput()
         {
-            MouseAimCb!.SetChecked(SharedResources.Settings!.MouseAim);
-            NoMouseCb!.SetChecked(SharedResources.Settings.NoMouse);
-            if (SharedResources.Eset!.Misc.MouseMoveEnabled)
-            {
-                MouseMoveCb!.SetChecked(SharedResources.Settings.MouseMove);
-                MouseMoveSwapCb!.SetChecked(SharedResources.Settings.MouseMoveSwap);
-                MouseMoveAttackCb!.SetChecked(SharedResources.Settings.MouseMoveAttack);
-            }
-            JoystickRumbleCb!.SetChecked(SharedResources.Settings.JoystickRumble);
-            TouchControlsCb!.SetChecked(SharedResources.Settings.Touchscreen);
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+            var inpt = SharedResources.Inpt!;
 
-            if (SharedResources.Settings.EnableJoystick && SharedResources.Inpt!.GetNumJoysticks() > 0)
+            MouseAimCb!.SetChecked(settings.MouseAim);
+            NoMouseCb!.SetChecked(settings.NoMouse);
+            if (eset.Misc.MouseMoveEnabled)
             {
-                SharedResources.Inpt.InitJoystick();
-                JoystickDeviceLstb!.Select((uint)(SharedResources.Settings.JoystickDevice + 1));
+                MouseMoveCb!.SetChecked(settings.MouseMove);
+                MouseMoveSwapCb!.SetChecked(settings.MouseMoveSwap);
+                MouseMoveAttackCb!.SetChecked(settings.MouseMoveAttack);
+            }
+            JoystickRumbleCb!.SetChecked(settings.JoystickRumble);
+            TouchControlsCb!.SetChecked(settings.Touchscreen);
+
+            if (settings.EnableJoystick && inpt.GetNumJoysticks() > 0)
+            {
+                inpt.InitJoystick();
+                JoystickDeviceLstb!.Select((uint)(settings.JoystickDevice + 1));
             }
 
-            JoystickDeadzoneSl!.Set(Settings.JoyDeadzoneMin, Settings.JoyDeadzoneMax, SharedResources.Settings.JoyDeadzone);
-            TouchScaleSl!.Set(TouchScaleMin, TouchScaleMax, (int)(SharedResources.Settings.TouchScale * 100.0));
+            JoystickDeadzoneSl!.Set(Settings.JoyDeadzoneMin, Settings.JoyDeadzoneMax, settings.JoyDeadzone);
+            TouchScaleSl!.Set(TouchScaleMin, TouchScaleMax, (int)(settings.TouchScale * 100.0));
 
             _cfgTabs[InputTab].Scrollbox!.Refresh();
         }
 
         public void UpdateKeybinds()
         {
+            var inpt = SharedResources.Inpt!;
+            var msg = SharedResources.Msg!;
+
             for (int i = 0; i < KeybindsLstb.Count; i++)
             {
                 KeybindsLstb[i]!.Clear();
-                if (SharedResources.Inpt!.Binding[i].Count == 0)
+                if (inpt.Binding[i].Count == 0)
                 {
-                    KeybindsLstb[i]!.Append(SharedResources.Inpt.GetBindingStringByIndex(i, -1), "");
+                    KeybindsLstb[i]!.Append(inpt.GetBindingStringByIndex(i, -1), "");
                 }
                 else
                 {
-                    string tooltipText = SharedResources.Msg!.Get("Bindings for:") + " " + SharedResources.Inpt.BindingName[i] + "\n";
+                    string tooltipText = msg.Get("Bindings for:") + " " + inpt.BindingName[i] + "\n";
 
-                    for (int j = 0; j < SharedResources.Inpt.Binding[i].Count; ++j)
+                    for (int j = 0; j < inpt.Binding[i].Count; ++j)
                     {
-                        tooltipText += SharedResources.Inpt.GetBindingStringByIndex(i, j);
-                        if (j + 1 != SharedResources.Inpt.Binding[i].Count)
+                        tooltipText += inpt.GetBindingStringByIndex(i, j);
+                        if (j + 1 != inpt.Binding[i].Count)
                         {
                             tooltipText += "\n";
                         }
                     }
-                    for (int j = 0; j < SharedResources.Inpt.Binding[i].Count; ++j)
+                    for (int j = 0; j < inpt.Binding[i].Count; ++j)
                     {
-                        KeybindsLstb[i]!.Append(SharedResources.Inpt.GetBindingStringByIndex(i, j), tooltipText);
+                        KeybindsLstb[i]!.Append(inpt.GetBindingStringByIndex(i, j), tooltipText);
                     }
                 }
                 KeybindsLstb[i]!.Refresh();
@@ -1379,7 +1411,10 @@ namespace FlareEngine
 
         public void Logic()
         {
-            if (SharedResources.Inpt!.WindowResized)
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+
+            if (inpt.WindowResized)
                 RefreshWidgets();
 
             if (DefaultsConfirm!.Visible)
@@ -1444,8 +1479,8 @@ namespace FlareEngine
 
                 if (Platform.Instance.ForceHardwareCursor)
                 {
-                    SharedResources.Settings!.HardwareCursor = true;
-                    HardwareCursorCb!.SetChecked(SharedResources.Settings.HardwareCursor);
+                    settings.HardwareCursor = true;
+                    HardwareCursorCb!.SetChecked(settings.HardwareCursor);
                 }
             }
             else if (ActiveTab == InputTab)
@@ -1470,6 +1505,8 @@ namespace FlareEngine
 
         public bool LogicMain()
         {
+            var inpt = SharedResources.Inpt!;
+
             for (int i = 0; i < ChildWidget.Count; i++)
             {
                 if (ChildWidget[i]!.InFocus && Optiontab[i] != NoTab)
@@ -1484,7 +1521,7 @@ namespace FlareEngine
             for (int i = 0; i < Tablists.Count; ++i)
             {
                 Tablists[i]!.Logic();
-                if (!SharedResources.Inpt!.UsingMouse() && !Tablists[i]!.IsLocked() && Tablists[i]!.GetCurrent() == -1 && TablistMain.GetCurrent() == -1)
+                if (!inpt.UsingMouse() && !Tablists[i]!.IsLocked() && Tablists[i]!.GetCurrent() == -1 && TablistMain.GetCurrent() == -1)
                 {
                     Tablists[i]!.GetNext(!TabList.GetInner, TabList.WidgetSelectAuto);
                 }
@@ -1502,17 +1539,17 @@ namespace FlareEngine
                     DefaultsConfirm!.Show();
                     return true;
                 }
-                else if (CancelButton!.CheckClick() || (SharedResources.Inpt.UsingMouse() && SharedResources.Inpt.Pressing[Input.Cancel] && !SharedResources.Inpt.Lock[Input.Cancel]))
+                else if (CancelButton!.CheckClick() || (inpt.UsingMouse() && inpt.Pressing[Input.Cancel] && !inpt.Lock[Input.Cancel]))
                 {
-                    if (SharedResources.Inpt.Pressing[Input.Cancel])
-                        SharedResources.Inpt.Lock[Input.Cancel] = true;
+                    if (inpt.Pressing[Input.Cancel])
+                        inpt.Lock[Input.Cancel] = true;
 
                     ClickedCancel = true;
                     return false;
                 }
-                else if (!SharedResources.Inpt.UsingMouse() && SharedResources.Inpt.Pressing[Input.Cancel] && !SharedResources.Inpt.Lock[Input.Cancel])
+                else if (!inpt.UsingMouse() && inpt.Pressing[Input.Cancel] && !inpt.Lock[Input.Cancel])
                 {
-                    SharedResources.Inpt.Lock[Input.Cancel] = true;
+                    inpt.Lock[Input.Cancel] = true;
 
                     if (TablistMain.GetCurrent() == -1)
                     {
@@ -1539,17 +1576,22 @@ namespace FlareEngine
 
         public void LogicDefaults()
         {
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+            var inpt = SharedResources.Inpt!;
+
             DefaultsConfirm!.Logic();
             if (DefaultsConfirm.ClickedConfirm)
             {
                 if (DefaultsConfirm.ActionList!.GetSelected() == DefaultsConfirmOptionYes)
                 {
-                    SharedResources.Settings!.Fullscreen = false;
-                    SharedResources.Settings.LoadDefaults();
-                    SharedResources.RenderDevice!.SetFullscreen(SharedResources.Settings.Fullscreen);
-                    SharedResources.Eset!.Load();
-                    SharedResources.Inpt!.InitBindings();
-                    SharedResources.Inpt.LoadKeyBindings(!InputState.LoadUserBinds);
+                    settings.Fullscreen = false;
+                    settings.LoadDefaults();
+                    renderDevice.SetFullscreen(settings.Fullscreen);
+                    eset.Load();
+                    inpt.InitBindings();
+                    inpt.LoadKeyBindings(!InputState.LoadUserBinds);
                     Update();
                     RefreshWindowSize();
                 }
@@ -1579,35 +1621,39 @@ namespace FlareEngine
 
         public void LogicVideo()
         {
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             _cfgTabs[VideoTab].Scrollbox!.Logic();
-            Int2 mouse = _cfgTabs[VideoTab].Scrollbox.InputAssist(SharedResources.Inpt!.Mouse);
+            Int2 mouse = _cfgTabs[VideoTab].Scrollbox.InputAssist(inpt.Mouse);
 
             if (_cfgTabs[VideoTab].Options[Platform.Video.Fullscreen].Enabled && FullscreenCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.Fullscreen = FullscreenCb.IsChecked;
-                SharedResources.RenderDevice!.SetFullscreen(SharedResources.Settings.Fullscreen);
+                settings.Fullscreen = FullscreenCb.IsChecked;
+                renderDevice.SetFullscreen(settings.Fullscreen);
                 RefreshWindowSize();
             }
             else if (_cfgTabs[VideoTab].Options[Platform.Video.Hwsurface].Enabled && HwsurfaceCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.Hwsurface = HwsurfaceCb.IsChecked;
+                settings.Hwsurface = HwsurfaceCb.IsChecked;
             }
             else if (_cfgTabs[VideoTab].Options[Platform.Video.Vsync].Enabled && VsyncCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.Vsync = VsyncCb.IsChecked;
+                settings.Vsync = VsyncCb.IsChecked;
             }
             else if (_cfgTabs[VideoTab].Options[Platform.Video.TextureFilter].Enabled && TextureFilterCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.TextureFilter = TextureFilterCb.IsChecked;
+                settings.TextureFilter = TextureFilterCb.IsChecked;
             }
             else if (_cfgTabs[VideoTab].Options[Platform.Video.DpiScaling].Enabled && DpiScalingCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.DpiScaling = DpiScalingCb.IsChecked;
+                settings.DpiScaling = DpiScalingCb.IsChecked;
                 RefreshWindowSize();
             }
             else if (_cfgTabs[VideoTab].Options[Platform.Video.ParallaxLayers].Enabled && ParallaxLayersCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.ParallaxLayers = ParallaxLayersCb.IsChecked;
+                settings.ParallaxLayers = ParallaxLayersCb.IsChecked;
             }
             else if (_cfgTabs[VideoTab].Options[Platform.Video.Renderer].Enabled && RendererLstb!.CheckClickAt(mouse.X, mouse.Y))
             {
@@ -1621,14 +1667,14 @@ namespace FlareEngine
                 int index = (int)MinRenderSizeLstb.GetSelected();
                 if (index == 0)
                 {
-                    SharedResources.Settings!.MinRenderSize = 0;
+                    settings.MinRenderSize = 0;
                 }
                 else
                 {
-                    SharedResources.Settings!.MinRenderSize = _virtualHeights[index - 1];
-                    if (SharedResources.Settings.MaxRenderSize < SharedResources.Settings.MinRenderSize)
+                    settings.MinRenderSize = _virtualHeights[index - 1];
+                    if (settings.MaxRenderSize < settings.MinRenderSize)
                     {
-                        SharedResources.Settings.MaxRenderSize = 0;
+                        settings.MaxRenderSize = 0;
                         MaxRenderSizeLstb!.Select(0);
                     }
                 }
@@ -1639,14 +1685,14 @@ namespace FlareEngine
                 int index = (int)MaxRenderSizeLstb.GetSelected();
                 if (index == 0)
                 {
-                    SharedResources.Settings!.MaxRenderSize = 0;
+                    settings.MaxRenderSize = 0;
                 }
                 else
                 {
-                    SharedResources.Settings!.MaxRenderSize = _virtualHeights[index - 1];
-                    if (SharedResources.Settings.MaxRenderSize < SharedResources.Settings.MinRenderSize)
+                    settings.MaxRenderSize = _virtualHeights[index - 1];
+                    if (settings.MaxRenderSize < settings.MinRenderSize)
                     {
-                        SharedResources.Settings.MinRenderSize = 0;
+                        settings.MinRenderSize = 0;
                         MinRenderSizeLstb!.Select(0);
                     }
                 }
@@ -1654,210 +1700,226 @@ namespace FlareEngine
             }
             else if (_cfgTabs[VideoTab].Options[Platform.Video.ThreadedImageLoad].Enabled && ThreadedImageLoadCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.EnableThreadedImageLoad = ThreadedImageLoadCb.IsChecked;
+                settings.EnableThreadedImageLoad = ThreadedImageLoadCb.IsChecked;
             }
             else if (_cfgTabs[VideoTab].Options[Platform.Video.FadeWalls].Enabled && FadeWallsCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.FadeWalls = FadeWallsCb.IsChecked;
+                settings.FadeWalls = FadeWallsCb.IsChecked;
             }
         }
 
         public void LogicAudio()
         {
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+            var snd = SharedResources.Snd!;
+
             _cfgTabs[AudioTab].Scrollbox!.Logic();
-            Int2 mouse = _cfgTabs[AudioTab].Scrollbox.InputAssist(SharedResources.Inpt!.Mouse);
+            Int2 mouse = _cfgTabs[AudioTab].Scrollbox.InputAssist(inpt.Mouse);
 
             if (_cfgTabs[AudioTab].Options[Platform.Audio.MuteOnFocusLoss].Enabled && MuteOnFocusLossCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.MuteOnFocusLoss = MuteOnFocusLossCb.IsChecked;
+                settings.MuteOnFocusLoss = MuteOnFocusLossCb.IsChecked;
             }
-            else if (SharedResources.Settings!.Audio)
+            else if (settings.Audio)
             {
                 if (_cfgTabs[AudioTab].Options[Platform.Audio.Music].Enabled && MusicVolumeSl!.CheckClickAt(mouse.X, mouse.Y))
                 {
-                    if (SharedResources.Settings.MusicVolume == 0)
+                    if (settings.MusicVolume == 0)
                         ReloadMusic = true;
-                    SharedResources.Settings.MusicVolume = (ushort)MusicVolumeSl.Value;
-                    SharedResources.Snd!.SetVolumeMusic(SharedResources.Settings.MusicVolume);
+                    settings.MusicVolume = (ushort)MusicVolumeSl.Value;
+                    snd.SetVolumeMusic(settings.MusicVolume);
                 }
                 else if (_cfgTabs[AudioTab].Options[Platform.Audio.Sfx].Enabled && SoundVolumeSl!.CheckClickAt(mouse.X, mouse.Y))
                 {
-                    SharedResources.Settings.SoundVolume = (ushort)SoundVolumeSl.Value;
-                    SharedResources.Snd!.SetVolumeSFX(SharedResources.Settings.SoundVolume);
+                    settings.SoundVolume = (ushort)SoundVolumeSl.Value;
+                    snd.SetVolumeSFX(settings.SoundVolume);
                 }
             }
         }
 
         public void LogicGame()
         {
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+
             _cfgTabs[GameTab].Scrollbox!.Logic();
-            Int2 mouse = _cfgTabs[GameTab].Scrollbox.InputAssist(SharedResources.Inpt!.Mouse);
+            Int2 mouse = _cfgTabs[GameTab].Scrollbox.InputAssist(inpt.Mouse);
 
             if (_cfgTabs[GameTab].Options[Platform.Game.AutoEquip].Enabled && AutoEquipCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.AutoEquip = AutoEquipCb.IsChecked;
+                settings.AutoEquip = AutoEquipCb.IsChecked;
             }
             else if (_cfgTabs[GameTab].Options[Platform.Game.AutoLoot].Enabled && AutoLootLstb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.AutoLoot = (int)AutoLootLstb.GetSelected();
+                settings.AutoLoot = (int)AutoLootLstb.GetSelected();
             }
             else if (_cfgTabs[GameTab].Options[Platform.Game.LowHpWarningType].Enabled && LowHpWarningLstb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.LowHpWarningType = (int)LowHpWarningLstb.GetSelected();
+                settings.LowHpWarningType = (int)LowHpWarningLstb.GetSelected();
             }
             else if (_cfgTabs[GameTab].Options[Platform.Game.LowHpThreshold].Enabled && LowHpThresholdLstb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.LowHpThreshold = ((int)LowHpThresholdLstb.GetSelected() + 1) * 5;
+                settings.LowHpThreshold = ((int)LowHpThresholdLstb.GetSelected() + 1) * 5;
             }
         }
 
         public void LogicInterface()
         {
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+
             _cfgTabs[InterfaceTab].Scrollbox!.Logic();
-            Int2 mouse = _cfgTabs[InterfaceTab].Scrollbox.InputAssist(SharedResources.Inpt!.Mouse);
+            Int2 mouse = _cfgTabs[InterfaceTab].Scrollbox.InputAssist(inpt.Mouse);
 
             if (_cfgTabs[InterfaceTab].Options[Platform.Interface.Language].Enabled && LanguageLstb!.CheckClickAt(mouse.X, mouse.Y))
             {
                 uint langId = LanguageLstb.GetSelected();
                 if (langId != LanguageLstb.GetSize())
-                    SharedResources.Settings!.Language = LanguageIso[(int)langId];
+                    settings.Language = LanguageIso[(int)langId];
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.ShowFps].Enabled && ShowFpsCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.ShowFps = ShowFpsCb.IsChecked;
+                settings.ShowFps = ShowFpsCb.IsChecked;
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.Colorblind].Enabled && ColorblindCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.Colorblind = ColorblindCb.IsChecked;
+                settings.Colorblind = ColorblindCb.IsChecked;
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.HardwareCursor].Enabled && HardwareCursorCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.HardwareCursor = HardwareCursorCb.IsChecked;
+                settings.HardwareCursor = HardwareCursorCb.IsChecked;
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.DevMode].Enabled && DevModeCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.DevMode = DevModeCb.IsChecked;
+                settings.DevMode = DevModeCb.IsChecked;
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.Subtitles].Enabled && SubtitlesCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.Subtitles = SubtitlesCb.IsChecked;
+                settings.Subtitles = SubtitlesCb.IsChecked;
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.LootTooltips].Enabled && LootTooltipLstb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.LootTooltips = (int)LootTooltipLstb.GetSelected();
+                settings.LootTooltips = (int)LootTooltipLstb.GetSelected();
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.MinimapMode].Enabled && MinimapLstb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.MinimapMode = (int)MinimapLstb.GetSelected();
+                settings.MinimapMode = (int)MinimapLstb.GetSelected();
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.StatbarLabels].Enabled && StatbarLabelsCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.StatbarLabels = StatbarLabelsCb.IsChecked;
+                settings.StatbarLabels = StatbarLabelsCb.IsChecked;
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.StatbarAutohide].Enabled && StatbarAutohideCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.StatbarAutohide = StatbarAutohideCb.IsChecked;
+                settings.StatbarAutohide = StatbarAutohideCb.IsChecked;
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.CombatText].Enabled && CombatTextCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.CombatText = CombatTextCb.IsChecked;
+                settings.CombatText = CombatTextCb.IsChecked;
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.ItemCompareTips].Enabled && ItemCompareTipsCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.ItemCompareTips = ItemCompareTipsCb.IsChecked;
+                settings.ItemCompareTips = ItemCompareTipsCb.IsChecked;
             }
             else if (_cfgTabs[InterfaceTab].Options[Platform.Interface.PauseOnFocusLoss].Enabled && PauseOnFocusLossCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.PauseOnFocusLoss = PauseOnFocusLossCb.IsChecked;
+                settings.PauseOnFocusLoss = PauseOnFocusLossCb.IsChecked;
             }
         }
 
         public void LogicInput()
         {
-            _cfgTabs[InputTab].Scrollbox!.Logic();
-            Int2 mouse = _cfgTabs[InputTab].Scrollbox.InputAssist(SharedResources.Inpt!.Mouse);
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
 
-            if (SharedResources.Inpt.JoysticksChanged)
+            _cfgTabs[InputTab].Scrollbox!.Logic();
+            Int2 mouse = _cfgTabs[InputTab].Scrollbox.InputAssist(inpt.Mouse);
+
+            if (inpt.JoysticksChanged)
             {
                 RefreshJoysticks();
-                if (SharedResources.Settings!.EnableJoystick && SharedResources.Inpt.GetNumJoysticks() > 0)
+                if (settings.EnableJoystick && inpt.GetNumJoysticks() > 0)
                 {
-                    SharedResources.Inpt.InitJoystick();
-                    JoystickDeviceLstb!.Select((uint)(SharedResources.Settings.JoystickDevice + 1));
+                    inpt.InitJoystick();
+                    JoystickDeviceLstb!.Select((uint)(settings.JoystickDevice + 1));
                 }
                 else
                 {
                     JoystickDeviceLstb!.Select(0);
                 }
 
-                SharedResources.Inpt.JoysticksChanged = false;
+                inpt.JoysticksChanged = false;
             }
 
             if (_cfgTabs[InputTab].Options[Platform.Input.MouseMove].Enabled && MouseMoveCb!.CheckClickAt(mouse.X, mouse.Y))
             {
                 if (MouseMoveCb.IsChecked)
                 {
-                    SharedResources.Settings!.MouseMove = true;
+                    settings.MouseMove = true;
                     EnableMouseOptions();
                 }
-                else SharedResources.Settings!.MouseMove = false;
+                else settings.MouseMove = false;
             }
             else if (_cfgTabs[InputTab].Options[Platform.Input.MouseAim].Enabled && MouseAimCb!.CheckClickAt(mouse.X, mouse.Y))
             {
                 if (MouseAimCb.IsChecked)
                 {
-                    SharedResources.Settings!.MouseAim = true;
+                    settings.MouseAim = true;
                     EnableMouseOptions();
                 }
-                else SharedResources.Settings!.MouseAim = false;
+                else settings.MouseAim = false;
             }
             else if (_cfgTabs[InputTab].Options[Platform.Input.NoMouse].Enabled && NoMouseCb!.CheckClickAt(mouse.X, mouse.Y))
             {
                 if (NoMouseCb.IsChecked)
                 {
-                    SharedResources.Settings!.NoMouse = true;
+                    settings.NoMouse = true;
                     DisableMouseOptions();
                 }
-                else SharedResources.Settings!.NoMouse = false;
+                else settings.NoMouse = false;
             }
             else if (_cfgTabs[InputTab].Options[Platform.Input.MouseMoveSwap].Enabled && MouseMoveSwapCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.MouseMoveSwap = MouseMoveSwapCb.IsChecked;
+                settings.MouseMoveSwap = MouseMoveSwapCb.IsChecked;
             }
             else if (_cfgTabs[InputTab].Options[Platform.Input.MouseMoveAttack].Enabled && MouseMoveAttackCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.MouseMoveAttack = MouseMoveAttackCb.IsChecked;
+                settings.MouseMoveAttack = MouseMoveAttackCb.IsChecked;
             }
             else if (_cfgTabs[InputTab].Options[Platform.Input.JoystickDeadzone].Enabled && JoystickDeadzoneSl!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.JoyDeadzone = JoystickDeadzoneSl.Value;
+                settings.JoyDeadzone = JoystickDeadzoneSl.Value;
             }
             else if (_cfgTabs[InputTab].Options[Platform.Input.Joystick].Enabled && JoystickDeviceLstb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.JoystickDevice = (int)JoystickDeviceLstb.GetSelected() - 1;
-                SharedResources.Settings.EnableJoystick = (SharedResources.Settings.JoystickDevice != -1);
-                SharedResources.Inpt!.JoysticksChanged = true;
-                SharedResources.Inpt.InitJoystick();
-                SharedResources.Inpt.JoysticksChanged = false;
+                settings.JoystickDevice = (int)JoystickDeviceLstb.GetSelected() - 1;
+                settings.EnableJoystick = (settings.JoystickDevice != -1);
+                inpt.JoysticksChanged = true;
+                inpt.InitJoystick();
+                inpt.JoysticksChanged = false;
             }
             else if (_cfgTabs[InputTab].Options[Platform.Input.JoystickRumble].Enabled && JoystickRumbleCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.JoystickRumble = JoystickRumbleCb.IsChecked;
+                settings.JoystickRumble = JoystickRumbleCb.IsChecked;
             }
             else if (_cfgTabs[InputTab].Options[Platform.Input.TouchControls].Enabled && TouchControlsCb!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.Touchscreen = TouchControlsCb.IsChecked;
+                settings.Touchscreen = TouchControlsCb.IsChecked;
             }
             else if (_cfgTabs[InputTab].Options[Platform.Input.TouchScale].Enabled && TouchScaleSl!.CheckClickAt(mouse.X, mouse.Y))
             {
-                SharedResources.Settings!.TouchScale = (float)TouchScaleSl.Value * 0.01f;
+                settings.TouchScale = (float)TouchScaleSl.Value * 0.01f;
             }
         }
 
         public void LogicKeybinds()
         {
+            var inpt = SharedResources.Inpt!;
+            var msg = SharedResources.Msg!;
+
             _cfgTabs[KeybindsTab].Scrollbox!.Logic();
-            Int2 mouse = _cfgTabs[KeybindsTab].Scrollbox.InputAssist(SharedResources.Inpt!.Mouse);
+            Int2 mouse = _cfgTabs[KeybindsTab].Scrollbox.InputAssist(inpt.Mouse);
 
             for (int i = 0; i < KeybindsLstb.Count; i++)
             {
@@ -1868,13 +1930,13 @@ namespace FlareEngine
                 {
                     if (KeybindsLstb[i]!.CheckAction())
                     {
-                        InputConfirm!.SetTitle(SharedResources.Msg!.Get("Assign:") + ' ' + SharedResources.Inpt!.BindingName[i]);
+                        InputConfirm!.SetTitle(msg.Get("Assign:") + ' ' + inpt.BindingName[i]);
                         InputConfirmTimer.Reset(Timer.Begin);
                         InputConfirm.Show();
                         InputAction = i;
-                        SharedResources.Inpt.LastButton = -1;
-                        SharedResources.Inpt.LastKey = -1;
-                        SharedResources.Inpt.LastJoybutton = -1;
+                        inpt.LastButton = -1;
+                        inpt.LastKey = -1;
+                        inpt.LastJoybutton = -1;
                     }
                 }
             }
@@ -1912,14 +1974,18 @@ namespace FlareEngine
 
         public void Render()
         {
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             Rectangle pos = new Rectangle();
-            pos.X = (SharedResources.Settings!.ViewW - SharedResources.Eset!.Resolutions.FrameW) / 2 + BackgroundOffset.X;
-            pos.Y = (SharedResources.Settings.ViewH - SharedResources.Eset.Resolutions.FrameH) / 2 + BackgroundOffset.Y;
+            pos.X = (settings.ViewW - eset.Resolutions.FrameW) / 2 + BackgroundOffset.X;
+            pos.Y = (settings.ViewH - eset.Resolutions.FrameH) / 2 + BackgroundOffset.Y;
 
             if (Background != null)
             {
                 Background.SetDestFromRect(pos);
-                SharedResources.RenderDevice!.Render(Background);
+                renderDevice.Render(Background);
             }
 
             TabControl!.Render();
@@ -2044,10 +2110,13 @@ namespace FlareEngine
 
         public void RefreshWidgets()
         {
-            TabControl!.SetMainArea(((SharedResources.Settings!.ViewW - SharedResources.Eset!.Resolutions.FrameW) / 2) + TabOffset.X, ((SharedResources.Settings.ViewH - SharedResources.Eset.Resolutions.FrameH) / 2) + TabOffset.Y, SharedResources.Eset.Resolutions.FrameW);
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
 
-            Frame.X = ((SharedResources.Settings.ViewW - SharedResources.Eset.Resolutions.FrameW) / 2) + FrameOffset.X;
-            Frame.Y = ((SharedResources.Settings.ViewH - SharedResources.Eset.Resolutions.FrameH) / 2) + TabControl.GetTabHeight() + FrameOffset.Y;
+            TabControl!.SetMainArea(((settings.ViewW - eset.Resolutions.FrameW) / 2) + TabOffset.X, ((settings.ViewH - eset.Resolutions.FrameH) / 2) + TabOffset.Y, eset.Resolutions.FrameW);
+
+            Frame.X = ((settings.ViewW - eset.Resolutions.FrameW) / 2) + FrameOffset.X;
+            Frame.Y = ((settings.ViewH - eset.Resolutions.FrameH) / 2) + TabControl.GetTabHeight() + FrameOffset.Y;
 
             for (int i = 0; i < ChildWidget.Count; ++i)
             {
@@ -2071,8 +2140,11 @@ namespace FlareEngine
 
         public void RefreshWindowSize()
         {
-            SharedResources.RenderDevice!.WindowResize();
-            SharedResources.Inpt!.WindowResized = true;
+            var renderDevice = SharedResources.RenderDevice!;
+            var inpt = SharedResources.Inpt!;
+
+            renderDevice.WindowResize();
+            inpt.WindowResized = true;
             RefreshWidgets();
             ForceRefreshBackground = true;
         }
@@ -2175,26 +2247,27 @@ namespace FlareEngine
 
         public bool SetMods()
         {
+            var mods = SharedResources.Mods!;
             List<Mod> tempList = new List<Mod>();
-            for (int i = 0; i < SharedResources.Mods!.ModList.Count; i++)
-                tempList.Add(new Mod(SharedResources.Mods.ModList[i]));
-            SharedResources.Mods.ModList.Clear();
-            SharedResources.Mods.ModList.Add(SharedResources.Mods.LoadMod(ModManager.FallbackMod));
+            for (int i = 0; i < mods.ModList.Count; i++)
+                tempList.Add(new Mod(mods.ModList[i]));
+            mods.ModList.Clear();
+            mods.ModList.Add(mods.LoadMod(ModManager.FallbackMod));
 
             for (int i = 0; i < ActivemodsLstb!.Size; i++)
             {
                 if (ActivemodsLstb.GetValue(i) != "")
-                    SharedResources.Mods.ModList.Add(SharedResources.Mods.LoadMod(ActivemodsLstb.GetValue(i)));
+                    mods.ModList.Add(mods.LoadMod(ActivemodsLstb.GetValue(i)));
             }
 
-            SharedResources.Mods.ApplyDepends();
+            mods.ApplyDepends();
 
-            bool changed = SharedResources.Mods.ModList.Count != tempList.Count;
+            bool changed = mods.ModList.Count != tempList.Count;
             if (!changed)
             {
-                for (int i = 0; i < SharedResources.Mods.ModList.Count; i++)
+                for (int i = 0; i < mods.ModList.Count; i++)
                 {
-                    if (SharedResources.Mods.ModList[i] != tempList[i])
+                    if (mods.ModList[i] != tempList[i])
                     {
                         changed = true;
                         break;
@@ -2204,7 +2277,7 @@ namespace FlareEngine
 
             if (changed)
             {
-                SharedResources.Mods.SaveMods();
+                mods.SaveMods();
                 return true;
             }
             else
@@ -2215,6 +2288,9 @@ namespace FlareEngine
 
         public void FilterMods()
         {
+            var mods = SharedResources.Mods!;
+            var settings = SharedResources.Settings!;
+
             InactivemodsLstb!.Clear();
             int gameIndex = (int)InactivemodsFilterLstb!.GetSelected();
             int unknownGameIndex = (int)InactivemodsFilterLstb.GetSize();
@@ -2223,29 +2299,29 @@ namespace FlareEngine
                 unknownGameIndex = (int)InactivemodsFilterLstb.GetSize() - 1;
             }
 
-            for (int i = 0; i < SharedResources.Mods!.ModDirs.Count; i++)
+            for (int i = 0; i < mods.ModDirs.Count; i++)
             {
                 bool skipMod = false;
                 for (int j = 0; j < ActivemodsLstb!.Size; j++)
                 {
-                    if (SharedResources.Mods.ModDirs[i] == ActivemodsLstb.GetValue(j))
+                    if (mods.ModDirs[i] == ActivemodsLstb.GetValue(j))
                     {
                         skipMod = true;
                         break;
                     }
                 }
-                if (!skipMod && SharedResources.Mods.ModDirs[i] != ModManager.FallbackMod)
+                if (!skipMod && mods.ModDirs[i] != ModManager.FallbackMod)
                 {
-                    Mod tempMod = SharedResources.Mods.LoadMod(SharedResources.Mods.ModDirs[i]);
+                    Mod tempMod = mods.LoadMod(mods.ModDirs[i]);
 
-                    bool gameMatches = (SharedResources.Settings!.Game.Length == 0 || (SharedResources.Settings.Game.Length != 0 && SharedResources.Settings.Game == tempMod.Game) || tempMod.Game == ModManager.FallbackGame);
+                    bool gameMatches = (settings.Game.Length == 0 || (settings.Game.Length != 0 && settings.Game == tempMod.Game) || tempMod.Game == ModManager.FallbackGame);
                     bool indexIsAll = (gameIndex == 0 || (gameIndex == 1 && tempMod.IsGameMod));
                     bool indexAndGameUnknown = (gameIndex == unknownGameIndex && tempMod.Game.Length == 0);
                     bool indexAndGameMatch = (tempMod.Game == InactivemodsFilterLstb.GetValue());
 
                     if (gameMatches && (indexIsAll || indexAndGameUnknown || indexAndGameMatch))
                     {
-                        InactivemodsLstb.Append(SharedResources.Mods.ModDirs[i], CreateModTooltip(tempMod));
+                        InactivemodsLstb.Append(mods.ModDirs[i], CreateModTooltip(tempMod));
                     }
                 }
             }
@@ -2255,6 +2331,9 @@ namespace FlareEngine
 
         public string CreateModTooltip(Mod? mod)
         {
+            var msg = SharedResources.Msg!;
+            var settings = SharedResources.Settings!;
+
             string ret = "";
             if (mod != null)
             {
@@ -2265,10 +2344,10 @@ namespace FlareEngine
 
                 if (mod.IsGameMod)
                 {
-                    ret += SharedResources.Msg!.Get("Core mod") + '\n';
+                    ret += msg.Get("Core mod") + '\n';
                 }
 
-                string modDescription = mod.GetLocaleDescription(SharedResources.Settings!.Language);
+                string modDescription = mod.GetLocaleDescription(settings.Language);
                 if (modDescription.Length != 0)
                 {
                     ret += '\n';
@@ -2280,19 +2359,19 @@ namespace FlareEngine
                 {
                     middleSection = true;
                     ret += '\n';
-                    ret += SharedResources.Msg!.Get("Version:") + ' ' + modVer;
+                    ret += msg.Get("Version:") + ' ' + modVer;
                 }
                 if (mod.Game.Length != 0 && mod.Game != ModManager.FallbackGame)
                 {
                     middleSection = true;
                     ret += '\n';
-                    ret += SharedResources.Msg!.Get("Game:") + ' ' + mod.Game;
+                    ret += msg.Get("Game:") + ' ' + mod.Game;
                 }
                 if (engineVer.Length != 0)
                 {
                     middleSection = true;
                     ret += '\n';
-                    ret += SharedResources.Msg!.Get("Engine version:") + ' ' + engineVer;
+                    ret += msg.Get("Engine version:") + ' ' + engineVer;
                 }
 
                 if (middleSection)
@@ -2301,7 +2380,7 @@ namespace FlareEngine
                 if (mod.Depends.Count != 0)
                 {
                     ret += '\n';
-                    ret += SharedResources.Msg!.Get("Requires mods:") + '\n';
+                    ret += msg.Get("Requires mods:") + '\n';
                     for (int i = 0; i < mod.Depends.Count; ++i)
                     {
                         ret += "-  " + mod.Depends[i];
@@ -2321,20 +2400,25 @@ namespace FlareEngine
 
         public void ConfirmKey(int action)
         {
-            SharedResources.Inpt!.Pressing[action] = false;
-            SharedResources.Inpt.Lock[action] = false;
+            var inpt = SharedResources.Inpt!;
+
+            inpt.Pressing[action] = false;
+            inpt.Lock[action] = false;
 
             InputConfirm!.Visible = false;
             InputConfirmTimer.Reset(Timer.End);
             KeybindTipTimer.Reset(Timer.End);
 
-            SharedResources.Inpt.RefreshHotkeys = true;
+            inpt.RefreshHotkeys = true;
 
             UpdateKeybinds();
         }
 
         public void ScanKey(int action)
         {
+            var inpt = SharedResources.Inpt!;
+            var msg = SharedResources.Msg!;
+
             if (!InputConfirm!.Visible)
                 return;
 
@@ -2347,20 +2431,20 @@ namespace FlareEngine
                     InputConfirm.ActionList.Enabled = false;
                     InputConfirm.Align();
 
-                    SharedResources.Inpt!.LastButton = -1;
-                    SharedResources.Inpt.LastKey = -1;
-                    SharedResources.Inpt.LastJoybutton = -1;
+                    inpt.LastButton = -1;
+                    inpt.LastKey = -1;
+                    inpt.LastJoybutton = -1;
                 }
                 else if (InputConfirm.ActionList.GetSelected() == InputConfirmOptionClear)
                 {
                     int selectedBind = (int)KeybindsLstb![action]!.GetSelected();
                     if (action == Input.Main1 && selectedBind == 0)
                     {
-                        KeybindMsg = SharedResources.Msg!.Get("Can not remove this binding.");
+                        KeybindMsg = msg.Get("Can not remove this binding.");
                     }
                     else
                     {
-                        SharedResources.Inpt!.RemoveBind(action, selectedBind);
+                        inpt.RemoveBind(action, selectedBind);
                         ConfirmKey(action);
                     }
                 }
@@ -2368,31 +2452,31 @@ namespace FlareEngine
 
             if (!InputConfirm.ActionList!.Enabled)
             {
-                if (SharedResources.Inpt!.LastKey != -1)
+                if (inpt.LastKey != -1)
                 {
                     string? msgRef = KeybindMsg;
-                    SharedResources.Inpt.SetBind(action, InputBind.Key, SharedResources.Inpt.LastKey, ref msgRef);
+                    inpt.SetBind(action, InputBind.Key, inpt.LastKey, ref msgRef);
                     KeybindMsg = msgRef ?? "";
                     ConfirmKey(action);
                 }
-                else if (SharedResources.Inpt.LastButton != -1)
+                else if (inpt.LastButton != -1)
                 {
                     string? msgRef = KeybindMsg;
-                    SharedResources.Inpt.SetBind(action, InputBind.Mouse, SharedResources.Inpt.LastButton, ref msgRef);
+                    inpt.SetBind(action, InputBind.Mouse, inpt.LastButton, ref msgRef);
                     KeybindMsg = msgRef ?? "";
                     ConfirmKey(action);
                 }
-                else if (SharedResources.Inpt.LastJoybutton != -1)
+                else if (inpt.LastJoybutton != -1)
                 {
                     string? msgRef = KeybindMsg;
-                    SharedResources.Inpt.SetBind(action, InputBind.Gamepad, SharedResources.Inpt.LastJoybutton, ref msgRef);
+                    inpt.SetBind(action, InputBind.Gamepad, inpt.LastJoybutton, ref msgRef);
                     KeybindMsg = msgRef ?? "";
                     ConfirmKey(action);
                 }
-                else if (SharedResources.Inpt.LastJoyaxis != -1)
+                else if (inpt.LastJoyaxis != -1)
                 {
                     string? msgRef = KeybindMsg;
-                    SharedResources.Inpt.SetBind(action, InputBind.GamepadAxis, SharedResources.Inpt.LastJoyaxis, ref msgRef);
+                    inpt.SetBind(action, InputBind.GamepadAxis, inpt.LastJoyaxis, ref msgRef);
                     KeybindMsg = msgRef ?? "";
                     ConfirmKey(action);
                 }
@@ -2401,34 +2485,40 @@ namespace FlareEngine
 
         public void EnableMouseOptions()
         {
-            SharedResources.Settings!.NoMouse = false;
-            NoMouseCb!.SetChecked(SharedResources.Settings.NoMouse);
+            var settings = SharedResources.Settings!;
+            settings.NoMouse = false;
+            NoMouseCb!.SetChecked(settings.NoMouse);
         }
 
         public void DisableMouseOptions()
         {
-            SharedResources.Settings!.MouseAim = false;
-            MouseAimCb!.SetChecked(SharedResources.Settings.MouseAim);
+            var settings = SharedResources.Settings!;
 
-            SharedResources.Settings.MouseMove = false;
-            MouseMoveCb!.SetChecked(SharedResources.Settings.MouseMove);
+            settings.MouseAim = false;
+            MouseAimCb!.SetChecked(settings.MouseAim);
 
-            SharedResources.Settings.NoMouse = true;
-            NoMouseCb!.SetChecked(SharedResources.Settings.NoMouse);
+            settings.MouseMove = false;
+            MouseMoveCb!.SetChecked(settings.MouseMove);
+
+            settings.NoMouse = true;
+            NoMouseCb!.SetChecked(settings.NoMouse);
         }
 
         public void RefreshRenderers()
         {
+            var msg = SharedResources.Msg!;
+            var settings = SharedResources.Settings!;
+
             RendererLstb!.Clear();
 
             List<string> rdName = new List<string>();
             List<string> rdDesc = new List<string>();
-            DeviceList.CreateRenderDeviceList(SharedResources.Msg!, rdName, rdDesc);
+            DeviceList.CreateRenderDeviceList(msg, rdName, rdDesc);
 
             for (int i = 0; i < rdName.Count; ++i)
             {
                 RendererLstb.Append(rdName[i], rdDesc[i]);
-                if (rdName[i] == SharedResources.Settings!.RenderDeviceName)
+                if (rdName[i] == settings.RenderDeviceName)
                 {
                     RendererLstb.Select((uint)i);
                 }
@@ -2437,13 +2527,16 @@ namespace FlareEngine
 
         public void RefreshJoysticks()
         {
-            JoystickDeviceLstb!.Clear();
-            JoystickDeviceLstb.Append(SharedResources.Msg!.Get("(none)"), "");
-            JoystickDeviceLstb.Enabled = SharedResources.Inpt!.GetNumJoysticks() > 0;
+            var msg = SharedResources.Msg!;
+            var inpt = SharedResources.Inpt!;
 
-            for (int i = 0; i < SharedResources.Inpt.GetNumJoysticks(); ++i)
+            JoystickDeviceLstb!.Clear();
+            JoystickDeviceLstb.Append(msg.Get("(none)"), "");
+            JoystickDeviceLstb.Enabled = inpt.GetNumJoysticks() > 0;
+
+            for (int i = 0; i < inpt.GetNumJoysticks(); ++i)
             {
-                string joystickName = SharedResources.Inpt.GetJoystickName(i);
+                string joystickName = inpt.GetJoystickName(i);
                 if (joystickName != "")
                     JoystickDeviceLstb.Append(joystickName, joystickName);
             }
@@ -2453,7 +2546,9 @@ namespace FlareEngine
 
         public void SetPauseExitText(bool enableSave)
         {
-            PauseExitBtn!.SetLabel((SharedResources.Eset!.Misc.SaveOnexit && enableSave) ? SharedResources.Msg!.Get("Save & Exit") : SharedResources.Msg!.Get("Exit"));
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+            PauseExitBtn!.SetLabel((eset.Misc.SaveOnexit && enableSave) ? msg.Get("Save & Exit") : msg.Get("Exit"));
         }
 
         public void SetPauseSaveEnabled(bool enableSave)
@@ -2577,13 +2672,15 @@ namespace FlareEngine
 
         public bool SetFrameLimit()
         {
+            var settings = SharedResources.Settings!;
+
             int frameLimitIndex = (int)FrameLimitLstb!.GetSelected();
             if (frameLimitIndex < _frameLimits.Count)
             {
-                if (SharedResources.Settings!.MaxFramesPerSec != _frameLimits[frameLimitIndex])
+                if (settings.MaxFramesPerSec != _frameLimits[frameLimitIndex])
                 {
-                    Utils.LogInfo("MenuConfig: Changing frame limit from %d to %d.", SharedResources.Settings.MaxFramesPerSec, _frameLimits[frameLimitIndex]);
-                    SharedResources.Settings.MaxFramesPerSec = _frameLimits[frameLimitIndex];
+                    Utils.LogInfo("MenuConfig: Changing frame limit from %d to %d.", settings.MaxFramesPerSec, _frameLimits[frameLimitIndex]);
+                    settings.MaxFramesPerSec = _frameLimits[frameLimitIndex];
                     return true;
                 }
             }

@@ -114,6 +114,8 @@ namespace FlareEngine
 
         public void LoadSoundsFromStatBlock(StatBlock? srcStats)
         {
+            var snd = SharedResources.Snd!;
+
             UnloadSounds();
 
             if (srcStats == null) srcStats = Stats;
@@ -124,74 +126,77 @@ namespace FlareEngine
                 SoundAttack.Add((animName, new List<SoundID>()));
                 for (int j = 0; j < srcStats.SfxAttack[i].Filenames.Count; ++j)
                 {
-                    SoundID sid = SharedResources.Snd!.Load(srcStats.SfxAttack[i].Filenames[j], "Entity attack");
+                    SoundID sid = snd.Load(srcStats.SfxAttack[i].Filenames[j], "Entity attack");
                     SoundAttack[^1].Second.Add(sid);
                 }
             }
 
             for (int i = 0; i < srcStats.SfxHit.Count; ++i)
             {
-                SoundHitIds.Add(SharedResources.Snd!.Load(srcStats.SfxHit[i], "Entity was hit"));
+                SoundHitIds.Add(snd.Load(srcStats.SfxHit[i], "Entity was hit"));
             }
             for (int i = 0; i < srcStats.SfxDie.Count; ++i)
             {
-                SoundDieIds.Add(SharedResources.Snd!.Load(srcStats.SfxDie[i], "Entity died"));
+                SoundDieIds.Add(snd.Load(srcStats.SfxDie[i], "Entity died"));
             }
             for (int i = 0; i < srcStats.SfxCritdie.Count; ++i)
             {
-                SoundCritdieIds.Add(SharedResources.Snd!.Load(srcStats.SfxCritdie[i], "Entity died from critical hit"));
+                SoundCritdieIds.Add(snd.Load(srcStats.SfxCritdie[i], "Entity died from critical hit"));
             }
             for (int i = 0; i < srcStats.SfxBlock.Count; ++i)
             {
-                SoundBlockIds.Add(SharedResources.Snd!.Load(srcStats.SfxBlock[i], "Entity blocked"));
+                SoundBlockIds.Add(snd.Load(srcStats.SfxBlock[i], "Entity blocked"));
             }
 
             if (srcStats.SfxLevelup != "")
-                SoundLevelup = SharedResources.Snd!.Load(srcStats.SfxLevelup, "Entity leveled up");
+                SoundLevelup = snd.Load(srcStats.SfxLevelup, "Entity leveled up");
 
             if (srcStats.SfxLowhp != "")
-                SoundLowhp = SharedResources.Snd!.Load(srcStats.SfxLowhp, "Entity has low hp");
+                SoundLowhp = snd.Load(srcStats.SfxLowhp, "Entity has low hp");
         }
 
         public void UnloadSounds()
         {
+            var snd = SharedResources.Snd!;
+            
             for (int i = 0; i < SoundAttack.Count; ++i)
             {
                 for (int j = 0; j < SoundAttack[i].Second.Count; ++j)
                 {
-                    SharedResources.Snd!.Unload(SoundAttack[i].Second[j]);
+                    snd.Unload(SoundAttack[i].Second[j]);
                 }
             }
 
             for (int i = 0; i < SoundHitIds.Count; ++i)
             {
-                SharedResources.Snd!.Unload(SoundHitIds[i]);
+                snd.Unload(SoundHitIds[i]);
             }
             for (int i = 0; i < SoundDieIds.Count; ++i)
             {
-                SharedResources.Snd!.Unload(SoundDieIds[i]);
+                snd.Unload(SoundDieIds[i]);
             }
             for (int i = 0; i < SoundCritdieIds.Count; ++i)
             {
-                SharedResources.Snd!.Unload(SoundCritdieIds[i]);
+                snd.Unload(SoundCritdieIds[i]);
             }
             for (int i = 0; i < SoundBlockIds.Count; ++i)
             {
-                SharedResources.Snd!.Unload(SoundBlockIds[i]);
+                snd.Unload(SoundBlockIds[i]);
             }
 
-            SharedResources.Snd!.Unload(SoundLevelup);
-            SharedResources.Snd!.Unload(SoundLowhp);
+            snd.Unload(SoundLevelup);
+            snd.Unload(SoundLowhp);
         }
 
         public void PlayAttackSound(string attackName)
         {
+            var snd = SharedResources.Snd!;
             for (int i = 0; i < SoundAttack.Count; ++i)
             {
                 if (SoundAttack[i].Second.Count != 0 && SoundAttack[i].First == attackName)
                 {
                     int randIndex = Program.Rng.Next() % SoundAttack[i].Second.Count;
-                    SharedResources.Snd!.Play(SoundAttack[i].Second[randIndex], SoundManager.DefaultChannel, Stats.Pos, !SoundManager.Loop);
+                    snd.Play(SoundAttack[i].Second[randIndex], SoundManager.DefaultChannel, Stats.Pos, !SoundManager.Loop);
                     return;
                 }
             }
@@ -199,36 +204,40 @@ namespace FlareEngine
 
         public void PlaySound(int soundType)
         {
+            var snd = SharedResources.Snd!;
+
             if (soundType == Entity.SoundHit && SoundHitIds.Count != 0)
             {
                 int randIndex = Program.Rng.Next() % SoundHitIds.Count;
                 string channelName = "entity_hit_" + SoundHitIds[randIndex];
-                SharedResources.Snd!.Play(SoundHitIds[randIndex], channelName, Stats.Pos, !SoundManager.Loop);
+                snd.Play(SoundHitIds[randIndex], channelName, Stats.Pos, !SoundManager.Loop);
             }
             else if (soundType == Entity.SoundDie && SoundDieIds.Count != 0)
             {
                 int randIndex = Program.Rng.Next() % SoundDieIds.Count;
                 string channelName = "entity_die_" + SoundDieIds[randIndex];
-                SharedResources.Snd!.Play(SoundDieIds[randIndex], channelName, Stats.Pos, !SoundManager.Loop);
+                snd.Play(SoundDieIds[randIndex], channelName, Stats.Pos, !SoundManager.Loop);
             }
             else if (soundType == Entity.SoundCritdie && SoundCritdieIds.Count != 0)
             {
                 int randIndex = Program.Rng.Next() % SoundCritdieIds.Count;
                 string channelName = "entity_critdie_" + SoundCritdieIds[randIndex];
-                SharedResources.Snd!.Play(SoundCritdieIds[randIndex], channelName, Stats.Pos, !SoundManager.Loop);
+                snd.Play(SoundCritdieIds[randIndex], channelName, Stats.Pos, !SoundManager.Loop);
             }
             else if (soundType == Entity.SoundBlock && SoundBlockIds.Count != 0)
             {
                 int randIndex = Program.Rng.Next() % SoundBlockIds.Count;
                 string channelName = "entity_block_" + SoundBlockIds[randIndex];
-                SharedResources.Snd!.Play(SoundBlockIds[randIndex], channelName, Stats.Pos, !SoundManager.Loop);
+                snd.Play(SoundBlockIds[randIndex], channelName, Stats.Pos, !SoundManager.Loop);
             }
         }
 
         private void MoveFromOffendingTile()
         {
+            var mapr = SharedGameResources.Mapr!;
+
             // don't bother if there's no possible tile for a stuck entity to move to
-            if (!SharedGameResources.Mapr!.Collider.HasEmptyTile)
+            if (!mapr.Collider.HasEmptyTile)
                 return;
 
             // If we got stuck on a tile, which we're not allowed to be on, move away
@@ -242,25 +251,25 @@ namespace FlareEngine
 
             Vector2 originalPos = Stats.Pos;
             bool originalPosIsBad = false;
-            int collideType = SharedGameResources.Mapr!.Collider.GetCollideType(Stats.Hero);
+            int collideType = mapr.Collider.GetCollideType(Stats.Hero);
 
-            while (!SharedGameResources.Mapr!.Collider.IsValidPosition(Stats.Pos.X, Stats.Pos.Y, Stats.MovementType, collideType))
+            while (!mapr.Collider.IsValidPosition(Stats.Pos.X, Stats.Pos.Y, Stats.MovementType, collideType))
             {
                 originalPosIsBad = true;
 
                 float pushx = 0;
                 float pushy = 0;
 
-                if (SharedGameResources.Mapr!.Collider.IsValidPosition(Stats.Pos.X + 1, Stats.Pos.Y, Stats.MovementType, collideType))
+                if (mapr.Collider.IsValidPosition(Stats.Pos.X + 1, Stats.Pos.Y, Stats.MovementType, collideType))
                     pushx += 0.1f * (2 - ((float)((int)(Stats.Pos.X + 1)) + 0.5f - Stats.Pos.X));
 
-                if (SharedGameResources.Mapr!.Collider.IsValidPosition(Stats.Pos.X - 1, Stats.Pos.Y, Stats.MovementType, collideType))
+                if (mapr.Collider.IsValidPosition(Stats.Pos.X - 1, Stats.Pos.Y, Stats.MovementType, collideType))
                     pushx -= 0.1f * (2 - (Stats.Pos.X - ((float)((int)(Stats.Pos.X - 1)) + 0.5f)));
 
-                if (SharedGameResources.Mapr!.Collider.IsValidPosition(Stats.Pos.X, Stats.Pos.Y + 1, Stats.MovementType, collideType))
+                if (mapr.Collider.IsValidPosition(Stats.Pos.X, Stats.Pos.Y + 1, Stats.MovementType, collideType))
                     pushy += 0.1f * (2 - ((float)((int)(Stats.Pos.Y + 1)) + 0.5f - Stats.Pos.Y));
 
-                if (SharedGameResources.Mapr!.Collider.IsValidPosition(Stats.Pos.X, Stats.Pos.Y - 1, Stats.MovementType, collideType))
+                if (mapr.Collider.IsValidPosition(Stats.Pos.X, Stats.Pos.Y - 1, Stats.MovementType, collideType))
                     pushy -= 0.1f * (2 - (Stats.Pos.Y - ((float)((int)(Stats.Pos.Y - 1)) + 0.5f)));
 
                 Stats.Pos.X += pushx;
@@ -277,13 +286,13 @@ namespace FlareEngine
                     float shortestDist = 0;
                     int radius = 1;
 
-                    while (radius <= Math.Max(SharedGameResources.Mapr!.W, SharedGameResources.Mapr!.H))
+                    while (radius <= Math.Max(mapr.W, mapr.H))
                     {
                         for (int i = srcPos.X - radius; i <= srcPos.X + radius; ++i)
                         {
                             for (int j = srcPos.Y - radius; j <= srcPos.Y + radius; ++j)
                             {
-                                if (SharedGameResources.Mapr!.Collider.IsValidPosition((float)i, (float)j, Stats.MovementType, collideType))
+                                if (mapr.Collider.IsValidPosition((float)i, (float)j, Stats.MovementType, collideType))
                                 {
                                     float testDist = Utils.CalcDist(Stats.Pos, shortestPos);
                                     if (shortestDist == 0 || testDist < shortestDist)
@@ -335,11 +344,13 @@ namespace FlareEngine
 
             MoveFromOffendingTile();
 
+            var mapr = SharedGameResources.Mapr!;
+
             float speed = Stats.Speed * StatBlock.SpeedMultiplier[Stats.Direction] * Stats.Effects.Speed / 100;
             float dx = speed * StatBlock.DirectionDeltaX[Stats.Direction];
             float dy = speed * StatBlock.DirectionDeltaY[Stats.Direction];
 
-            bool fullMove = SharedGameResources.Mapr!.Collider.Move(ref Stats.Pos.X, ref Stats.Pos.Y, dx, dy, Stats.MovementType, SharedGameResources.Mapr!.Collider.GetCollideType(Stats.Hero));
+            bool fullMove = mapr.Collider.Move(ref Stats.Pos.X, ref Stats.Pos.Y, dx, dy, Stats.MovementType, mapr.Collider.GetCollideType(Stats.Hero));
 
             return fullMove;
         }
@@ -352,6 +363,15 @@ namespace FlareEngine
         /// </summary>
         public bool TakeHit(Hazard h)
         {
+            var eset = SharedResources.Eset!;
+            var inpt = SharedResources.Inpt!;
+            var comb = SharedResources.Comb!;
+            var msg = SharedResources.Msg!;
+            var hazards = SharedGameResources.Hazards!;
+            var powers = SharedGameResources.Powers!;
+            var settings = SharedResources.Settings!;
+            var mapr = SharedGameResources.Mapr!;
+
             //check if this enemy should be affected by this hazard based on the category
             if (h.HazardPower!.TargetCategories.Count != 0)
             {
@@ -387,7 +407,7 @@ namespace FlareEngine
                 return false;
 
             // prevent hazard aoe from hitting targets behind walls
-            if (h.HazardPower!.WallsBlockAoe && !SharedGameResources.Mapr!.Collider.LineOfMovement(Stats.Pos.X, Stats.Pos.Y, h.Pos.X, h.Pos.Y, MapCollision.MoveNormal))
+            if (h.HazardPower!.WallsBlockAoe && !mapr.Collider.LineOfMovement(Stats.Pos.X, Stats.Pos.Y, h.Pos.X, h.Pos.Y, MapCollision.MoveNormal))
                 return false;
 
             // some enemies can be invicible based on campaign status
@@ -446,7 +466,7 @@ namespace FlareEngine
 
             float trueAvoidance = 100 - (accuracy - avoidance);
             bool isOverhit = (trueAvoidance < 0 && !h.SrcStats!.PerfectAccuracy) ? MathUtils.PercentChanceF(MathF.Abs(trueAvoidance)) : false;
-            trueAvoidance = Math.Min(Math.Max(trueAvoidance, SharedResources.Eset!.Combat.MinAvoidance), SharedResources.Eset!.Combat.MaxAvoidance);
+            trueAvoidance = Math.Min(Math.Max(trueAvoidance, eset.Combat.MinAvoidance), eset.Combat.MaxAvoidance);
 
             bool missed = false;
             if (!h.SrcStats!.PerfectAccuracy && MathUtils.PercentChanceF(trueAvoidance))
@@ -485,17 +505,17 @@ namespace FlareEngine
                     float baseAbsorb = absorption;
                     if (Stats.Effects.TriggeredBlock)
                     {
-                        if ((baseAbsorb * 100) / dmg < SharedResources.Eset!.Combat.MinBlock)
-                            absorption = (dmg * SharedResources.Eset!.Combat.MinBlock) / 100;
-                        if ((baseAbsorb * 100) / dmg > SharedResources.Eset!.Combat.MaxBlock)
-                            absorption = (dmg * SharedResources.Eset!.Combat.MaxBlock) / 100;
+                        if ((baseAbsorb * 100) / dmg < eset.Combat.MinBlock)
+                            absorption = (dmg * eset.Combat.MinBlock) / 100;
+                        if ((baseAbsorb * 100) / dmg > eset.Combat.MaxBlock)
+                            absorption = (dmg * eset.Combat.MaxBlock) / 100;
                     }
                     else
                     {
-                        if ((baseAbsorb * 100) / dmg < SharedResources.Eset!.Combat.MinAbsorb)
-                            absorption = (dmg * SharedResources.Eset!.Combat.MinAbsorb) / 100;
-                        if ((baseAbsorb * 100) / dmg > SharedResources.Eset!.Combat.MaxAbsorb)
-                            absorption = (dmg * SharedResources.Eset!.Combat.MaxAbsorb) / 100;
+                        if ((baseAbsorb * 100) / dmg < eset.Combat.MinAbsorb)
+                            absorption = (dmg * eset.Combat.MinAbsorb) / 100;
+                        if ((baseAbsorb * 100) / dmg > eset.Combat.MaxAbsorb)
+                            absorption = (dmg * eset.Combat.MaxAbsorb) / 100;
                     }
 
                     // Sometimes, the absorb limits cause absorption to drop to 1
@@ -510,9 +530,9 @@ namespace FlareEngine
                     dmg = 0;
                     if (!h.HazardPower!.IgnoreZeroDamage)
                     {
-                        if (Stats.Effects.TriggeredBlock && SharedResources.Eset!.Combat.MaxBlock < 100)
+                        if (Stats.Effects.TriggeredBlock && eset.Combat.MaxBlock < 100)
                             dmg = 1;
-                        else if (!Stats.Effects.TriggeredBlock && SharedResources.Eset!.Combat.MaxAbsorb < 100)
+                        else if (!Stats.Effects.TriggeredBlock && eset.Combat.MaxAbsorb < 100)
                             dmg = 1;
 
                         if (ActiveAnimation!.Name == "block")
@@ -541,44 +561,44 @@ namespace FlareEngine
             if (crit)
             {
                 // default is dmg * 2
-                dmg = (dmg * MathUtils.RandBetweenF(SharedResources.Eset!.Combat.MinCritDamage, SharedResources.Eset!.Combat.MaxCritDamage)) / 100;
+                dmg = (dmg * MathUtils.RandBetweenF(eset.Combat.MinCritDamage, eset.Combat.MaxCritDamage)) / 100;
                 if (!Stats.Hero)
                 {
-                    SharedGameResources.Mapr!.Cam.ShakeTimer.Duration = (uint)(SharedResources.Settings!.MaxFramesPerSec / 2);
-                    SharedResources.Inpt!.JoystickRumble(InputState.JoystickRumbleStrength, InputState.JoystickRumbleStrength, 500);
+                    mapr.Cam.ShakeTimer.Duration = (uint)(settings.MaxFramesPerSec / 2);
+                    inpt.JoystickRumble(InputState.JoystickRumbleStrength, InputState.JoystickRumbleStrength, 500);
                 }
             }
             else if (isOverhit)
             {
-                dmg = (dmg * MathUtils.RandBetweenF(SharedResources.Eset!.Combat.MinOverhitDamage, SharedResources.Eset!.Combat.MaxOverhitDamage)) / 100;
+                dmg = (dmg * MathUtils.RandBetweenF(eset.Combat.MinOverhitDamage, eset.Combat.MaxOverhitDamage)) / 100;
                 // Should we use shakycam for overhits?
             }
 
             // misses cause reduced damage
             if (missed)
             {
-                dmg = (dmg * MathUtils.RandBetweenF(SharedResources.Eset!.Combat.MinMissDamage, SharedResources.Eset!.Combat.MaxMissDamage)) / 100;
+                dmg = (dmg * MathUtils.RandBetweenF(eset.Combat.MinMissDamage, eset.Combat.MaxMissDamage)) / 100;
             }
 
-            dmg = SharedResources.Eset!.Combat.ResourceRound(dmg);
+            dmg = eset.Combat.ResourceRound(dmg);
 
             if (!h.HazardPower!.IgnoreZeroDamage)
             {
                 if (dmg == 0)
                 {
-                    SharedResources.Comb!.AddString(SharedResources.Msg!.Get("miss"), Stats.Pos, CombatText.MsgMiss);
+                    comb.AddString(msg.Get("miss"), Stats.Pos, CombatText.MsgMiss);
                     return false;
                 }
                 else if (Stats.Hero)
-                    SharedResources.Comb!.AddFloat(dmg, Stats.Pos, CombatText.MsgTakedmg);
+                    comb.AddFloat(dmg, Stats.Pos, CombatText.MsgTakedmg);
                 else
                 {
                     if (crit || isOverhit)
-                        SharedResources.Comb!.AddFloat(dmg, Stats.Pos, CombatText.MsgCrit);
+                        comb.AddFloat(dmg, Stats.Pos, CombatText.MsgCrit);
                     else if (missed)
-                        SharedResources.Comb!.AddFloat(dmg, Stats.Pos, CombatText.MsgMiss);
+                        comb.AddFloat(dmg, Stats.Pos, CombatText.MsgMiss);
                     else
-                        SharedResources.Comb!.AddFloat(dmg, Stats.Pos, CombatText.MsgGivedmg);
+                        comb.AddFloat(dmg, Stats.Pos, CombatText.MsgGivedmg);
                 }
             }
 
@@ -608,15 +628,15 @@ namespace FlareEngine
                     {
                         if (MathUtils.PercentChanceF(Stats.Get(global::FlareEngine.Stats.ResistHpSteal)))
                         {
-                            SharedResources.Comb!.AddString(SharedResources.Msg!.Get("Resist"), Stats.Pos, CombatText.MsgMiss);
+                            comb.AddString(msg.Get("Resist"), Stats.Pos, CombatText.MsgMiss);
                         }
                         else
                         {
                             float stealAmt = (Math.Min(dmg, prevHp) * hpSteal) / 100;
-                            stealAmt = SharedResources.Eset!.Combat.ResourceRound(stealAmt);
-                            if (stealAmt >= 1 || SharedResources.Eset!.NumberFormat.CombatText > 0)
+                            stealAmt = eset.Combat.ResourceRound(stealAmt);
+                            if (stealAmt >= 1 || eset.NumberFormat.CombatText > 0)
                             {
-                                SharedResources.Comb!.AddString(SharedResources.Msg!.GetV("+%s HP", Utils.FloatToString(stealAmt, SharedResources.Eset!.NumberFormat.CombatText)), h.SrcStats!.Pos, CombatText.MsgBuff);
+                                comb.AddString(msg.GetV("+%s HP", Utils.FloatToString(stealAmt, eset.NumberFormat.CombatText)), h.SrcStats!.Pos, CombatText.MsgBuff);
                             }
                             h.SrcStats!.Hp = Math.Min(h.SrcStats!.Hp + stealAmt, h.SrcStats!.Get(global::FlareEngine.Stats.HpMax));
                         }
@@ -626,15 +646,15 @@ namespace FlareEngine
                     {
                         if (MathUtils.PercentChanceF(Stats.Get(global::FlareEngine.Stats.ResistMpSteal)))
                         {
-                            SharedResources.Comb!.AddString(SharedResources.Msg!.Get("Resist"), Stats.Pos, CombatText.MsgMiss);
+                            comb.AddString(msg.Get("Resist"), Stats.Pos, CombatText.MsgMiss);
                         }
                         else
                         {
                             float stealAmt = (Math.Min(dmg, prevHp) * mpSteal) / 100;
-                            stealAmt = SharedResources.Eset!.Combat.ResourceRound(stealAmt);
-                            if (stealAmt >= 1 || SharedResources.Eset!.NumberFormat.CombatText > 0)
+                            stealAmt = eset.Combat.ResourceRound(stealAmt);
+                            if (stealAmt >= 1 || eset.NumberFormat.CombatText > 0)
                             {
-                                SharedResources.Comb!.AddString(SharedResources.Msg!.GetV("+%s MP", Utils.FloatToString(stealAmt, SharedResources.Eset!.NumberFormat.CombatText)), h.SrcStats!.Pos, CombatText.MsgBuff);
+                                comb.AddString(msg.GetV("+%s MP", Utils.FloatToString(stealAmt, eset.NumberFormat.CombatText)), h.SrcStats!.Pos, CombatText.MsgBuff);
                             }
                             h.SrcStats!.Mp = Math.Min(h.SrcStats!.Mp + stealAmt, h.SrcStats!.Get(global::FlareEngine.Stats.MpMax));
                         }
@@ -646,13 +666,13 @@ namespace FlareEngine
                         {
                             if (MathUtils.PercentChanceF(Stats.GetResourceStat(i, EngineSettings.ResourceStatsSettings.StatResistSteal)))
                             {
-                                SharedResources.Comb!.AddString(SharedResources.Msg!.Get("Resist"), Stats.Pos, CombatText.MsgMiss);
+                                comb.AddString(msg.Get("Resist"), Stats.Pos, CombatText.MsgMiss);
                             }
                             else
                             {
                                 float stealAmt = (Math.Min(dmg, prevHp) * resourceSteal) / 100;
-                                stealAmt = SharedResources.Eset!.Combat.ResourceRound(stealAmt);
-                                SharedResources.Comb!.AddString("+" + Utils.FloatToString(stealAmt, SharedResources.Eset!.NumberFormat.CombatText) + " " + SharedResources.Eset!.ResourceStats.Stats[i].TextCombatHeal, h.SrcStats!.Pos, CombatText.MsgBuff);
+                                stealAmt = eset.Combat.ResourceRound(stealAmt);
+                                comb.AddString("+" + Utils.FloatToString(stealAmt, eset.NumberFormat.CombatText) + " " + eset.ResourceStats.Stats[i].TextCombatHeal, h.SrcStats!.Pos, CombatText.MsgBuff);
                                 h.SrcStats!.ResourceStats[i] = Math.Min(h.SrcStats!.ResourceStats[i] + stealAmt, h.SrcStats!.GetResourceStat(i, EngineSettings.ResourceStatsSettings.StatBase));
                             }
                         }
@@ -663,12 +683,12 @@ namespace FlareEngine
                 if (Stats.Get(global::FlareEngine.Stats.ReturnDamage) > 0)
                 {
                     float dmgReturn = (dmg * Stats.Get(global::FlareEngine.Stats.ReturnDamage)) / 100f;
-                    dmgReturn = SharedResources.Eset!.Combat.ResourceRound(dmgReturn);
+                    dmgReturn = eset.Combat.ResourceRound(dmgReturn);
                     if (dmgReturn > 0)
                     {
                         if (MathUtils.PercentChanceF(h.SrcStats!.Get(global::FlareEngine.Stats.ResistDamageReflect)))
                         {
-                            SharedResources.Comb!.AddString(SharedResources.Msg!.Get("Resist"), Stats.Pos, CombatText.MsgMiss);
+                            comb.AddString(msg.Get("Resist"), Stats.Pos, CombatText.MsgMiss);
                         }
                         else
                         {
@@ -680,7 +700,7 @@ namespace FlareEngine
                                 returnSourceType = Stats.Hero ? Power.SourceTypeHero : Power.SourceTypeAlly;
 
                             h.SrcStats!.TakeDamage(dmgReturn, !StatBlock.TakeDmgCrit, returnSourceType);
-                            SharedResources.Comb!.AddFloat(dmgReturn, h.SrcStats!.Pos, CombatText.MsgGivedmg);
+                            comb.AddFloat(dmgReturn, h.SrcStats!.Pos, CombatText.MsgGivedmg);
                         }
                     }
                 }
@@ -704,26 +724,26 @@ namespace FlareEngine
                     ChainPower chainPower = h.HazardPower!.ChainPowers[i];
                     if (chainPower.Type == ChainPower.TypePost && MathUtils.PercentChanceF(chainPower.Chance))
                     {
-                        int hazardCount = SharedGameResources.Hazards!.H.Count;
+                        int hazardCount = hazards.H.Count;
                         if (h.HazardPower!.PostHazardsSkipTarget)
                         {
                             // calling this here clears the powers->hazards queue
                             // it's important that we clear the queue first
                             // we'll be using it to determine which hazards are added by the post power
-                            SharedGameResources.Hazards!.CheckNewHazards();
+                            hazards.CheckNewHazards();
                         }
 
-                        SharedGameResources.Powers!.Activate(chainPower.Id, h.SrcStats!, h.Pos, Stats.Pos);
+                        powers.Activate(chainPower.Id, h.SrcStats!, h.Pos, Stats.Pos);
 
                         if (h.HazardPower!.PostHazardsSkipTarget)
                         {
                             // populate powers->hazards with any new hazards created by the post power
-                            SharedGameResources.Hazards!.CheckNewHazards();
-                            if (SharedGameResources.Hazards!.H.Count > hazardCount)
+                            hazards.CheckNewHazards();
+                            if (hazards.H.Count > hazardCount)
                             {
-                                for (uint j = (uint)hazardCount - 1; j < (uint)SharedGameResources.Hazards!.H.Count; ++j)
+                                for (uint j = (uint)hazardCount - 1; j < (uint)hazards.H.Count; ++j)
                                 {
-                                    SharedGameResources.Hazards!.H[(int)j].AddEntity(this);
+                                    hazards.H[(int)j].AddEntity(this);
                                 }
                             }
                         }
@@ -797,16 +817,16 @@ namespace FlareEngine
                 }
 
                 // handle block post-power
-                if (SharedGameResources.Powers!.IsValid(Stats.BlockPower))
+                if (powers.IsValid(Stats.BlockPower))
                 {
-                    Power blockPower = SharedGameResources.Powers!.Powers[Stats.BlockPower];
+                    Power blockPower = powers.Powers[Stats.BlockPower]!;
                     for (int i = 0; i < blockPower.ChainPowers.Count; ++i)
                     {
                         ChainPower chainPower = blockPower.ChainPowers[i];
                         if (chainPower.Type == ChainPower.TypePost && Stats.GetPowerCooldown(chainPower.Id) == 0 && MathUtils.PercentChanceF(chainPower.Chance))
                         {
-                            SharedGameResources.Powers!.Activate(chainPower.Id, Stats, Stats.Pos, Stats.Pos);
-                            Stats.SetPowerCooldown(chainPower.Id, SharedGameResources.Powers!.Powers[chainPower.Id].Cooldown);
+                            powers.Activate(chainPower.Id, Stats, Stats.Pos, Stats.Pos);
+                            Stats.SetPowerCooldown(chainPower.Id, powers.Powers[chainPower.Id]!.Cooldown);
                         }
                     }
                 }
@@ -957,7 +977,10 @@ namespace FlareEngine
 
         public void AddRenders(List<Renderable> r)
         {
-            if (SharedGameResources.Mapr != null && SharedGameResources.Mapr.Collider.IsOutsideMap(Stats.Pos.X, Stats.Pos.Y))
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var mapr = SharedGameResources.Mapr;
+            if (mapr != null && mapr.Collider.IsOutsideMap(Stats.Pos.X, Stats.Pos.Y))
                 return;
 
             if (Stats.LayerReferenceOrder.Count != 0)
@@ -977,7 +1000,7 @@ namespace FlareEngine
                         // fade out corpses
                         if (!Stats.Hero && Stats.Corpse && Stats.CorpseHasTimeout)
                         {
-                            uint fadeTime = (SharedResources.Eset!.Misc.CorpseTimeout > (int)SharedResources.Settings!.MaxFramesPerSec) ? SharedResources.Settings!.MaxFramesPerSec : (uint)SharedResources.Eset!.Misc.CorpseTimeout;
+                            uint fadeTime = (eset.Misc.CorpseTimeout > (int)settings.MaxFramesPerSec) ? settings.MaxFramesPerSec : (uint)eset.Misc.CorpseTimeout;
                             if (fadeTime != 0 && Stats.CorpseTimer.Current <= fadeTime)
                             {
                                 ren.AlphaMod = (byte)((float)Stats.CorpseTimer.Current * (ren.AlphaMod / (float)fadeTime));
@@ -1004,7 +1027,7 @@ namespace FlareEngine
                 // fade out corpses
                 if (!Stats.Hero && Stats.Corpse && Stats.CorpseHasTimeout)
                 {
-                    uint fadeTime = (SharedResources.Eset!.Misc.CorpseTimeout > (int)SharedResources.Settings!.MaxFramesPerSec) ? SharedResources.Settings!.MaxFramesPerSec : (uint)SharedResources.Eset!.Misc.CorpseTimeout;
+                    uint fadeTime = (eset.Misc.CorpseTimeout > (int)settings.MaxFramesPerSec) ? settings.MaxFramesPerSec : (uint)eset.Misc.CorpseTimeout;
                     if (fadeTime != 0 && Stats.CorpseTimer.Current <= fadeTime)
                     {
                         ren.AlphaMod = (byte)((float)Stats.CorpseTimer.Current * (ren.AlphaMod / (float)fadeTime));
@@ -1056,13 +1079,15 @@ namespace FlareEngine
 
         public void LoadAnimations()
         {
+            var anim = SharedResources.Anim!;
+
             // load the base animation
             if (AnimationSet == null)
             {
                 if (Stats.Animations != "")
                 {
-                    SharedResources.Anim!.IncreaseCount(Stats.Animations);
-                    AnimationSet = SharedResources.Anim!.GetAnimationSet(Stats.Animations);
+                    anim.IncreaseCount(Stats.Animations);
+                    AnimationSet = anim.GetAnimationSet(Stats.Animations);
                     if (ActiveAnimation != null)
                         ActiveAnimation.Dispose();
                     ActiveAnimation = AnimationSet!.GetAnimation("");
@@ -1072,7 +1097,7 @@ namespace FlareEngine
             for (int i = 0; i < Animsets.Count; ++i)
             {
                 if (Animsets[i] != null)
-                    SharedResources.Anim!.DecreaseCount(Animsets[i]!.Name);
+                    anim.DecreaseCount(Animsets[i]!.Name);
                 Anims[i]?.Dispose();
             }
             Animsets.Clear();
@@ -1099,8 +1124,8 @@ namespace FlareEngine
                     else
                         name = imgGfx[i].Gfx;
 
-                    SharedResources.Anim!.IncreaseCount(name);
-                    Animsets.Add(SharedResources.Anim!.GetAnimationSet(name));
+                    anim.IncreaseCount(name);
+                    Animsets.Add(anim.GetAnimationSet(name));
                     Animsets[^1]!.Parent = AnimationSet;
                     Anims.Add(Animsets[^1]!.GetAnimation(ActiveAnimation!.Name));
                     SetAnimation("stance");

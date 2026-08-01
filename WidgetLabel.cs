@@ -64,6 +64,8 @@ namespace FlareEngine
 
         public WidgetLabel()
         {
+            var font = SharedResources.Font!;
+
             _justify = FontEngine.JustifyLeft;
             _valign = LabelInfo.ValignTop;
             _maxWidth = 0;
@@ -74,7 +76,7 @@ namespace FlareEngine
             _label = null;
             _text = "";
             _fontStyle = DefaultFont;
-            _color = SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal);
+            _color = font.GetColor(FontEngine.ColorWidgetNormal);
 
             _bounds.X = _bounds.Y = 0;
             _bounds.Width = _bounds.Height = 0;
@@ -296,6 +298,9 @@ namespace FlareEngine
         /// </summary>
         private void RecacheTextSprite()
         {
+            var font = SharedResources.Font!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             if (_label != null)
             {
                 _label.Dispose();
@@ -311,22 +316,22 @@ namespace FlareEngine
 
             string tempText = _text;
 
-            SharedResources.Font!.SetFont(_fontStyle);
+            font.SetFont(_fontStyle);
 
-            Int2 p = SharedResources.Font.CalcSize(tempText);
+            Int2 p = font.CalcSize(tempText);
             if (_maxWidth > 0 && p.X > _maxWidth)
             {
-                tempText = SharedResources.Font.TrimTextToWidth(_text, _maxWidth, FontEngine.UseEllipsis, 0);
-                p = SharedResources.Font.CalcSize(tempText);
+                tempText = font.TrimTextToWidth(_text, _maxWidth, FontEngine.UseEllipsis, 0);
+                p = font.CalcSize(tempText);
             }
 
             _bounds.Width = p.X;
-            _bounds.Height = Math.Max(p.Y, SharedResources.Font.GetFontHeight());
+            _bounds.Height = Math.Max(p.Y, font.GetFontHeight());
 
-            Image? image = SharedResources.RenderDevice!.CreateImage(_bounds.Width, _bounds.Height);
+            Image? image = renderDevice.CreateImage(_bounds.Width, _bounds.Height);
             if (image == null) return;
 
-            SharedResources.Font.RenderShadowed(tempText, 0, 0, FontEngine.JustifyLeft, image, 0, _color);
+            font.RenderShadowed(tempText, 0, 0, FontEngine.JustifyLeft, image, 0, _color);
             _label = image.CreateSprite();
             image.Unref();
         }

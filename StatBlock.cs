@@ -260,6 +260,9 @@ namespace FlareEngine
 
         public StatBlock()
         {
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+
             _statsLoaded = false;
             Alive = true;
             Corpse = false;
@@ -279,7 +282,7 @@ namespace FlareEngine
             Converted = false;
             Summoned = false;
             SummonedPowerIndex = 0;
-            Encountered = SharedResources.Eset!.Combat.OffscreenEnemyEncounters;
+            Encountered = eset.Combat.OffscreenEnemyEncounters;
             TargetCorpse = null;
             TargetNearest = null;
             TargetNearestCorpse = null;
@@ -310,7 +313,7 @@ namespace FlareEngine
             SpeedDefault = 0.1f;
 
             ItemBaseDmg = new List<FMinMax>();
-            for (int i = 0; i < SharedResources.Eset.DamageTypes.Types.Count; ++i)
+            for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                 ItemBaseDmg.Add(new FMinMax());
             ItemBaseAbs = new FMinMax();
 
@@ -335,7 +338,7 @@ namespace FlareEngine
             HoldState = false;
             PreventInterrupt = false;
             Waypoints = new Queue<Vector2>();
-            WaypointTimer = new Timer(SharedResources.Settings!.MaxFramesPerSec);
+            WaypointTimer = new Timer(settings.MaxFramesPerSec);
             Wander = false;
             WanderArea = default;
             ChancePursue = 0;
@@ -357,8 +360,8 @@ namespace FlareEngine
             ActivatedPower = null;
             HalfDeadPower = false;
             SuppressHp = false;
-            FleeTimer = new Timer(SharedResources.Settings.MaxFramesPerSec);
-            FleeCooldownTimer = new Timer(SharedResources.Settings.MaxFramesPerSec);
+            FleeTimer = new Timer(settings.MaxFramesPerSec);
+            FleeCooldownTimer = new Timer(settings.MaxFramesPerSec);
             PerfectAccuracy = false;
             CooldownLos = new Timer();
             RestingHpRegenSeconds = 5.0f;
@@ -406,20 +409,20 @@ namespace FlareEngine
             AiDebuffPower = null;
             AiHitPower = null;
 
-            Primary = new List<int>(new int[SharedResources.Eset.PrimaryStats.Stats.Count]);
-            PrimaryStarting = new List<int>(new int[SharedResources.Eset.PrimaryStats.Stats.Count]);
-            PrimaryAdditional = new List<int>(new int[SharedResources.Eset.PrimaryStats.Stats.Count]);
+            Primary = new List<int>(new int[eset.PrimaryStats.Stats.Count]);
+            PrimaryStarting = new List<int>(new int[eset.PrimaryStats.Stats.Count]);
+            PrimaryAdditional = new List<int>(new int[eset.PrimaryStats.Stats.Count]);
             PerPrimary = new List<List<float>>();
-            for (int i = 0; i < SharedResources.Eset.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
                 PerPrimary.Add(new List<float>(new float[GetFullStatCount()]));
             }
 
             Cooldown.Reset(Timer.End);
 
-            ResourceStats = new List<float>(new float[SharedResources.Eset.ResourceStats.Stats.Count]);
-            PrevMaxResourceStats = new List<float>(new float[SharedResources.Eset.ResourceStats.Stats.Count]);
-            PrevResourceStats = new List<float>(new float[SharedResources.Eset.ResourceStats.Stats.Count]);
+            ResourceStats = new List<float>(new float[eset.ResourceStats.Stats.Count]);
+            PrevMaxResourceStats = new List<float>(new float[eset.ResourceStats.Stats.Count]);
+            PrevResourceStats = new List<float>(new float[eset.ResourceStats.Stats.Count]);
 
             Starting[Stats.HpMax] = 1;
         }
@@ -685,10 +688,13 @@ namespace FlareEngine
 
         private bool LoadCoreStat(FileParser infile)
         {
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+
             if (infile.Key == "speed")
             {
                 float fvalue = Parse.ToFloat(infile.Val, 0);
-                Speed = SpeedDefault = fvalue / SharedResources.Settings!.MaxFramesPerSec;
+                Speed = SpeedDefault = fvalue / settings.MaxFramesPerSec;
                 return true;
             }
             else if (infile.Key == "cooldown")
@@ -719,31 +725,31 @@ namespace FlareEngine
                 }
                 offsetIndex += Stats.Count;
 
-                for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                 {
-                    if (SharedResources.Eset.DamageTypes.Types[i].Min == stat)
+                    if (eset.DamageTypes.Types[i].Min == stat)
                     {
                         Starting[offsetIndex + EngineSettings.DamageTypesSettings.IndexToMin(i)] = value;
                         return true;
                     }
-                    else if (SharedResources.Eset.DamageTypes.Types[i].Max == stat)
+                    else if (eset.DamageTypes.Types[i].Max == stat)
                     {
                         Starting[offsetIndex + EngineSettings.DamageTypesSettings.IndexToMax(i)] = value;
                         return true;
                     }
-                    else if (SharedResources.Eset.DamageTypes.Types[i].Resist == stat)
+                    else if (eset.DamageTypes.Types[i].Resist == stat)
                     {
                         Starting[offsetIndex + EngineSettings.DamageTypesSettings.IndexToResist(i)] = value;
                         return true;
                     }
                 }
-                offsetIndex += SharedResources.Eset.DamageTypes.Count;
+                offsetIndex += eset.DamageTypes.Count;
 
-                for (int i = 0; i < SharedResources.Eset.ResourceStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
                 {
                     for (int j = 0; j < EngineSettings.ResourceStatsSettings.StatCount; ++j)
                     {
-                        if (SharedResources.Eset.ResourceStats.Stats[i].Ids[j] == stat)
+                        if (eset.ResourceStats.Stats[i].Ids[j] == stat)
                         {
                             Starting[offsetIndex + (i * EngineSettings.ResourceStatsSettings.StatCount) + j] = value;
                             return true;
@@ -768,31 +774,31 @@ namespace FlareEngine
                 }
                 offsetIndex += Stats.Count;
 
-                for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                 {
-                    if (SharedResources.Eset.DamageTypes.Types[i].Min == stat)
+                    if (eset.DamageTypes.Types[i].Min == stat)
                     {
                         PerLevel[offsetIndex + EngineSettings.DamageTypesSettings.IndexToMin(i)] = value;
                         return true;
                     }
-                    else if (SharedResources.Eset.DamageTypes.Types[i].Max == stat)
+                    else if (eset.DamageTypes.Types[i].Max == stat)
                     {
                         PerLevel[offsetIndex + EngineSettings.DamageTypesSettings.IndexToMax(i)] = value;
                         return true;
                     }
-                    else if (SharedResources.Eset.DamageTypes.Types[i].Resist == stat)
+                    else if (eset.DamageTypes.Types[i].Resist == stat)
                     {
                         PerLevel[offsetIndex + EngineSettings.DamageTypesSettings.IndexToResist(i)] = value;
                         return true;
                     }
                 }
-                offsetIndex += SharedResources.Eset.DamageTypes.Count;
+                offsetIndex += eset.DamageTypes.Count;
 
-                for (int i = 0; i < SharedResources.Eset.ResourceStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
                 {
                     for (int j = 0; j < EngineSettings.ResourceStatsSettings.StatCount; ++j)
                     {
-                        if (SharedResources.Eset.ResourceStats.Stats[i].Ids[j] == stat)
+                        if (eset.ResourceStats.Stats[i].Ids[j] == stat)
                         {
                             PerLevel[offsetIndex + (i * EngineSettings.ResourceStatsSettings.StatCount) + j] = value;
                             return true;
@@ -804,8 +810,8 @@ namespace FlareEngine
             {
                 string val = infile.Val;
                 string primStat = Parse.PopFirstString(ref val);
-                int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(primStat);
-                if (primStatIndex == SharedResources.Eset.PrimaryStats.Stats.Count)
+                int primStatIndex = eset.PrimaryStats.GetIndexByID(primStat);
+                if (primStatIndex == eset.PrimaryStats.Stats.Count)
                 {
                     infile.Error("StatBlock: '%s' is not a valid primary stat.", primStat);
                     return true;
@@ -825,31 +831,31 @@ namespace FlareEngine
                 }
                 offsetIndex += Stats.Count;
 
-                for (int i = 0; i < SharedResources.Eset.DamageTypes.Types.Count; ++i)
+                for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                 {
-                    if (SharedResources.Eset.DamageTypes.Types[i].Min == stat)
+                    if (eset.DamageTypes.Types[i].Min == stat)
                     {
                         PerPrimary[primStatIndex][offsetIndex + EngineSettings.DamageTypesSettings.IndexToMin(i)] = value;
                         return true;
                     }
-                    else if (SharedResources.Eset.DamageTypes.Types[i].Max == stat)
+                    else if (eset.DamageTypes.Types[i].Max == stat)
                     {
                         PerPrimary[primStatIndex][offsetIndex + EngineSettings.DamageTypesSettings.IndexToMax(i)] = value;
                         return true;
                     }
-                    else if (SharedResources.Eset.DamageTypes.Types[i].Resist == stat)
+                    else if (eset.DamageTypes.Types[i].Resist == stat)
                     {
                         PerPrimary[primStatIndex][offsetIndex + EngineSettings.DamageTypesSettings.IndexToResist(i)] = value;
                         return true;
                     }
                 }
-                offsetIndex += SharedResources.Eset.DamageTypes.Count;
+                offsetIndex += eset.DamageTypes.Count;
 
-                for (int i = 0; i < SharedResources.Eset.ResourceStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
                 {
                     for (int j = 0; j < EngineSettings.ResourceStatsSettings.StatCount; ++j)
                     {
-                        if (SharedResources.Eset.ResourceStats.Stats[i].Ids[j] == stat)
+                        if (eset.ResourceStats.Stats[i].Ids[j] == stat)
                         {
                             PerPrimary[primStatIndex][offsetIndex + (i * EngineSettings.ResourceStatsSettings.StatCount) + j] = value;
                             return true;
@@ -865,9 +871,9 @@ namespace FlareEngine
 
                 infile.Error("StatBlock: 'vulnerable' is deprecated. Use 'stat=%s_resist,%d' instead.", element, (int)value);
 
-                for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                 {
-                    if (element == SharedResources.Eset.DamageTypes.Types[i].Id)
+                    if (element == eset.DamageTypes.Types[i].Id)
                     {
                         Starting[Stats.Count + EngineSettings.DamageTypesSettings.IndexToResist(i)] = value;
                         return true;
@@ -1109,6 +1115,14 @@ namespace FlareEngine
             if (!infile.Open(filename, FileParser.ModFile, FileParser.ErrorNormal))
                 return;
 
+            var msg = SharedResources.Msg!;
+            var settings = SharedResources.Settings!;
+
+            var items = SharedGameResources.Items!;
+            var loot = SharedGameResources.Loot!;
+            var camp = SharedGameResources.Camp!;
+            var powers = SharedGameResources.Powers!;
+
             bool clearLoot = true;
             bool fleeRangeDefined = false;
 
@@ -1123,7 +1137,7 @@ namespace FlareEngine
                 float fnum = Parse.ToFloat(infile.Val);
                 bool valid = LoadCoreStat(infile) || LoadSfxStat(infile) || LoadRenderLayerStat(infile) || LoadAnimationSlotStat(infile) || IsNpcStat(infile);
 
-                if (infile.Key == "name") Name = SharedResources.Msg!.Get(infile.Val);
+                if (infile.Key == "name") Name = msg.Get(infile.Val);
                 else if (infile.Key == "humanoid") Humanoid = Parse.ToBool(infile.Val);
                 else if (infile.Key == "lifeform") Lifeform = Parse.ToBool(infile.Val);
                 else if (infile.Key == "level") Level = num;
@@ -1145,7 +1159,7 @@ namespace FlareEngine
 
                     LootTable.Add(new EventComponent());
                     string lootVal = infile.Val;
-                    SharedGameResources.Loot!.ParseLoot(ref lootVal, LootTable[^1], LootTable);
+                    loot.ParseLoot(ref lootVal, LootTable[^1], LootTable);
                 }
                 else if (infile.Key == "loot_count")
                 {
@@ -1158,26 +1172,26 @@ namespace FlareEngine
                         LootCount.Y = Math.Max(LootCount.Y, LootCount.X);
                     }
                 }
-                else if (infile.Key == "defeat_status") DefeatStatus = SharedGameResources.Camp!.RegisterStatus(infile.Val);
-                else if (infile.Key == "convert_status") ConvertStatus = SharedGameResources.Camp!.RegisterStatus(infile.Val);
+                else if (infile.Key == "defeat_status") DefeatStatus = camp.RegisterStatus(infile.Val);
+                else if (infile.Key == "convert_status") ConvertStatus = camp.RegisterStatus(infile.Val);
                 else if (infile.Key == "first_defeat_loot")
                 {
-                    if (SharedGameResources.Items != null)
-                        FirstDefeatLoot = SharedGameResources.Items.VerifyID(Parse.ToItemID(infile.Val), infile, ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                    if (items != null)
+                        FirstDefeatLoot = items.VerifyID(Parse.ToItemID(infile.Val), infile, ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
                 }
                 else if (infile.Key == "quest_loot")
                 {
-                    if (SharedGameResources.Items != null)
+                    if (items != null)
                     {
                         string val = infile.Val;
                         string reqStatus = Parse.PopFirstString(ref val);
                         string reqNotStatus = Parse.PopFirstString(ref val);
 
-                        QuestLootId = SharedGameResources.Items.VerifyID(Parse.ToItemID(Parse.PopFirstString(ref val)), infile, ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                        QuestLootId = items.VerifyID(Parse.ToItemID(Parse.PopFirstString(ref val)), infile, ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
                         if (QuestLootId > 0)
                         {
-                            QuestLootRequiresStatus = SharedGameResources.Camp!.RegisterStatus(reqStatus);
-                            QuestLootRequiresNotStatus = SharedGameResources.Camp!.RegisterStatus(reqNotStatus);
+                            QuestLootRequiresStatus = camp.RegisterStatus(reqStatus);
+                            QuestLootRequiresNotStatus = camp.RegisterStatus(reqNotStatus);
                         }
                     }
                 }
@@ -1209,8 +1223,8 @@ namespace FlareEngine
                     string val = infile.Val;
                     string aiType = Parse.PopFirstString(ref val);
 
-                    if (SharedGameResources.Powers != null)
-                        aiPower.Id = SharedGameResources.Powers.VerifyID(Parse.ToPowerID(Parse.PopFirstString(ref val)), infile, !PowerManager.AllowZeroId);
+                    if (powers != null)
+                        aiPower.Id = powers.VerifyID(Parse.ToPowerID(Parse.PopFirstString(ref val)), infile, !PowerManager.AllowZeroId);
 
                     if (aiPower.Id == 0)
                         continue;
@@ -1238,20 +1252,20 @@ namespace FlareEngine
                 }
                 else if (infile.Key == "passive_powers")
                 {
-                    if (SharedGameResources.Powers != null)
+                    if (powers != null)
                     {
                         PowersPassive.Clear();
                         string val = infile.Val;
                         string p = Parse.PopFirstString(ref val);
                         while (p != "")
                         {
-                            PowerID passiveId = SharedGameResources.Powers.VerifyID(Parse.ToPowerID(p), infile, !PowerManager.AllowZeroId);
+                            PowerID passiveId = powers.VerifyID(Parse.ToPowerID(p), infile, !PowerManager.AllowZeroId);
 
-                            if (SharedGameResources.Powers.IsValid(passiveId))
+                            if (powers.IsValid(passiveId))
                             {
                                 PowersPassive.Add(passiveId);
 
-                                Power passivePower = SharedGameResources.Powers.Powers[passiveId];
+                                Power passivePower = powers.Powers[passiveId]!;
                                 for (int i = 0; i < passivePower.ChainPowers.Count; ++i)
                                 {
                                     ChainPower chainPower = passivePower.ChainPowers[i];
@@ -1305,7 +1319,7 @@ namespace FlareEngine
                 else if (infile.Key == "resting_hp_regen_time")
                 {
                     float t = (float)Parse.ToDuration(infile.Val);
-                    RestingHpRegenSeconds = t / SharedResources.Settings!.MaxFramesPerSec;
+                    RestingHpRegenSeconds = t / settings.MaxFramesPerSec;
                 }
                 else if (!valid)
                 {
@@ -1317,7 +1331,8 @@ namespace FlareEngine
             Hp = Starting[Stats.HpMax];
             Mp = Starting[Stats.MpMax];
 
-            int resourceOffsetIndex = Stats.Count + SharedResources.Eset!.DamageTypes.Count;
+            var eset = SharedResources.Eset!;
+            int resourceOffsetIndex = Stats.Count + eset.DamageTypes.Count;
             for (int i = 0; i < ResourceStats.Count; ++i)
             {
                 ResourceStats[i] = Starting[resourceOffsetIndex + (i * EngineSettings.ResourceStatsSettings.StatCount) + EngineSettings.ResourceStatsSettings.StatBase];
@@ -1331,6 +1346,8 @@ namespace FlareEngine
 
         public void TakeDamage(float dmg, bool crit, int sourceType)
         {
+            var camp = SharedGameResources.Camp!;
+
             Hp -= Effects.DamageShields(dmg);
             if (Hp <= 0)
             {
@@ -1348,7 +1365,7 @@ namespace FlareEngine
                     {
                         if (QuestLootRequiresStatus != 0)
                         {
-                            if (!(SharedGameResources.Camp!.CheckStatus(QuestLootRequiresStatus) && !SharedGameResources.Camp!.CheckStatus(QuestLootRequiresNotStatus)))
+                            if (!(camp.CheckStatus(QuestLootRequiresStatus) && !camp.CheckStatus(QuestLootRequiresNotStatus)))
                             {
                                 QuestLootId = 0;
                             }
@@ -1358,13 +1375,13 @@ namespace FlareEngine
                         {
                             if (FirstDefeatLoot > 0)
                             {
-                                if (!SharedGameResources.Camp!.CheckStatus(DefeatStatus))
+                                if (!camp.CheckStatus(DefeatStatus))
                                 {
                                     QuestLootId = FirstDefeatLoot;
                                 }
                             }
 
-                            SharedGameResources.Camp!.SetStatus(DefeatStatus);
+                            camp.SetStatus(DefeatStatus);
                         }
 
                         float xpMultiplier = 1;
@@ -1373,7 +1390,7 @@ namespace FlareEngine
 
                         xpMultiplier *= SharedGameResources.XpScaling!.GetMultiplier(this, SharedGameResources.Pc!.Stats);
 
-                        SharedGameResources.Camp!.RewardXp((float)Xp * xpMultiplier, !CampaignManager.XpShowMsg);
+                        camp.RewardXp((float)Xp * xpMultiplier, !CampaignManager.XpShowMsg);
 
                         SharedGameResources.Loot!.AddEnemyLoot(this);
                     }
@@ -1398,10 +1415,11 @@ namespace FlareEngine
 
                 RefreshStats = true;
 
-                ulong xpMax = SharedResources.Eset!.Xp.GetLevelXP(SharedResources.Eset.Xp.GetMaxLevel());
+                var eset = SharedResources.Eset!;
+                ulong xpMax = eset.Xp.GetLevelXP(eset.Xp.GetMaxLevel());
                 Xp = Math.Min(Xp, xpMax);
 
-                Level = SharedResources.Eset.Xp.GetLevelFromXP(Xp);
+                Level = eset.Xp.GetLevelFromXP(Xp);
                 if (Level != 0)
                     CheckTitle = true;
             }
@@ -1495,7 +1513,8 @@ namespace FlareEngine
             if (Hp > Get(Stats.HpMax)) Hp = Get(Stats.HpMax);
             if (Mp > Get(Stats.MpMax)) Mp = Get(Stats.MpMax);
 
-            int resourceOffsetIndex = Stats.Count + SharedResources.Eset!.DamageTypes.Count;
+            var eset = SharedResources.Eset!;
+            int resourceOffsetIndex = Stats.Count + eset.DamageTypes.Count;
             for (int i = 0; i < ResourceStats.Count; ++i)
             {
                 int currentIndex = resourceOffsetIndex + (i * EngineSettings.ResourceStatsSettings.StatCount) + EngineSettings.ResourceStatsSettings.StatBase;
@@ -1511,24 +1530,32 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var comb = SharedResources.Comb!;
+            var mapr = SharedGameResources.Mapr!;
+            var settings = SharedResources.Settings!;
+            var powers = SharedGameResources.Powers!;
+            var entitym = SharedGameResources.Entitym;
+
             Alive = !(Hp <= 0 && !Effects.TriggeredDeath && !Effects.Revive);
 
-            if (SharedGameResources.Entitym != null && SharedGameResources.Powers != null)
+            if (entitym != null && powers != null)
             {
                 while (PartyBuffs.Count > 0)
                 {
                     PowerID powerIndex = PartyBuffs.Dequeue();
-                    Power buffPower = SharedGameResources.Powers.Powers[powerIndex];
+                    Power buffPower = powers.Powers[powerIndex];
 
-                    for (int i = 0; i < SharedGameResources.Entitym.Entities.Count; ++i)
+                    for (int i = 0; i < entitym.Entities.Count; ++i)
                     {
-                        Entity partyMember = SharedGameResources.Entitym.Entities[i];
+                        Entity partyMember = entitym.Entities[i];
                         if (partyMember.Stats.Hp > 0 &&
                            ((partyMember.Stats.HeroAlly && Hero) || (partyMember.Stats.EnemyAlly && partyMember.Stats.Summoner == this)) &&
                            (buffPower.BuffPartyPowerId == 0 || buffPower.BuffPartyPowerId == partyMember.Stats.SummonedPowerIndex)
                         )
                         {
-                            SharedGameResources.Powers.Effect(partyMember.Stats, this, powerIndex, (Hero ? Power.SourceTypeHero : Power.SourceTypeEnemy));
+                            powers.Effect(partyMember.Stats, this, powerIndex, (Hero ? Power.SourceTypeHero : Power.SourceTypeEnemy));
                         }
                     }
                 }
@@ -1577,12 +1604,12 @@ namespace FlareEngine
                 {
                     if (RestingHpRegenSeconds > 0)
                     {
-                        hpRegenPerFrame = Get(Stats.HpMax) / RestingHpRegenSeconds / SharedResources.Settings!.MaxFramesPerSec;
+                        hpRegenPerFrame = Get(Stats.HpMax) / RestingHpRegenSeconds / settings.MaxFramesPerSec;
                     }
                 }
                 else
                 {
-                    hpRegenPerFrame = Get(Stats.HpRegen) / 60.0f / SharedResources.Settings!.MaxFramesPerSec;
+                    hpRegenPerFrame = Get(Stats.HpRegen) / 60.0f / settings.MaxFramesPerSec;
                 }
                 Hp += hpRegenPerFrame;
                 Hp = Math.Max(0.0f, Math.Min(Hp, Get(Stats.HpMax)));
@@ -1590,7 +1617,7 @@ namespace FlareEngine
 
             if (Mp <= Get(Stats.MpMax) && Hp > 0)
             {
-                float mpRegenPerFrame = Get(Stats.MpRegen) / 60.0f / SharedResources.Settings!.MaxFramesPerSec;
+                float mpRegenPerFrame = Get(Stats.MpRegen) / 60.0f / settings.MaxFramesPerSec;
                 Mp += mpRegenPerFrame;
                 Mp = Math.Max(0.0f, Math.Min(Mp, Get(Stats.MpMax)));
             }
@@ -1602,7 +1629,7 @@ namespace FlareEngine
 
                 if (ResourceStats[i] <= resourceStatMax && Hp > 0)
                 {
-                    float regenPerFrame = resourceStatRegen / 60.0f / SharedResources.Settings!.MaxFramesPerSec;
+                    float regenPerFrame = resourceStatRegen / 60.0f / settings.MaxFramesPerSec;
                     ResourceStats[i] += regenPerFrame;
                     ResourceStats[i] = Math.Max(0.0f, Math.Min(ResourceStats[i], resourceStatMax));
                 }
@@ -1614,8 +1641,6 @@ namespace FlareEngine
             // apply damage over time (DOT)
             if (Hp > 0)
             {
-                var eset = SharedResources.Eset!;
-                var comb = SharedResources.Comb!;
                 var damageForText = 0f;
                 // apply neutral DOT
                 if (Effects.Damage > 0)
@@ -1681,32 +1706,32 @@ namespace FlareEngine
             if (Effects.Hpot > 0)
             {
                 float hpot = Effects.Hpot;
-                hpot = SharedResources.Eset!.Combat.ResourceRound(hpot);
-                SharedResources.Comb!.AddString(SharedResources.Msg!.GetV("+%s HP", Utils.FloatToString(hpot, SharedResources.Eset.NumberFormat.CombatText)), Pos, CombatText.MsgBuff);
+                hpot = eset.Combat.ResourceRound(hpot);
+                comb.AddString(msg.GetV("+%s HP", Utils.FloatToString(hpot, eset.NumberFormat.CombatText)), Pos, CombatText.MsgBuff);
                 Hp += hpot;
                 if (Hp > Get(Stats.HpMax)) Hp = Get(Stats.HpMax);
             }
             if (Effects.HpotPercent > 0)
             {
                 float hpot = (Get(Stats.HpMax) * Effects.HpotPercent) / 100;
-                hpot = SharedResources.Eset!.Combat.ResourceRound(hpot);
-                SharedResources.Comb!.AddString(SharedResources.Msg!.GetV("+%s HP", Utils.FloatToString(hpot, SharedResources.Eset.NumberFormat.CombatText)), Pos, CombatText.MsgBuff);
+                hpot = eset.Combat.ResourceRound(hpot);
+                comb.AddString(msg.GetV("+%s HP", Utils.FloatToString(hpot, eset.NumberFormat.CombatText)), Pos, CombatText.MsgBuff);
                 Hp += hpot;
                 if (Hp > Get(Stats.HpMax)) Hp = Get(Stats.HpMax);
             }
             if (Effects.Mpot > 0)
             {
                 float mpot = Effects.Mpot;
-                mpot = SharedResources.Eset!.Combat.ResourceRound(mpot);
-                SharedResources.Comb!.AddString(SharedResources.Msg!.GetV("+%s MP", Utils.FloatToString(mpot, SharedResources.Eset.NumberFormat.CombatText)), Pos, CombatText.MsgBuff);
+                mpot = eset.Combat.ResourceRound(mpot);
+                comb.AddString(msg.GetV("+%s MP", Utils.FloatToString(mpot, eset.NumberFormat.CombatText)), Pos, CombatText.MsgBuff);
                 Mp += mpot;
                 if (Mp > Get(Stats.MpMax)) Mp = Get(Stats.MpMax);
             }
             if (Effects.MpotPercent > 0)
             {
                 float mpot = (Get(Stats.MpMax) * Effects.MpotPercent) / 100;
-                mpot = SharedResources.Eset!.Combat.ResourceRound(mpot);
-                SharedResources.Comb!.AddString(SharedResources.Msg!.GetV("+%s MP", Utils.FloatToString(mpot, SharedResources.Eset.NumberFormat.CombatText)), Pos, CombatText.MsgBuff);
+                mpot = eset.Combat.ResourceRound(mpot);
+                comb.AddString(msg.GetV("+%s MP", Utils.FloatToString(mpot, eset.NumberFormat.CombatText)), Pos, CombatText.MsgBuff);
                 Mp += mpot;
                 if (Mp > Get(Stats.MpMax)) Mp = Get(Stats.MpMax);
             }
@@ -1716,8 +1741,8 @@ namespace FlareEngine
                 {
                     float resourceMax = GetResourceStat(i, EngineSettings.ResourceStatsSettings.StatBase);
                     float resourceOt = Effects.ResourceOt[i];
-                    resourceOt = SharedResources.Eset!.Combat.ResourceRound(resourceOt);
-                    SharedResources.Comb!.AddString("+" + Utils.FloatToString(resourceOt, SharedResources.Eset.NumberFormat.CombatText) + " " + SharedResources.Eset.ResourceStats.Stats[i].TextCombatHeal, Pos, CombatText.MsgBuff);
+                    resourceOt = eset.Combat.ResourceRound(resourceOt);
+                    comb.AddString("+" + Utils.FloatToString(resourceOt, eset.NumberFormat.CombatText) + " " + eset.ResourceStats.Stats[i].TextCombatHeal, Pos, CombatText.MsgBuff);
                     ResourceStats[i] += resourceOt;
 
                     if (ResourceStats[i] > resourceMax)
@@ -1727,8 +1752,8 @@ namespace FlareEngine
                 {
                     float resourceMax = GetResourceStat(i, EngineSettings.ResourceStatsSettings.StatBase);
                     float resourceOt = (resourceMax * Effects.ResourceOtPercent[i]) / 100;
-                    resourceOt = SharedResources.Eset!.Combat.ResourceRound(resourceOt);
-                    SharedResources.Comb!.AddString("+" + Utils.FloatToString(resourceOt, SharedResources.Eset.NumberFormat.CombatText) + " " + SharedResources.Eset.ResourceStats.Stats[i].TextCombatHeal, Pos, CombatText.MsgBuff);
+                    resourceOt = eset.Combat.ResourceRound(resourceOt);
+                    comb.AddString("+" + Utils.FloatToString(resourceOt, eset.NumberFormat.CombatText) + " " + eset.ResourceStats.Stats[i].TextCombatHeal, Pos, CombatText.MsgBuff);
                     ResourceStats[i] += resourceOt;
 
                     if (ResourceStats[i] > resourceMax)
@@ -1747,10 +1772,10 @@ namespace FlareEngine
 
                 float posX = Pos.X;
                 float posY = Pos.Y;
-                SharedGameResources.Mapr!.Collider.Unblock(posX, posY);
-                SharedGameResources.Mapr!.Collider.Move(ref posX, ref posY, KnockbackSpeed.X, KnockbackSpeed.Y, MovementType, SharedGameResources.Mapr!.Collider.GetCollideType(Hero));
+                mapr.Collider.Unblock(posX, posY);
+                mapr.Collider.Move(ref posX, ref posY, KnockbackSpeed.X, KnockbackSpeed.Y, MovementType, mapr.Collider.GetCollideType(Hero));
                 Pos = new Vector2(posX, posY);
-                SharedGameResources.Mapr!.Collider.Block(Pos.X, Pos.Y, HeroAlly);
+                mapr.Collider.Block(Pos.X, Pos.Y, HeroAlly);
             }
             else if (ChargeSpeed != 0.0f)
             {
@@ -1760,10 +1785,10 @@ namespace FlareEngine
 
                 float posX = Pos.X;
                 float posY = Pos.Y;
-                SharedGameResources.Mapr!.Collider.Unblock(posX, posY);
-                SharedGameResources.Mapr!.Collider.Move(ref posX, ref posY, dx, dy, MovementType, SharedGameResources.Mapr!.Collider.GetCollideType(Hero));
+                mapr.Collider.Unblock(posX, posY);
+                mapr.Collider.Move(ref posX, ref posY, dx, dy, MovementType, mapr.Collider.GetCollideType(Hero));
                 Pos = new Vector2(posX, posY);
-                SharedGameResources.Mapr!.Collider.Block(Pos.X, Pos.Y, HeroAlly);
+                mapr.Collider.Block(Pos.X, Pos.Y, HeroAlly);
             }
 
             WaypointTimer.Tick();
@@ -1796,7 +1821,8 @@ namespace FlareEngine
             if (!SharedGameResources.Powers!.IsValid(powerid))
                 return false;
 
-            Power power = SharedGameResources.Powers.Powers[powerid];
+            var powers = SharedGameResources.Powers;
+            Power power = powers.Powers[powerid];
 
             if (!Alive)
             {
@@ -1813,19 +1839,19 @@ namespace FlareEngine
             else
             {
                 return (
-                    SharedGameResources.Powers.CheckPowerCost(power, this)
+                    powers.CheckPowerCost(power, this)
                     && (!power.Passive || allowPassive)
                     && !power.MetaPower
                     && (!Effects.Stun || (allowPassive && power.Passive))
-                    && SharedGameResources.Powers.CheckRequiredResourceState(power, this)
-                    && (!power.RequiresCorpse || (TargetCorpse != null && !TargetCorpse.CorpseTimer.IsEnd()) || (TargetNearestCorpse != null && SharedGameResources.Powers.CheckNearestTargeting(power, this, true) && !TargetNearestCorpse.CorpseTimer.IsEnd()))
+                    && powers.CheckRequiredResourceState(power, this)
+                    && (!power.RequiresCorpse || (TargetCorpse != null && !TargetCorpse.CorpseTimer.IsEnd()) || (TargetNearestCorpse != null && powers.CheckNearestTargeting(power, this, true) && !TargetNearestCorpse.CorpseTimer.IsEnd()))
                     && (CheckRequiredSpawns(power.RequiresSpawns))
                     && (SharedGameResources.MenuPowers != null && SharedGameResources.MenuPowers.MeetsUsageStats(powerid))
                     && (power.Type == Power.TypeSpawn ? !SummonLimitReached(powerid) : true)
                     && !(power.SpawnType == "untransform" && !Transformed)
                     && power.RequiresFlags.All(flag => EquipFlags.Contains(flag))
                     && (!power.BuffParty || (power.BuffParty && SharedGameResources.Entitym != null && SharedGameResources.Entitym.CheckPartyMembers()))
-                    && SharedGameResources.Powers.CheckRequiredItems(power, this)
+                    && powers.CheckRequiredItems(power, this)
                 );
             }
 
@@ -1871,7 +1897,8 @@ namespace FlareEngine
             if (MaxPointsPerStat == 0) MaxPointsPerStat = MaxSpendableStatPoints / 4 + 1;
             _statsLoaded = true;
 
-            MaxSpendableStatPoints = SharedResources.Eset!.Xp.GetMaxLevel() * StatPointsPerLevel;
+            var eset = SharedResources.Eset!;
+            MaxSpendableStatPoints = eset.Xp.GetMaxLevel() * StatPointsPerLevel;
         }
 
         public void LoadHeroSfx()
@@ -1914,8 +1941,9 @@ namespace FlareEngine
             }
             else if (spawnPower.SpawnLimitMode == Power.SpawnLimitModeStat)
             {
+                var eset = SharedResources.Eset!;
                 int statVal = 1;
-                if (spawnPower.SpawnLimitStat < SharedResources.Eset!.PrimaryStats.Stats.Count)
+                if (spawnPower.SpawnLimitStat < eset.PrimaryStats.Stats.Count)
                 {
                     statVal = GetPrimary(spawnPower.SpawnLimitStat);
                 }
@@ -1943,7 +1971,9 @@ namespace FlareEngine
 
         public void UpdateSummonPowerIDs(PowerID oldId, PowerID newId)
         {
-            Power oldPwr = SharedGameResources.Powers!.Powers[oldId];
+            var powers = SharedGameResources.Powers!;
+
+            Power oldPwr = powers.Powers[oldId];
 
             if (oldPwr.SpawnType == "")
                 return;
@@ -1951,7 +1981,7 @@ namespace FlareEngine
             bool matchingSpawnTypes = false;
             if (newId != 0)
             {
-                Power newPwr = SharedGameResources.Powers.Powers[newId];
+                Power newPwr = powers.Powers[newId];
                 matchingSpawnTypes = (oldPwr.SpawnType == newPwr.SpawnType);
             }
 
@@ -1994,30 +2024,36 @@ namespace FlareEngine
 
         public string GetShortClass()
         {
+            var msg = SharedResources.Msg!;
             if (CharacterSubclass == "")
-                return SharedResources.Msg!.Get(CharacterClass);
+                return msg.Get(CharacterClass);
             else
-                return SharedResources.Msg!.Get(CharacterSubclass);
+                return msg.Get(CharacterSubclass);
         }
 
         public string GetLongClass()
         {
+            var msg = SharedResources.Msg!;
             if (CharacterSubclass == "" || CharacterClass == CharacterSubclass)
-                return SharedResources.Msg!.Get(CharacterClass);
+                return msg.Get(CharacterClass);
             else
-                return SharedResources.Msg!.Get(CharacterClass) + " / " + SharedResources.Msg!.Get(CharacterSubclass);
+                return msg.Get(CharacterClass) + " / " + msg.Get(CharacterSubclass);
         }
 
         public void AddXp(int amount)
         {
+            var eset = SharedResources.Eset!;
+
             Xp += (ulong)amount;
 
-            ulong xpMax = SharedResources.Eset!.Xp.GetLevelXP(SharedResources.Eset.Xp.GetMaxLevel());
+            ulong xpMax = eset.Xp.GetLevelXP(eset.Xp.GetMaxLevel());
             Xp = Math.Min(Xp, xpMax);
         }
 
         public AIPower? GetAIPower(int aiType)
         {
+            var powers = SharedGameResources.Powers!;
+
             List<int> possibleIds = new List<int>();
 
             for (int i = 0; i < PowersAi.Count; ++i)
@@ -2031,13 +2067,13 @@ namespace FlareEngine
                 if (!PowersAi[i].Cooldown.IsEnd())
                     continue;
 
-                if (SharedGameResources.Powers!.Powers[PowersAi[i].Id].Type == Power.TypeSpawn)
+                if (powers.Powers[PowersAi[i].Id].Type == Power.TypeSpawn)
                 {
                     if (SummonLimitReached(PowersAi[i].Id))
                         continue;
                 }
 
-                if (!CheckRequiredSpawns(SharedGameResources.Powers!.Powers[PowersAi[i].Id].RequiresSpawns))
+                if (!CheckRequiredSpawns(powers.Powers[PowersAi[i].Id].RequiresSpawns))
                     continue;
 
                 possibleIds.Add(i);
@@ -2076,7 +2112,8 @@ namespace FlareEngine
         {
             if (Hero)
             {
-                return (int)SharedGameResources.Pc!.PowerCooldownTimers[powerId].Duration;
+                var pc = SharedGameResources.Pc!;
+                return (int)pc.PowerCooldownTimers[powerId].Duration;
             }
             else
             {
@@ -2094,7 +2131,8 @@ namespace FlareEngine
         {
             if (Hero)
             {
-                SharedGameResources.Pc!.PowerCooldownTimers[powerId].Duration = (uint)powerCooldown;
+                var pc = SharedGameResources.Pc!;
+                pc.PowerCooldownTimers[powerId].Duration = (uint)powerCooldown;
             }
             else
             {
@@ -2126,7 +2164,8 @@ namespace FlareEngine
 
         public float GetResourceStat(int resourceIndex, int fieldOffset)
         {
-            int offsetIndex = Stats.Count + SharedResources.Eset!.DamageTypes.Count;
+            var eset = SharedResources.Eset!;
+            int offsetIndex = Stats.Count + eset.DamageTypes.Count;
             return Current[offsetIndex + (resourceIndex * 4) + fieldOffset];
         }
 
@@ -2153,7 +2192,8 @@ namespace FlareEngine
 
         public void CheckGfxPaths()
         {
-            if (SharedResources.Mods!.List("animations/avatar/" + GfxBase, !ModManager.ListFullPaths).Count == 0)
+            var mods = SharedResources.Mods!;
+            if (mods.List("animations/avatar/" + GfxBase, !ModManager.ListFullPaths).Count == 0)
             {
                 GfxBaseOriginal = GfxBase;
 
@@ -2163,9 +2203,9 @@ namespace FlareEngine
                     GfxBase = "male";
             }
 
-            if (SharedResources.Mods!.Locate("animations/avatar/" + GfxBase + "/" + GfxHead + ".txt") == "")
+            if (mods.Locate("animations/avatar/" + GfxBase + "/" + GfxHead + ".txt") == "")
             {
-                if (SharedResources.Mods!.Locate("animations/avatar/" + GfxBase + "/head_short.txt") != "")
+                if (mods.Locate("animations/avatar/" + GfxBase + "/head_short.txt") != "")
                 {
                     GfxHeadOriginal = GfxHead;
                     GfxHead = "head_short";

@@ -131,15 +131,17 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var inpt = SharedResources.Inpt!;
+
             if (Visible && ActionList!.Enabled)
             {
                 Tablist.Logic();
 
-                if (!SharedResources.Inpt!.UsingMouse() && Tablist.GetCurrent() == -1)
+                if (!inpt.UsingMouse() && Tablist.GetCurrent() == -1)
                 {
                     Tablist.GetNext(!TabList.GetInner, TabList.WidgetSelectAuto);
                 }
-                else if (SharedResources.Inpt.UsingMouse())
+                else if (inpt.UsingMouse())
                 {
                     Tablist.Defocus();
                 }
@@ -150,10 +152,10 @@ namespace FlareEngine
                 {
                     ClickedConfirm = true;
                 }
-                else if (_buttonClose!.CheckClick() || (SharedResources.Inpt.Pressing[Input.Cancel] && !SharedResources.Inpt.Lock[Input.Cancel]))
+                else if (_buttonClose!.CheckClick() || (inpt.Pressing[Input.Cancel] && !inpt.Lock[Input.Cancel]))
                 {
-                    if (SharedResources.Inpt.Pressing[Input.Cancel])
-                        SharedResources.Inpt.Lock[Input.Cancel] = true;
+                    if (inpt.Pressing[Input.Cancel])
+                        inpt.Lock[Input.Cancel] = true;
 
                     Visible = false;
                     ClickedConfirm = false;

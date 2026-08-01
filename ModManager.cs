@@ -146,9 +146,10 @@ namespace FlareEngine
             ModList.Clear();
             SetPaths();
 
+            var settings = SharedResources.Settings!;
             List<string> modDirsOther = new List<string>();
-            Filesystem.GetDirList(SharedResources.Settings!.PathData + "mods", modDirsOther);
-            Filesystem.GetDirList(SharedResources.Settings!.PathUser + "mods", modDirsOther);
+            Filesystem.GetDirList(settings.PathData + "mods", modDirsOther);
+            Filesystem.GetDirList(settings.PathUser + "mods", modDirsOther);
 
             for (int i = 0; i < modDirsOther.Count; ++i)
             {
@@ -185,6 +186,7 @@ namespace FlareEngine
         /// </summary>
         private void LoadModList()
         {
+            var settings = SharedResources.Settings!;
             bool foundAnyMod = false;
             bool loadedDefaults = false;
 
@@ -202,8 +204,8 @@ namespace FlareEngine
                 StreamReader? infile = null;
                 string line;
 
-                string place1 = Filesystem.ConvertSlashes(SharedResources.Settings!.PathConf + "mods.txt");
-                string place2 = Filesystem.ConvertSlashes(SharedResources.Settings!.PathData + "mods/mods.txt");
+                string place1 = Filesystem.ConvertSlashes(settings.PathConf + "mods.txt");
+                string place2 = Filesystem.ConvertSlashes(settings.PathData + "mods/mods.txt");
 
                 try
                 {
@@ -410,19 +412,21 @@ namespace FlareEngine
 
         private void SetPaths()
         {
-            // 若目录相同则设置标志
-            bool uniqPathData = SharedResources.Settings!.PathUser != SharedResources.Settings!.PathData;
+            var settings = SharedResources.Settings!;
 
-            if (SharedResources.Settings!.CustomPathData != "")
+            // 若目录相同则设置标志
+            bool uniqPathData = settings.PathUser != settings.PathData;
+
+            if (settings.CustomPathData != "")
             {
                 // 使用自定义数据路径时，赋予其最高优先级
                 // 实际上完全不使用 PATH_DATA，因为设置 CUSTOM_PATH_DATA 时两者相等
-                _modPaths.Add(SharedResources.Settings!.CustomPathData);
+                _modPaths.Add(settings.CustomPathData);
                 uniqPathData = false;
             }
-            _modPaths.Add(SharedResources.Settings!.PathUser);
+            _modPaths.Add(settings.PathUser);
             if (uniqPathData)
-                _modPaths.Add(SharedResources.Settings!.PathData);
+                _modPaths.Add(settings.PathData);
         }
 
         public Mod LoadMod(string name)

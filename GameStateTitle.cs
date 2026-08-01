@@ -47,6 +47,11 @@ namespace FlareEngine
 
         public GameStateTitle()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+
             _logo = null;
             _buttonPlay = new WidgetButton(WidgetButton.DefaultFile);
             _buttonExit = new WidgetButton(WidgetButton.DefaultFile);
@@ -71,7 +76,7 @@ namespace FlareEngine
                     if (infile.Key == "logo")
                     {
                         string val = infile.Val;
-                        Image? graphics = SharedResources.RenderDevice!.LoadImage(Parse.PopFirstString(ref val), RenderDevice.ErrorNone);
+                        Image? graphics = renderDevice.LoadImage(Parse.PopFirstString(ref val), RenderDevice.ErrorNone);
                         if (graphics != null)
                         {
                             _logo = graphics.CreateSprite();
@@ -126,16 +131,16 @@ namespace FlareEngine
                 infile.Close();
             }
 
-            _buttonPlay.SetLabel(SharedResources.Msg!.Get("Play Game"));
+            _buttonPlay.SetLabel(msg.Get("Play Game"));
             _buttonPlay.Refresh();
 
-            _buttonCfg.SetLabel(SharedResources.Msg.Get("Configuration"));
+            _buttonCfg.SetLabel(msg.Get("Configuration"));
             _buttonCfg.Refresh();
 
-            _buttonCredits.SetLabel(SharedResources.Msg.Get("Credits"));
+            _buttonCredits.SetLabel(msg.Get("Credits"));
             _buttonCredits.Refresh();
 
-            _buttonExit.SetLabel(SharedResources.Msg.Get("Exit Game"));
+            _buttonExit.SetLabel(msg.Get("Exit Game"));
             _buttonExit.Refresh();
 
             // set up labels
@@ -151,27 +156,27 @@ namespace FlareEngine
 
             // Core mod not selected dialogue
             _promptSelectMods = new MenuConfirm();
-            _promptSelectMods.SetTitle(SharedResources.Msg.Get("Enable a core mod to continue"));
-            _promptSelectMods.ActionList!.Append(SharedResources.Msg.Get("Mods"), "");
-            _promptSelectMods.ActionList.Append(SharedResources.Msg.Get("Cancel"), "");
+            _promptSelectMods.SetTitle(msg.Get("Enable a core mod to continue"));
+            _promptSelectMods.ActionList!.Append(msg.Get("Mods"), "");
+            _promptSelectMods.ActionList.Append(msg.Get("Cancel"), "");
 
             RefreshWidgets();
             ForceRefreshBackground = true;
 
-            if (SharedResources.Eset!.Gameplay.EnablePlaygame && SharedResources.Settings!.LoadSlot.Length != 0)
+            if (eset.Gameplay.EnablePlaygame && settings.LoadSlot.Length != 0)
             {
                 ShowLoading();
                 SetRequestedGameState(new GameStateLoad());
             }
 
-            SharedResources.RenderDevice.SetBackgroundColor(new Color(0, 0, 0, 0));
+            renderDevice.SetBackgroundColor(new Color(0, 0, 0, 0));
 
             // NOTE The presence of the language setting is used to determine if the
             // language select dialog is displayed. Is this adequate?
-            if (!SharedResources.Settings.SetupLanguage && Platform.Instance.ConfigInterface[Platform.Interface.Language])
+            if (!settings.SetupLanguage && Platform.Instance.ConfigInterface[Platform.Interface.Language])
             {
                 _menuLanguage = new MenuConfirm();
-                _menuLanguage.SetTitle(SharedResources.Msg.Get("Language"));
+                _menuLanguage.SetTitle(msg.Get("Language"));
 
                 _languageIso.Clear();
                 _menuLanguage.ActionList!.Clear();
@@ -186,7 +191,7 @@ namespace FlareEngine
                             _languageIso.Add(infile.Key);
                             _menuLanguage.ActionList.Append(infile.Val, infile.Val + " [" + infile.Key + "]");
 
-                            if (infile.Key == SharedResources.Settings.Language)
+                            if (infile.Key == settings.Language)
                             {
                                 _languageId = (uint)i;
                             }
@@ -207,37 +212,43 @@ namespace FlareEngine
 
                 if (_languageIso.Count <= 1)
                 {
-                    SharedResources.Settings.SetupLanguage = true;
+                    settings.SetupLanguage = true;
                 }
             }
 
             // NOTE The presence of the mouse move setting is used to determine if the
             // movement type dialog is displayed. Is this adequate?
-            if (!SharedResources.Settings.SetupMousemove && Platform.Instance.ConfigInput[Platform.Input.MouseMove] && SharedResources.Eset.Misc.MouseMoveEnabled)
+            if (!settings.SetupMousemove && Platform.Instance.ConfigInput[Platform.Input.MouseMove] && eset.Misc.MouseMoveEnabled)
             {
                 _menuMovementType = new MenuConfirm();
-                _menuMovementType.SetTitle(SharedResources.Msg.Get("Use mouse to move player?"));
-                _menuMovementType.ActionList!.Append(SharedResources.Msg.Get("No"), "");
-                _menuMovementType.ActionList.Append(SharedResources.Msg.Get("Yes"), "");
+                _menuMovementType.SetTitle(msg.Get("Use mouse to move player?"));
+                _menuMovementType.ActionList!.Append(msg.Get("No"), "");
+                _menuMovementType.ActionList.Append(msg.Get("Yes"), "");
             }
 
-            if (!SharedResources.Eset.Misc.MouseMoveEnabled)
-                SharedResources.Settings.MouseMove = false;
+            if (!eset.Misc.MouseMoveEnabled)
+                settings.MouseMove = false;
         }
 
         public override void Logic()
         {
-            if (!SharedResources.Settings!.SetupLanguage && !_menuLanguage!.Visible && _menuLanguage.ActionList!.GetSize() > 1)
+            var settings = SharedResources.Settings!;
+            var inpt = SharedResources.Inpt!;
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+
+            if (!settings.SetupLanguage && !_menuLanguage!.Visible && _menuLanguage.ActionList!.GetSize() > 1)
             {
                 _menuLanguage.Show();
                 _menuLanguage.ActionList.Select(_languageId);
             }
-            else if (!SharedResources.Settings.SetupMousemove && _menuMovementType != null && !_menuMovementType.Visible)
+            else if (!settings.SetupMousemove && _menuMovementType != null && !_menuMovementType.Visible)
             {
                 _menuMovementType.Show();
             }
 
-            if (SharedResources.Inpt!.WindowResized)
+            if (inpt.WindowResized)
                 RefreshWidgets();
 
             if (_menuLanguage != null && _menuLanguage.Visible)
@@ -246,20 +257,20 @@ namespace FlareEngine
 
                 if (_menuLanguage.ClickedConfirm)
                 {
-                    SharedResources.Settings.Language = _languageIso[(int)_menuLanguage.ActionList!.GetSelected()];
-                    SharedResources.Settings.SetupLanguage = true;
-                    SharedResources.Settings.SaveSettings();
+                    settings.Language = _languageIso[(int)_menuLanguage.ActionList!.GetSelected()];
+                    settings.SetupLanguage = true;
+                    settings.SaveSettings();
 
-                    SharedResources.Msg!.Dispose();
+                    msg.Dispose();
                     SharedResources.Msg = new MessageEngine();
-                    SharedResources.Font!.Dispose();
+                    font.Dispose();
                     SharedResources.Font = DeviceList.GetFontEngine();
                     SetRequestedGameState(new GameStateTitle());
                 }
                 else if (_menuLanguage.ClickedCancel)
                 {
-                    SharedResources.Settings.SetupLanguage = true;
-                    SharedResources.Settings.SaveSettings();
+                    settings.SetupLanguage = true;
+                    settings.SaveSettings();
 
                     _menuLanguage.Visible = false;
                     _menuLanguage.ClickedCancel = false;
@@ -273,33 +284,33 @@ namespace FlareEngine
                 {
                     if (_menuMovementType.ActionList!.GetSelected() == PromptSelectMousemoveNo)
                     {
-                        SharedResources.Settings.MouseMove = false;
+                        settings.MouseMove = false;
 
                         _menuMovementType.Visible = false;
                         _menuMovementType.ClickedConfirm = false;
 
-                        SharedResources.Settings.SetupMousemove = true;
-                        SharedResources.Settings.SaveSettings();
+                        settings.SetupMousemove = true;
+                        settings.SaveSettings();
                     }
                     else if (_menuMovementType.ActionList.GetSelected() == PromptSelectMousemoveYes)
                     {
-                        SharedResources.Settings.MouseMove = true;
+                        settings.MouseMove = true;
 
                         _menuMovementType.Visible = false;
                         _menuMovementType.ClickedConfirm = false;
 
-                        SharedResources.Settings.SetupMousemove = true;
-                        SharedResources.Settings.SaveSettings();
+                        settings.SetupMousemove = true;
+                        settings.SaveSettings();
                     }
                 }
                 else if (_menuMovementType.ClickedCancel)
                 {
-                    SharedResources.Settings.MouseMove = false;
+                    settings.MouseMove = false;
 
                     _menuMovementType.ClickedCancel = false;
 
-                    SharedResources.Settings.SetupMousemove = true;
-                    SharedResources.Settings.SaveSettings();
+                    settings.SetupMousemove = true;
+                    settings.SaveSettings();
                 }
             }
             else if (_promptSelectMods != null && _promptSelectMods.Visible)
@@ -326,9 +337,9 @@ namespace FlareEngine
             }
             else
             {
-                if (SharedResources.Inpt.Pressing[Input.Cancel] && !SharedResources.Inpt.Lock[Input.Cancel])
+                if (inpt.Pressing[Input.Cancel] && !inpt.Lock[Input.Cancel])
                 {
-                    SharedResources.Inpt.Lock[Input.Cancel] = true;
+                    inpt.Lock[Input.Cancel] = true;
                     ExitRequested = true;
                 }
 
@@ -336,12 +347,12 @@ namespace FlareEngine
 
                 bool playClicked = _buttonPlay.CheckClick();
 
-                if (!SharedResources.Inpt.UsingMouse() && _tablist.GetCurrent() == -1)
+                if (!inpt.UsingMouse() && _tablist.GetCurrent() == -1)
                 {
                     _tablist.GetNext(!TabList.GetInner, TabList.WidgetSelectAuto);
                 }
 
-                if (playClicked && !SharedResources.Eset!.Gameplay.EnablePlaygame)
+                if (playClicked && !eset.Gameplay.EnablePlaygame)
                 {
                     _promptSelectMods!.Show();
                 }
@@ -351,7 +362,7 @@ namespace FlareEngine
 
                     // if we don't have any saves, go directly to GameStateNew
                     List<string> saveDirs = new List<string>();
-                    Filesystem.GetDirList(SharedResources.Settings.PathUser + "saves/" + SharedResources.Eset.Misc.SavePrefix, saveDirs);
+                    Filesystem.GetDirList(settings.PathUser + "saves/" + eset.Misc.SavePrefix, saveDirs);
                     if (saveDirs.Count == 0)
                     {
                         GameStateNew newgame = new GameStateNew();

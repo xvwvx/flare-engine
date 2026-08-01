@@ -1,5 +1,5 @@
 // <自动生成> 对应 C++ 源文件：GameSlotPreview.h + GameSlotPreview.cpp
-// 注意：System, System.Collections.Generic, System.Linq, System.Threading.Tasks 已全局导入，此处省略�?
+// 注意：System, System.Collections.Generic, System.Linq, System.Threading.Tasks 已全局导入，此处省略�?
 using Stride.Core.Mathematics;
 
 namespace FlareEngine
@@ -7,7 +7,7 @@ namespace FlareEngine
     /// <summary>
     /// GameSlotPreview
     ///
-    /// 负责 GameStateLoad 界面中角色存档预览的逻辑与渲染�?
+    /// 负责 GameStateLoad 界面中角色存档预览的逻辑与渲染�?
     /// </summary>
     public class GameSlotPreview : IDisposable
     {
@@ -16,12 +16,12 @@ namespace FlareEngine
         private byte _staticDirection;
 
         /// <summary>
-        /// 对应 C++ 中的 <c>unsigned char* direction</c>：该指针可以指向自身�?
-        /// <see cref="_staticDirection"/>，也可以指向外部 <see cref="StatBlock"/> 实例�?
+        /// 对应 C++ 中的 <c>unsigned char* direction</c>：该指针可以指向自身�?
+        /// <see cref="_staticDirection"/>，也可以指向外部 <see cref="StatBlock"/> 实例�?
         /// direction 字段。C# 没有"指向任意字段"的裸指针等价物（语言范式差异，属于必要适配），
-        /// 这里用一个闭包捕获目标字段的 <see cref="Func{TResult}"/> 表达同样�?读取时始终取
-        /// 目标当前�?的别名语义：目标始终是某个具体对象在赋值那一刻绑定的字段�?
-        /// 与原始指针语义完全一致（重新赋�?<c>direction</c> 本身，而不是通过它写回）�?
+        /// 这里用一个闭包捕获目标字段的 <see cref="Func{TResult}"/> 表达同样�?读取时始终取
+        /// 目标当前�?的别名语义：目标始终是某个具体对象在赋值那一刻绑定的字段�?
+        /// 与原始指针语义完全一致（重新赋�?<c>direction</c> 本身，而不是通过它写回）�?
         /// </summary>
         private Func<byte> _direction;
 
@@ -39,8 +39,9 @@ namespace FlareEngine
             _direction = () => _staticDirection;
 
             // load the hero's animations from hero definition file
-            SharedResources.Anim!.IncreaseCount("animations/hero.txt");
-            AnimationSet = SharedResources.Anim!.GetAnimationSet("animations/hero.txt");
+            var anim = SharedResources.Anim!;
+            anim.IncreaseCount("animations/hero.txt");
+            AnimationSet = anim.GetAnimationSet("animations/hero.txt");
             ActiveAnimation = AnimationSet!.GetAnimation("");
 
             // load layer definitions
@@ -95,22 +96,24 @@ namespace FlareEngine
         }
 
         /// <summary>
-        /// 对应 C++ 析构函数：按原始顺序释放当前动画引用计数、当前动画帧对象�?
-        /// 再依次释放每套装备动画集的引用计数与动画帧对象，最后触发一次清理�?
+        /// 对应 C++ 析构函数：按原始顺序释放当前动画引用计数、当前动画帧对象�?
+        /// 再依次释放每套装备动画集的引用计数与动画帧对象，最后触发一次清理�?
         /// </summary>
         public void Dispose()
         {
-            SharedResources.Anim!.DecreaseCount("animations/hero.txt");
+            var anim = SharedResources.Anim!;
+
+            anim.DecreaseCount("animations/hero.txt");
             if (ActiveAnimation != null)
                 ActiveAnimation.Dispose();
 
             for (int i = 0; i < _animsets.Count; i++)
             {
                 if (_animsets[i] != null)
-                    SharedResources.Anim!.DecreaseCount(_animsets[i]!.Name);
+                    anim.DecreaseCount(_animsets[i]!.Name);
                 _anims[i]?.Dispose();
             }
-            SharedResources.Anim!.CleanUp();
+            anim.CleanUp();
         }
 
         public void SetAnimation(string name)
@@ -160,10 +163,12 @@ namespace FlareEngine
             if (_stats == null)
                 return;
 
+            var anim = SharedResources.Anim!;
+
             for (int i = 0; i < _animsets.Count; i++)
             {
                 if (_animsets[i] != null)
-                    SharedResources.Anim!.DecreaseCount(_animsets[i]!.Name);
+                    anim.DecreaseCount(_animsets[i]!.Name);
                 _anims[i]?.Dispose();
             }
             _animsets.Clear();
@@ -174,8 +179,8 @@ namespace FlareEngine
                 if (imgGfx[i] != "")
                 {
                     string name = "animations/avatar/" + _stats!.GfxBase + "/" + imgGfx[i] + ".txt";
-                    SharedResources.Anim!.IncreaseCount(name);
-                    _animsets.Add(SharedResources.Anim!.GetAnimationSet(name));
+                    anim.IncreaseCount(name);
+                    _animsets.Add(anim.GetAnimationSet(name));
                     _animsets[^1]!.Parent = AnimationSet;
                     _anims.Add(_animsets[^1]!.GetAnimation(ActiveAnimation!.Name));
                     SetAnimation("stance");
@@ -190,7 +195,7 @@ namespace FlareEngine
                     _anims.Add(null);
                 }
             }
-            SharedResources.Anim!.CleanUp();
+            anim.CleanUp();
 
             SetAnimation("stance");
         }
@@ -273,9 +278,11 @@ namespace FlareEngine
 
         public void LoadGraphicsFromInventory(MenuInventory? menuInv)
         {
+            var items = SharedGameResources.Items;
+
             List<string> previewGfx = new List<string>(_defaultGfx);
 
-            if (SharedGameResources.Items != null && menuInv != null)
+            if (items != null && menuInv != null)
             {
                 int storageSize = menuInv.Inventory[MenuInventory.Equipment].GetSlotNumber();
                 for (int i = 0; i < storageSize; ++i)
@@ -285,9 +292,9 @@ namespace FlareEngine
                     if (itemId == 0)
                         continue;
 
-                    if (!SharedGameResources.Items!.IsValid(itemId) || !SharedGameResources.Items!.Items[itemId]!.HasName)
+                    if (!items.IsValid(itemId) || !items.Items[itemId]!.HasName)
                     {
-                        // 原始注释：是否需要输出错误提示？（按原始行为保留，此分支�?continue�?
+                        // 原始注释：是否需要输出错误提示？（按原始行为保留，此分支�?continue�?
                         continue;
                     }
 
@@ -298,12 +305,12 @@ namespace FlareEngine
 
                     if (LayerReferenceOrder.Count != 0)
                     {
-                        int found = LayerReferenceOrder.IndexOf(SharedGameResources.Items!.GetItemType(SharedGameResources.Items!.Items[itemId]!.Type).Id);
+                        int found = LayerReferenceOrder.IndexOf(items.GetItemType(items.Items[itemId]!.Type).Id);
                         if (found != -1)
                         {
                             int previewIndex = found;
                             if (previewIndex < previewGfx.Count)
-                                previewGfx[previewIndex] = SharedGameResources.Items!.Items[itemId]!.Gfx;
+                                previewGfx[previewIndex] = items.Items[itemId]!.Gfx;
                         }
                     }
                 }

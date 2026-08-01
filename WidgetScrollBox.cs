@@ -175,7 +175,8 @@ namespace FlareEngine
 
         public void Logic()
         {
-            Logic(SharedResources.Inpt!.Mouse.X, SharedResources.Inpt!.Mouse.Y);
+            var inpt = SharedResources.Inpt!;
+            Logic(inpt.Mouse.X, inpt.Mouse.Y);
             if (InFocus)
             {
                 if (_currentChild == -1 && _children.Count != 0)
@@ -194,6 +195,7 @@ namespace FlareEngine
             Int2 mouse = new Int2(x, y);
 
             InputState inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
 
             if (Utils.IsWithinRect(Pos, mouse))
             {
@@ -227,13 +229,13 @@ namespace FlareEngine
 
             if (_cursorTarget < _cursor)
             {
-                _cursor -= (Pos.Height * ScrollSpeedSmoothMod + (_cursor - _cursorTarget)) / SharedResources.Settings!.MaxFramesPerSec;
+                _cursor -= (Pos.Height * ScrollSpeedSmoothMod + (_cursor - _cursorTarget)) / settings.MaxFramesPerSec;
                 if (_cursor < _cursorTarget)
                     _cursor = _cursorTarget;
             }
             else if (_cursorTarget > _cursor)
             {
-                _cursor += (Pos.Height * ScrollSpeedSmoothMod + (_cursorTarget - _cursor)) / SharedResources.Settings!.MaxFramesPerSec;
+                _cursor += (Pos.Height * ScrollSpeedSmoothMod + (_cursorTarget - _cursor)) / settings.MaxFramesPerSec;
                 if (_cursor > _cursorTarget)
                     _cursor = _cursorTarget;
             }
@@ -276,8 +278,10 @@ namespace FlareEngine
                     Contents = null;
                 }
 
+                var renderDevice = SharedResources.RenderDevice!;
+
                 Image? graphics;
-                graphics = SharedResources.RenderDevice!.CreateImage(_contentsSize.X, _contentsSize.Y);
+                graphics = renderDevice.CreateImage(_contentsSize.X, _contentsSize.Y);
                 if (graphics != null)
                 {
                     Contents = graphics.CreateSprite();
@@ -298,6 +302,9 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+
             Update = false;
 
             Rectangle src = new Rectangle();
@@ -318,7 +325,7 @@ namespace FlareEngine
                 Contents.SetOffset(LocalOffset);
                 Contents.SetClipFromRect(src);
                 Contents.SetDestFromRect(dest);
-                SharedResources.RenderDevice!.Render(Contents);
+                renderDevice.Render(Contents);
             }
 
             // draw child widgets
@@ -363,7 +370,7 @@ namespace FlareEngine
                 }
                 if (draw)
                 {
-                    SharedResources.RenderDevice!.DrawRectangleCorners(SharedResources.Eset!.Widgets.SelectionRectCornerSize, topLeft, bottomRight, SharedResources.Eset.Widgets.SelectionRectColor);
+                    renderDevice.DrawRectangleCorners(eset.Widgets.SelectionRectCornerSize, topLeft, bottomRight, eset.Widgets.SelectionRectColor);
                 }
             }
         }

@@ -227,6 +227,11 @@ namespace FlareEngine
 
         public int Logic()
         {
+            var snd = SharedResources.Snd;
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             _buttonPrev.Enabled = !(IsFirstScene && _subIndex == 0);
 
             if (IsLastScene && (CutsceneType == CutsceneVscroll || _subIndex + 1 >= Subscenes.Count))
@@ -243,43 +248,43 @@ namespace FlareEngine
             {
                 skip = SkipNext;
             }
-            else if (SharedResources.Inpt!.Pressing[Input.Main1] && Utils.IsWithinRect(_buttonPrev.Pos, SharedResources.Inpt.Mouse))
+            else if (inpt.Pressing[Input.Main1] && Utils.IsWithinRect(_buttonPrev.Pos, inpt.Mouse))
             {
-                SharedResources.Inpt.Lock[Input.Main1] = true;
+                inpt.Lock[Input.Main1] = true;
             }
 
             if (!_buttonPrev.Pressed && !_buttonAdvance.Pressed)
             {
-                if (SharedResources.Inpt.Pressing[Input.Main1] && (!SharedResources.Inpt.Lock[Input.Main1] || CutsceneType == CutsceneVscroll))
+                if (inpt.Pressing[Input.Main1] && (!inpt.Lock[Input.Main1] || CutsceneType == CutsceneVscroll))
                 {
-                    SharedResources.Inpt.Lock[Input.Main1] = true;
+                    inpt.Lock[Input.Main1] = true;
                     skip = SkipSubscene;
                 }
-                else if (SharedResources.Inpt.Pressing[Input.Accept] && (!SharedResources.Inpt.Lock[Input.Accept] || CutsceneType == CutsceneVscroll))
+                else if (inpt.Pressing[Input.Accept] && (!inpt.Lock[Input.Accept] || CutsceneType == CutsceneVscroll))
                 {
-                    SharedResources.Inpt.Lock[Input.Accept] = true;
+                    inpt.Lock[Input.Accept] = true;
                     skip = SkipSubscene;
                 }
-                else if (SharedResources.Inpt.Pressing[Input.Right] && !SharedResources.Inpt.Lock[Input.Right])
+                else if (inpt.Pressing[Input.Right] && !inpt.Lock[Input.Right])
                 {
-                    SharedResources.Inpt.Lock[Input.Right] = true;
+                    inpt.Lock[Input.Right] = true;
                     skip = SkipNext;
                 }
-                else if (_buttonPrev.Enabled && SharedResources.Inpt.Pressing[Input.Left] && !SharedResources.Inpt.Lock[Input.Left])
+                else if (_buttonPrev.Enabled && inpt.Pressing[Input.Left] && !inpt.Lock[Input.Left])
                 {
-                    SharedResources.Inpt.Lock[Input.Left] = true;
+                    inpt.Lock[Input.Left] = true;
                     skip = SkipPrev;
                 }
-                else if (SharedResources.Inpt.Pressing[Input.Cancel] && !SharedResources.Inpt.Lock[Input.Cancel])
+                else if (inpt.Pressing[Input.Cancel] && !inpt.Lock[Input.Cancel])
                 {
-                    SharedResources.Inpt.Lock[Input.Cancel] = true;
+                    inpt.Lock[Input.Cancel] = true;
                     return Done;
                 }
-                else if (CutsceneType == CutsceneVscroll && SharedResources.Inpt.Pressing[Input.Up])
+                else if (CutsceneType == CutsceneVscroll && inpt.Pressing[Input.Up])
                 {
                     skip = SkipVscrollBack;
                 }
-                else if (CutsceneType == CutsceneVscroll && SharedResources.Inpt.Pressing[Input.Down])
+                else if (CutsceneType == CutsceneVscroll && inpt.Pressing[Input.Down])
                 {
                     skip = SkipSubscene;
                 }
@@ -355,7 +360,7 @@ namespace FlareEngine
                 {
                     ClearArt();
 
-                    Image? graphics = SharedResources.RenderDevice!.LoadImage(imageFilename, RenderDevice.ErrorNormal);
+                    Image? graphics = renderDevice.LoadImage(imageFilename, RenderDevice.ErrorNormal);
                     if (graphics != null)
                     {
                         _art = graphics.CreateSprite();
@@ -369,8 +374,8 @@ namespace FlareEngine
                 {
                     ClearSound();
 
-                    _sid = SharedResources.Snd!.Load(sfxFilename, "Cutscenes");
-                    SharedResources.Snd.Play(_sid, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                    _sid = snd!.Load(sfxFilename, "Cutscenes");
+                    snd.Play(_sid, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                 }
 
                 if (_subIndex >= Subscenes.Count || Subscenes[_subIndex] >= Components.Count)
@@ -394,8 +399,8 @@ namespace FlareEngine
                         if (Components[i].Type == "text")
                         {
                             VScrollComponent vsc = new VScrollComponent();
-                            vsc.Pos.X = SharedResources.Settings!.ViewW / 2;
-                            vsc.Pos.Y = SharedResources.Settings.ViewH / 2 + nextY;
+                            vsc.Pos.X = settings.ViewW / 2;
+                            vsc.Pos.Y = settings.ViewH / 2 + nextY;
 
                             vsc.Text = new WidgetLabel();
                             if (vsc.Text != null)
@@ -413,7 +418,7 @@ namespace FlareEngine
                         {
                             VScrollComponent vsc = new VScrollComponent();
 
-                            Image? graphics = SharedResources.RenderDevice!.LoadImage(Components[i].S, RenderDevice.ErrorNormal);
+                            Image? graphics = renderDevice.LoadImage(Components[i].S, RenderDevice.ErrorNormal);
                             if (graphics != null)
                             {
                                 vsc.Image = graphics.CreateSprite();
@@ -422,8 +427,8 @@ namespace FlareEngine
                                     vsc.ImageSize.X = vsc.Image.GetGraphicsWidth();
                                     vsc.ImageSize.Y = vsc.Image.GetGraphicsHeight();
 
-                                    vsc.Pos.X = SharedResources.Settings!.ViewW / 2 - vsc.ImageSize.X / 2;
-                                    vsc.Pos.Y = SharedResources.Settings.ViewH / 2 + nextY;
+                                    vsc.Pos.X = settings.ViewW / 2 - vsc.ImageSize.X / 2;
+                                    vsc.Pos.Y = settings.ViewH / 2 + nextY;
 
                                     nextY += vsc.ImageSize.Y;
 
@@ -435,7 +440,7 @@ namespace FlareEngine
                         else if (Components[i].Type == "separator")
                         {
                             VScrollComponent vsc = new VScrollComponent();
-                            vsc.Pos.Y = SharedResources.Settings!.ViewH / 2 + nextY + Components[i].X / 2;
+                            vsc.Pos.Y = settings.ViewH / 2 + nextY + Components[i].X / 2;
                             nextY += Components[i].X;
 
                             VscrollComponents.Add(vsc);
@@ -484,14 +489,17 @@ namespace FlareEngine
 
         public void RefreshWidgets()
         {
+            var settings = SharedResources.Settings!;
+            var font = SharedResources.Font!;
+
             if (CutsceneType == CutsceneStatic)
             {
                 if (_caption.Length != 0)
                 {
-                    int captionWidth = SharedResources.Settings!.ViewW - (int)(SharedResources.Settings.ViewW * (_cutsceneSettings.CaptionMargins.X * 2.0f));
-                    SharedResources.Font!.SetFont("font_captions");
-                    int padding = SharedResources.Font.GetLineHeight() / 4;
-                    Int2 captionSize = SharedResources.Font.CalcSizeWrapped(_caption, captionWidth);
+                    int captionWidth = settings.ViewW - (int)(settings.ViewW * (_cutsceneSettings.CaptionMargins.X * 2.0f));
+                    font.SetFont("font_captions");
+                    int padding = font.GetLineHeight() / 4;
+                    Int2 captionSize = font.CalcSizeWrapped(_caption, captionWidth);
                     Int2 captionSizePadded = new Int2(captionSize.X + padding * 2, captionSize.Y + padding * 2);
 
                     if (_captionBox == null)
@@ -507,13 +515,13 @@ namespace FlareEngine
                         _captionBox.Resize(captionSizePadded.X, captionSizePadded.Y);
                     }
 
-                    _captionBox.SetPos(0, (int)((float)SharedResources.Settings.ViewH * _cutsceneSettings.CaptionMargins.Y) * (-1));
+                    _captionBox.SetPos(0, (int)((float)settings.ViewH * _cutsceneSettings.CaptionMargins.Y) * (-1));
 
-                    SharedResources.Font.RenderShadowed(_caption, (padding / 2) + (captionSizePadded.X / 2), padding,
+                    font.RenderShadowed(_caption, (padding / 2) + (captionSizePadded.X / 2), padding,
                         FontEngine.JustifyCenter,
                         _captionBox.Contents!.GetGraphics()!,
                         captionWidth,
-                        SharedResources.Font.GetColor(FontEngine.ColorWhite));
+                        font.GetColor(FontEngine.ColorWhite));
                 }
 
                 if (_art != null)
@@ -557,11 +565,11 @@ namespace FlareEngine
                 {
                     if (VscrollComponents[i].Text != null)
                     {
-                        VscrollComponents[i].Text!.SetPos(SharedResources.Settings!.ViewW / 2, VscrollComponents[i].Pos.Y - _vscrollOffset);
+                        VscrollComponents[i].Text!.SetPos(settings.ViewW / 2, VscrollComponents[i].Pos.Y - _vscrollOffset);
                     }
                     else if (VscrollComponents[i].Image != null)
                     {
-                        int x = SharedResources.Settings!.ViewW / 2 - VscrollComponents[i].ImageSize.X / 2;
+                        int x = settings.ViewW / 2 - VscrollComponents[i].ImageSize.X / 2;
                         int y = VscrollComponents[i].Pos.Y - _vscrollOffset;
                         VscrollComponents[i].Image!.SetDest(x, y);
                     }
@@ -578,18 +586,22 @@ namespace FlareEngine
 
         public void Render()
         {
-            if (SharedResources.Inpt!.WindowResized)
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+
+            if (inpt.WindowResized)
                 RefreshWidgets();
 
             if (CutsceneType == CutsceneStatic)
             {
                 if (_artScaled != null)
                 {
-                    SharedResources.RenderDevice!.Render(_artScaled);
+                    renderDevice.Render(_artScaled);
                 }
                 else if (_art != null)
                 {
-                    SharedResources.RenderDevice!.Render(_art);
+                    renderDevice.Render(_art);
                 }
 
                 if (_captionBox != null && _caption != "")
@@ -605,7 +617,7 @@ namespace FlareEngine
 
                     if (vsc.Text != null)
                     {
-                        if (vsc.Text.GetBounds().Y <= SharedResources.Settings!.ViewH && (vsc.Text.GetBounds().Y + vsc.Text.GetBounds().Height >= 0))
+                        if (vsc.Text.GetBounds().Y <= settings.ViewH && (vsc.Text.GetBounds().Y + vsc.Text.GetBounds().Height >= 0))
                         {
                             vsc.Text.Render();
                         }
@@ -613,9 +625,9 @@ namespace FlareEngine
                     else if (vsc.Image != null)
                     {
                         Int2 dest = vsc.Image.GetDest();
-                        if (dest.Y <= SharedResources.Settings!.ViewH && (dest.Y + vsc.ImageSize.Y >= 0))
+                        if (dest.Y <= settings.ViewH && (dest.Y + vsc.ImageSize.Y >= 0))
                         {
-                            SharedResources.RenderDevice!.Render(vsc.Image);
+                            renderDevice.Render(vsc.Image);
                         }
                     }
                 }
@@ -673,12 +685,16 @@ namespace FlareEngine
 
         public override void Logic()
         {
+            var settings = SharedResources.Settings!;
+            var snd = SharedResources.Snd!;
+            var saveLoad = SharedResources.SaveLoad!;
+
             if (!_initialized)
             {
-                if (SharedResources.Settings!.MusicVolume > 0 && _music.Length != 0)
+                if (settings.MusicVolume > 0 && _music.Length != 0)
                 {
-                    SharedResources.Snd!.StopMusic();
-                    SharedResources.Snd.LoadMusic(_music);
+                    snd.StopMusic();
+                    snd.LoadMusic(_music);
                 }
 
                 _initialized = true;
@@ -691,8 +707,8 @@ namespace FlareEngine
                     ShowLoading();
                     GameStatePlay gsp = new GameStatePlay();
                     gsp.ResetGame();
-                    SharedResources.SaveLoad!.GameSlot = GameSlot;
-                    SharedResources.SaveLoad.LoadGame();
+                    saveLoad.GameSlot = GameSlot;
+                    saveLoad.LoadGame();
 
                     SetRequestedGameState(gsp);
                     return;
@@ -732,6 +748,7 @@ namespace FlareEngine
 
         public bool Load(string filename)
         {
+            var msg = SharedResources.Msg!;
             CutsceneSettings cutsceneSettings = new CutsceneSettings();
             FileParser infile = new FileParser();
 
@@ -795,7 +812,7 @@ namespace FlareEngine
                     if (infile.Key == "caption")
                     {
                         sc.Type = infile.Key;
-                        sc.S = SharedResources.Msg!.Get(infile.Val);
+                        sc.S = msg.Get(infile.Val);
                     }
                     else if (infile.Key == "image")
                     {
@@ -838,7 +855,7 @@ namespace FlareEngine
                     if (infile.Key == "text")
                     {
                         sc.Type = infile.Key;
-                        sc.S = SharedResources.Msg!.Get(infile.Val);
+                        sc.S = msg.Get(infile.Val);
                     }
                     else if (infile.Key == "image")
                     {

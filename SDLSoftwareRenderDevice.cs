@@ -319,13 +319,16 @@ namespace FlareEngine
 
             Utils.LogInfo("RenderDevice: Using SDLSoftwareRenderDevice (software, SDL 2, %s)", Sdl?.GetCurrentVideoDriver() ?? string.Empty);
 
-            Fullscreen = SharedResources.Settings!.Fullscreen;
-            Hwsurface = SharedResources.Settings!.Hwsurface;
-            Vsync = SharedResources.Settings!.Vsync;
-            TextureFilter = SharedResources.Settings!.TextureFilter;
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
 
-            MinScreen.X = SharedResources.Eset!.Resolutions.MinScreenW;
-            MinScreen.Y = SharedResources.Eset!.Resolutions.MinScreenH;
+            Fullscreen = settings.Fullscreen;
+            Hwsurface = settings.Hwsurface;
+            Vsync = settings.Vsync;
+            TextureFilter = settings.TextureFilter;
+
+            MinScreen.X = eset.Resolutions.MinScreenW;
+            MinScreen.Y = eset.Resolutions.MinScreenH;
 
             if (Sdl?.GetDesktopDisplayMode(0, out int desktopW, out int desktopH, out int desktopRefresh) == 0)
             {
@@ -342,38 +345,41 @@ namespace FlareEngine
 
         protected override int CreateContextInternal()
         {
-            if (SharedResources.Settings!.SafeVideo)
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+
+            if (settings.SafeVideo)
             {
-                SharedResources.Settings!.SafeVideo = false;
+                settings.SafeVideo = false;
                 Utils.LogInfo("RenderDevice: Safe mode is enabled. Using minimum video settings.");
-                SharedResources.Settings!.Fullscreen = false;
-                SharedResources.Settings!.Hwsurface = false;
-                SharedResources.Settings!.Vsync = false;
-                SharedResources.Settings!.TextureFilter = false;
-                SharedResources.Settings!.ScreenW = SharedResources.Eset!.Resolutions.MinScreenW;
-                SharedResources.Settings!.ScreenH = SharedResources.Eset!.Resolutions.MinScreenH;
+                settings.Fullscreen = false;
+                settings.Hwsurface = false;
+                settings.Vsync = false;
+                settings.TextureFilter = false;
+                settings.ScreenW = eset.Resolutions.MinScreenW;
+                settings.ScreenH = eset.Resolutions.MinScreenH;
             }
 
-            bool settingsChanged = ((Fullscreen != SharedResources.Settings!.Fullscreen && DestructiveFullscreen) ||
-                                    Hwsurface != SharedResources.Settings!.Hwsurface ||
-                                    Vsync != SharedResources.Settings!.Vsync ||
-                                    TextureFilter != SharedResources.Settings!.TextureFilter ||
-                                    IgnoreTextureFilter != SharedResources.Eset!.Resolutions.IgnoreTextureFilter);
+            bool settingsChanged = ((Fullscreen != settings.Fullscreen && DestructiveFullscreen) ||
+                                    Hwsurface != settings.Hwsurface ||
+                                    Vsync != settings.Vsync ||
+                                    TextureFilter != settings.TextureFilter ||
+                                    IgnoreTextureFilter != eset.Resolutions.IgnoreTextureFilter);
 
             uint wFlags = 0;
             uint rFlags = 0;
-            int windowW = SharedResources.Settings!.ScreenW;
-            int windowH = SharedResources.Settings!.ScreenH;
+            int windowW = settings.ScreenW;
+            int windowH = settings.ScreenH;
 
             // Apply display scale multiplier for non-fullscreen mode
-            if (!SharedResources.Settings!.Fullscreen)
+            if (!settings.Fullscreen)
             {
-                float scale = SharedResources.Settings!.DisplayScale;
+                float scale = settings.DisplayScale;
                 windowW = (int)(windowW * scale);
                 windowH = (int)(windowH * scale);
             }
 
-            if (SharedResources.Settings!.Fullscreen)
+            if (settings.Fullscreen)
             {
                 wFlags = wFlags | SdlSoftwareConstants.WindowFullscreenDesktop;
 
@@ -385,23 +391,23 @@ namespace FlareEngine
             }
             else if (Fullscreen && IsInitialized)
             {
-                float scale = SharedResources.Settings!.DisplayScale;
-                windowW = (int)(SharedResources.Eset!.Resolutions.MinScreenW * scale);
-                windowH = (int)(SharedResources.Eset!.Resolutions.MinScreenH * scale);
+                float scale = settings.DisplayScale;
+                windowW = (int)(eset.Resolutions.MinScreenW * scale);
+                windowH = (int)(eset.Resolutions.MinScreenH * scale);
             }
 
             wFlags = wFlags | SdlSoftwareConstants.WindowResizable;
 
-            if (SharedResources.Settings!.Hwsurface)
+            if (settings.Hwsurface)
             {
                 rFlags = rFlags | SdlSoftwareConstants.RendererAccelerated;
             }
             else
             {
                 rFlags = rFlags | SdlSoftwareConstants.RendererSoftware;
-                SharedResources.Settings!.Vsync = false;
+                settings.Vsync = false;
             }
-            if (SharedResources.Settings!.Vsync) rFlags = rFlags | SdlSoftwareConstants.RendererPresentVsync;
+            if (settings.Vsync) rFlags = rFlags | SdlSoftwareConstants.RendererPresentVsync;
 
             if (settingsChanged || !IsInitialized)
             {
@@ -413,13 +419,13 @@ namespace FlareEngine
                     _renderer = Sdl?.CreateRenderer(_window, -1, rFlags);
                     if (_renderer != null)
                     {
-                        if (SharedResources.Settings!.TextureFilter && !SharedResources.Eset!.Resolutions.IgnoreTextureFilter)
+                        if (settings.TextureFilter && !eset.Resolutions.IgnoreTextureFilter)
                             Sdl?.SetHintWithPriority(SdlSoftwareConstants.HintRenderScaleQuality, "1", SdlSoftwareConstants.HintOverride);
                         else
                             Sdl?.SetHintWithPriority(SdlSoftwareConstants.HintRenderScaleQuality, "0", SdlSoftwareConstants.HintOverride);
                     }
 
-                    Sdl?.SetWindowMinimumSize(_window, SharedResources.Eset!.Resolutions.MinScreenW, SharedResources.Eset!.Resolutions.MinScreenH);
+                    Sdl?.SetWindowMinimumSize(_window, eset.Resolutions.MinScreenW, eset.Resolutions.MinScreenH);
                     Sdl?.SetWindowPosition(_window, SdlSoftwareConstants.WindowposCentered, SdlSoftwareConstants.WindowposCentered);
 
                     Sdl?.SetWindowSize(_window, windowW, windowH);
@@ -430,14 +436,14 @@ namespace FlareEngine
                     if (!IsInitialized)
                     {
                         Sdl?.GetWindowGammaRamp(_window, _gammaR, _gammaG, _gammaB);
-                        Utils.LogInfo("RenderDevice: Window size is %dx%d", SharedResources.Settings!.ScreenW, SharedResources.Settings!.ScreenH);
+                        Utils.LogInfo("RenderDevice: Window size is %dx%d", settings.ScreenW, settings.ScreenH);
                     }
 
-                    Fullscreen = SharedResources.Settings!.Fullscreen;
-                    Hwsurface = SharedResources.Settings!.Hwsurface;
-                    Vsync = SharedResources.Settings!.Vsync;
-                    TextureFilter = SharedResources.Settings!.TextureFilter;
-                    IgnoreTextureFilter = SharedResources.Eset!.Resolutions.IgnoreTextureFilter;
+                    Fullscreen = settings.Fullscreen;
+                    Hwsurface = settings.Hwsurface;
+                    Vsync = settings.Vsync;
+                    TextureFilter = settings.TextureFilter;
+                    IgnoreTextureFilter = eset.Resolutions.IgnoreTextureFilter;
                     IsInitialized = true;
 
                     Utils.LogInfo("RenderDevice: Fullscreen=%d, Hardware surfaces=%d, Vsync=%d, Texture Filter=%d", Fullscreen ? 1 : 0, Hwsurface ? 1 : 0, Vsync ? 1 : 0, TextureFilter ? 1 : 0);
@@ -461,11 +467,11 @@ namespace FlareEngine
 
             if (IsInitialized)
             {
-                if (MinScreen.X != SharedResources.Eset!.Resolutions.MinScreenW || MinScreen.Y != SharedResources.Eset!.Resolutions.MinScreenH)
+                if (MinScreen.X != eset.Resolutions.MinScreenW || MinScreen.Y != eset.Resolutions.MinScreenH)
                 {
-                    MinScreen.X = SharedResources.Eset!.Resolutions.MinScreenW;
-                    MinScreen.Y = SharedResources.Eset!.Resolutions.MinScreenH;
-                    Sdl?.SetWindowMinimumSize(_window, SharedResources.Eset!.Resolutions.MinScreenW, SharedResources.Eset!.Resolutions.MinScreenH);
+                    MinScreen.X = eset.Resolutions.MinScreenW;
+                    MinScreen.Y = eset.Resolutions.MinScreenH;
+                    Sdl?.SetWindowMinimumSize(_window, eset.Resolutions.MinScreenW, eset.Resolutions.MinScreenH);
                     Sdl?.SetWindowPosition(_window, SdlSoftwareConstants.WindowposCentered, SdlSoftwareConstants.WindowposCentered);
                 }
 
@@ -490,13 +496,13 @@ namespace FlareEngine
                 }
                 SharedResources.Curs = new CursorManager();
 
-                if (SharedResources.Settings!.ChangeGamma)
-                    SetGamma(SharedResources.Settings!.Gamma);
+                if (settings.ChangeGamma)
+                    SetGamma(settings.Gamma);
                 else
                 {
                     ResetGamma();
-                    SharedResources.Settings!.ChangeGamma = false;
-                    SharedResources.Settings!.Gamma = 1.0f;
+                    settings.ChangeGamma = false;
+                    settings.Gamma = 1.0f;
                 }
             }
 
@@ -636,6 +642,8 @@ namespace FlareEngine
 
         public override void DrawLine(int x0, int y0, int x1, int y1, Color color)
         {
+            var settings = SharedResources.Settings!;
+
             int dx = Math.Abs(x1 - x0);
             int dy = Math.Abs(y1 - y0);
             int sx = x0 < x1 ? 1 : -1;
@@ -644,7 +652,7 @@ namespace FlareEngine
 
             do
             {
-                if (x0 > 0 && y0 > 0 && x0 < SharedResources.Settings!.ViewW && y0 < SharedResources.Settings!.ViewH)
+                if (x0 > 0 && y0 > 0 && x0 < settings.ViewW && y0 < settings.ViewH)
                 {
                     DrawPixel(x0, y0, color);
                 }
@@ -848,9 +856,11 @@ namespace FlareEngine
 
         public override void WindowResize()
         {
+            var settings = SharedResources.Settings!;
+
             WindowResizeInternal();
 
-            Sdl?.RenderSetLogicalSize(_renderer, SharedResources.Settings!.ViewW, SharedResources.Settings!.ViewH);
+            Sdl?.RenderSetLogicalSize(_renderer, settings.ViewW, settings.ViewH);
 
             if (_texture != null) Sdl?.DestroyTexture(_texture);
             if (_screen != null) Sdl?.FreeSurface(_screen);
@@ -861,10 +871,10 @@ namespace FlareEngine
             uint amask = 0;
             int bpp = (int)RenderDevice.BitsPerPixel;
             Sdl?.PixelFormatEnumToMasks(SdlSoftwareConstants.PixelFormatArgb8888, ref bpp, out rmask, out gmask, out bmask, out amask);
-            _screen = Sdl?.CreateRgbSurface(0, SharedResources.Settings!.ViewW, SharedResources.Settings!.ViewH, bpp, rmask, gmask, bmask, amask);
-            _texture = Sdl?.CreateTexture(_renderer, SdlSoftwareConstants.PixelFormatArgb8888, SdlSoftwareConstants.TextureAccessStreaming, SharedResources.Settings!.ViewW, SharedResources.Settings!.ViewH);
+            _screen = Sdl?.CreateRgbSurface(0, settings.ViewW, settings.ViewH, bpp, rmask, gmask, bmask, amask);
+            _texture = Sdl?.CreateTexture(_renderer, SdlSoftwareConstants.PixelFormatArgb8888, SdlSoftwareConstants.TextureAccessStreaming, settings.ViewW, settings.ViewH);
 
-            SharedResources.Settings!.UpdateScreenVars();
+            settings.UpdateScreenVars();
         }
 
         public override void SetBackgroundColor(Color color)
@@ -874,6 +884,9 @@ namespace FlareEngine
 
         public override void SetFullscreen(bool enableFullscreen)
         {
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+
             if (!DestructiveFullscreen)
             {
                 if (enableFullscreen)
@@ -898,9 +911,9 @@ namespace FlareEngine
                     {
                         Sdl?.SetWindowFullscreen(_window, 0);
 
-                        float ds = SharedResources.Settings!.DisplayScale;
-                        int scaledMinW = (int)(SharedResources.Eset!.Resolutions.MinScreenW * ds);
-                        int scaledMinH = (int)(SharedResources.Eset!.Resolutions.MinScreenH * ds);
+                        float ds = settings.DisplayScale;
+                        int scaledMinW = (int)(eset.Resolutions.MinScreenW * ds);
+                        int scaledMinH = (int)(eset.Resolutions.MinScreenH * ds);
                         Sdl?.SetWindowMinimumSize(_window, scaledMinW, scaledMinH);
                         Sdl?.SetWindowSize(_window, scaledMinW, scaledMinH);
                         WindowResize();

@@ -182,15 +182,19 @@ namespace FlareEngine
 
         public MenuPowers()
         {
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+
             _skipSection = false;
             _pointsLeft = 0;
             _defaultBackground = "";
             _tabControl = null;
             _treeLoaded = false;
             _defaultPowerTab = -1;
-            _upgradeButtonOffset = new Int2(SharedResources.Eset!.Resolutions.IconSize, 0);
-            _tooltipTextShield = SharedResources.Msg!.Get("Magical Shield");
-            _tooltipTextHeal = SharedResources.Msg.Get("Healing");
+            _upgradeButtonOffset = new Int2(eset.Resolutions.IconSize, 0);
+            _tooltipTextShield = msg.Get("Magical Shield");
+            _tooltipTextHeal = msg.Get("Healing");
             NewPowerNotification = false;
 
             _closeButton = new WidgetButton(WidgetButton.CloseFile);
@@ -226,21 +230,21 @@ namespace FlareEngine
 
                     // @ATTR tooltip_text_shield|string|Text to use in place of "Magical Shield".
                     else if (infile.Key == "tooltip_text_shield")
-                        _tooltipTextShield = SharedResources.Msg.Get(infile.Val);
+                        _tooltipTextShield = msg.Get(infile.Val);
 
                     // @ATTR tooltip_text_heal|string|Text to use in place of "Healing".
                     else if (infile.Key == "tooltip_text_heal")
-                        _tooltipTextHeal = SharedResources.Msg.Get(infile.Val);
+                        _tooltipTextHeal = msg.Get(infile.Val);
 
                     else infile.Error("MenuPowers: '%s' is not a valid key.", infile.Key);
                 }
                 infile.Close();
             }
 
-            _labelPowers.SetText(SharedResources.Msg.Get("Powers"));
-            _labelPowers.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            _labelPowers.SetText(msg.Get("Powers"));
+            _labelPowers.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
-            _labelUnspent.SetColor(SharedResources.Font.GetColor(FontEngine.ColorMenuBonus));
+            _labelUnspent.SetColor(font.GetColor(FontEngine.ColorMenuBonus));
 
             LoadGraphics();
 
@@ -319,6 +323,12 @@ namespace FlareEngine
 
         public void LoadPowerTree(string filename)
         {
+            var renderDevice = SharedResources.RenderDevice!;
+            var msg = SharedResources.Msg!;
+            var powers = SharedGameResources.Powers!;
+            var eset = SharedResources.Eset!;
+            var pc = SharedGameResources.Pc!;
+
             if (_treeLoaded) return;
 
             List<MenuPowersCell> powerCellUpgrade = new List<MenuPowersCell>();
@@ -384,7 +394,7 @@ namespace FlareEngine
             Image? graphics;
             if (_tabs.Count == 0 && _defaultBackground != "")
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(_defaultBackground, RenderDevice.ErrorNormal);
+                graphics = renderDevice.LoadImage(_defaultBackground, RenderDevice.ErrorNormal);
                 if (graphics != null)
                 {
                     _treeSurf.Add(graphics.CreateSprite());
@@ -404,7 +414,7 @@ namespace FlareEngine
                         continue;
                     }
 
-                    graphics = SharedResources.RenderDevice!.LoadImage(_tabs[i].Background, RenderDevice.ErrorNormal);
+                    graphics = renderDevice.LoadImage(_tabs[i].Background, RenderDevice.ErrorNormal);
                     if (graphics != null)
                     {
                         Sprite? treeSprite = graphics.CreateSprite();
@@ -436,7 +446,7 @@ namespace FlareEngine
                 {
                     for (int i = 0; i < _tabs.Count; i++)
                     {
-                        _tabControl.SetupTab((uint)i, SharedResources.Msg!.Get(_tabs[i].Title), TablistPow[i]);
+                        _tabControl.SetupTab((uint)i, msg.Get(_tabs[i].Title), TablistPow[i]);
                     }
 
                     _tabControl.SetMainArea(WindowArea.X + _tabArea.X, WindowArea.Y + _tabArea.Y, _tabArea.Width);
@@ -445,9 +455,9 @@ namespace FlareEngine
 
             for (int i = 0; i < Slots.Count; i++)
             {
-                if (_powerCell[i].Cells.Count > 0 && SharedGameResources.Powers!.IsValid(_powerCell[i].Cells[0].Id))
+                if (_powerCell[i].Cells.Count > 0 && powers.IsValid(_powerCell[i].Cells[0].Id))
                 {
-                    Slots[i] = new WidgetSlot(SharedGameResources.Powers.Powers[_powerCell[i].Cells[0].Id]!.Icon, WidgetSlot.HighlightPowerMenu);
+                    Slots[i] = new WidgetSlot(powers.Powers[_powerCell[i].Cells[0].Id]!.Icon, WidgetSlot.HighlightPowerMenu);
                     Slots[i]!.SetBasePos(_powerCell[i].Pos.X, _powerCell[i].Pos.Y, Utils.AlignTopLeft);
 
                     if (TablistPow.Count > 0)
@@ -471,7 +481,7 @@ namespace FlareEngine
             SetUnlockedPowers();
 
             EngineSettings.HeroClassesSettings.HeroClass? pcClass;
-            pcClass = SharedResources.Eset!.HeroClasses.GetByName(SharedGameResources.Pc!.Stats.CharacterClass);
+            pcClass = eset.HeroClasses.GetByName(pc.Stats.CharacterClass);
             if (pcClass != null)
             {
                 _defaultPowerTab = pcClass.DefaultPowerTab;
@@ -492,6 +502,10 @@ namespace FlareEngine
 
         private void LoadPower(FileParser infile)
         {
+            var powers = SharedGameResources.Powers!;
+            var eset = SharedResources.Eset!;
+            var camp = SharedGameResources.Camp!;
+
             if (_powerCell.Count == 0)
             {
                 return;
@@ -506,7 +520,7 @@ namespace FlareEngine
             if (infile.Key == "id")
             {
                 string val = infile.Val;
-                PowerID id = SharedGameResources.Powers!.VerifyID(Parse.ToPowerID(Parse.PopFirstString(ref val)), infile, !PowerManager.AllowZeroId);
+                PowerID id = powers.VerifyID(Parse.ToPowerID(Parse.PopFirstString(ref val)), infile, !PowerManager.AllowZeroId);
                 if (id > 0)
                 {
                     _skipSection = false;
@@ -547,9 +561,9 @@ namespace FlareEngine
                 // @ATTR power.requires_primary|predefined_string, int : Primary stat name, Required value|Power requires this primary stat to be at least the specificed value.
                 string primVal = infile.Val;
                 string primStat = Parse.PopFirstString(ref primVal);
-                int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(primStat);
+                int primStatIndex = eset.PrimaryStats.GetIndexByID(primStat);
 
-                if (primStatIndex != SharedResources.Eset.PrimaryStats.Stats.Count)
+                if (primStatIndex != eset.PrimaryStats.Stats.Count)
                 {
                     cellGroup.Cells[0].RequiresPrimary[primStatIndex] = Parse.ToInt(primVal);
                 }
@@ -566,32 +580,32 @@ namespace FlareEngine
             else if (infile.Key == "requires_power")
             {
                 // @ATTR power.requires_power|power_id|Power requires another power id.
-                PowerID powerId = SharedGameResources.Powers!.VerifyID(Parse.ToPowerID(infile.Val), infile, !PowerManager.AllowZeroId);
+                PowerID powerId = powers.VerifyID(Parse.ToPowerID(infile.Val), infile, !PowerManager.AllowZeroId);
                 if (powerId != 0)
                     cellGroup.Cells[0].RequiresPower.Add(powerId);
             }
             else if (infile.Key == "requires_status")
             {
                 // @ATTR power.requires_status|repeatable(string)|Power requires this campaign status.
-                cellGroup.Cells[0].RequiresStatus.Add(SharedGameResources.Camp!.RegisterStatus(infile.Val));
+                cellGroup.Cells[0].RequiresStatus.Add(camp.RegisterStatus(infile.Val));
             }
             else if (infile.Key == "requires_not_status")
             {
                 // @ATTR power.requires_not_status|repeatable(string)|Power requires not having this campaign status.
-                cellGroup.Cells[0].RequiresNotStatus.Add(SharedGameResources.Camp!.RegisterStatus(infile.Val));
+                cellGroup.Cells[0].RequiresNotStatus.Add(camp.RegisterStatus(infile.Val));
             }
             else if (infile.Key == "visible_requires_status")
             {
                 // @ATTR power.visible_requires_status|repeatable(string)|(Deprecated as of v1.11.75) Hide the power if we don't have this campaign status.
                 infile.Error("MenuPowers: visible_requires_status is deprecated. Use requires_status and visible_check_status=true instead.");
-                cellGroup.Cells[0].RequiresStatus.Add(SharedGameResources.Camp!.RegisterStatus(infile.Val));
+                cellGroup.Cells[0].RequiresStatus.Add(camp.RegisterStatus(infile.Val));
                 cellGroup.Cells[0].VisibleCheckStatus = true;
             }
             else if (infile.Key == "visible_requires_not_status")
             {
                 // @ATTR power.visible_requires_not_status|repeatable(string)|(Deprecated as of v1.11.75) Hide the power if we have this campaign status.
                 infile.Error("MenuPowers: visible_requires_not_status is deprecated. Use requires_not_status and visible_check_status=true instead.");
-                cellGroup.Cells[0].RequiresNotStatus.Add(SharedGameResources.Camp!.RegisterStatus(infile.Val));
+                cellGroup.Cells[0].RequiresNotStatus.Add(camp.RegisterStatus(infile.Val));
                 cellGroup.Cells[0].VisibleCheckStatus = true;
             }
             else if (infile.Key == "upgrades")
@@ -601,7 +615,7 @@ namespace FlareEngine
                 string repeatVal = Parse.PopFirstString(ref upgradeVal);
                 while (repeatVal != "")
                 {
-                    PowerID testId = SharedGameResources.Powers!.VerifyID(Parse.ToPowerID(repeatVal), infile, !PowerManager.AllowZeroId);
+                    PowerID testId = powers.VerifyID(Parse.ToPowerID(repeatVal), infile, !PowerManager.AllowZeroId);
                     if (testId != 0)
                     {
                         if (testId == cellGroup.Cells[0].Id)
@@ -648,6 +662,10 @@ namespace FlareEngine
 
         private void LoadUpgrade(FileParser infile, List<MenuPowersCell> powerCellUpgrade)
         {
+            var powers = SharedGameResources.Powers!;
+            var eset = SharedResources.Eset!;
+            var camp = SharedGameResources.Camp!;
+
             if (powerCellUpgrade.Count == 0)
                 return;
 
@@ -657,7 +675,7 @@ namespace FlareEngine
             if (infile.Key == "id")
             {
                 string val = infile.Val;
-                PowerID id = SharedGameResources.Powers!.VerifyID(Parse.ToPowerID(Parse.PopFirstString(ref val)), infile, !PowerManager.AllowZeroId);
+                PowerID id = powers.VerifyID(Parse.ToPowerID(Parse.PopFirstString(ref val)), infile, !PowerManager.AllowZeroId);
                 if (id > 0)
                 {
                     _skipSection = false;
@@ -681,9 +699,9 @@ namespace FlareEngine
             {
                 string primVal = infile.Val;
                 string primStat = Parse.PopFirstString(ref primVal);
-                int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(primStat);
+                int primStatIndex = eset.PrimaryStats.GetIndexByID(primStat);
 
-                if (primStatIndex != SharedResources.Eset.PrimaryStats.Stats.Count)
+                if (primStatIndex != eset.PrimaryStats.Stats.Count)
                 {
                     cell.RequiresPrimary[primStatIndex] = Parse.ToInt(primVal);
                 }
@@ -705,32 +723,32 @@ namespace FlareEngine
             else if (infile.Key == "requires_power")
             {
                 // @ATTR upgrade.requires_power|int|Upgrade requires another power id.
-                PowerID powerId = SharedGameResources.Powers!.VerifyID(Parse.ToPowerID(infile.Val), infile, !PowerManager.AllowZeroId);
+                PowerID powerId = powers.VerifyID(Parse.ToPowerID(infile.Val), infile, !PowerManager.AllowZeroId);
                 if (powerId != 0)
                     cell.RequiresPower.Add(powerId);
             }
             else if (infile.Key == "requires_status")
             {
                 // @ATTR upgrade.requires_status|repeatable(string)|Upgrade requires this campaign status.
-                cell.RequiresStatus.Add(SharedGameResources.Camp!.RegisterStatus(infile.Val));
+                cell.RequiresStatus.Add(camp.RegisterStatus(infile.Val));
             }
             else if (infile.Key == "requires_not_status")
             {
                 // @ATTR upgrade.requires_not_status|repeatable(string)|Upgrade requires not having this campaign status.
-                cell.RequiresNotStatus.Add(SharedGameResources.Camp!.RegisterStatus(infile.Val));
+                cell.RequiresNotStatus.Add(camp.RegisterStatus(infile.Val));
             }
             else if (infile.Key == "visible_requires_status")
             {
                 // @ATTR upgrade.visible_requires_status|repeatable(string)|(Deprecated as of v1.11.75) Hide the upgrade if we don't have this campaign status.
                 infile.Error("MenuPowers: visible_requires_status is deprecated. Use requires_status and visible_check_status=true instead.");
-                cell.RequiresStatus.Add(SharedGameResources.Camp!.RegisterStatus(infile.Val));
+                cell.RequiresStatus.Add(camp.RegisterStatus(infile.Val));
                 cell.VisibleCheckStatus = true;
             }
             else if (infile.Key == "visible_requires_not_status")
             {
                 // @ATTR upgrade.visible_requires_not_status|repeatable(string)|(Deprecated as of v1.11.75) Hide the upgrade if we have this campaign status.
                 infile.Error("MenuPowers: visible_requires_not_status is deprecated. Use requires_not_status and visible_check_status=true instead.");
-                cell.RequiresNotStatus.Add(SharedGameResources.Camp!.RegisterStatus(infile.Val));
+                cell.RequiresNotStatus.Add(camp.RegisterStatus(infile.Val));
                 cell.VisibleCheckStatus = true;
             }
             else if (infile.Key == "visible")
@@ -756,24 +774,29 @@ namespace FlareEngine
 
         private bool CheckRequirements(MenuPowersCell? pcell)
         {
+            var pc = SharedGameResources.Pc!;
+            var eset = SharedResources.Eset!;
+            var camp = SharedGameResources.Camp!;
+            var powers = SharedGameResources.Powers!;
+
             if (pcell == null)
                 return false;
 
-            if (SharedGameResources.Pc!.Stats.Level < pcell.RequiresLevel)
+            if (pc.Stats.Level < pcell.RequiresLevel)
                 return false;
 
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
-                if (SharedGameResources.Pc.Stats.GetPrimary(i) < pcell.RequiresPrimary[i])
+                if (pc.Stats.GetPrimary(i) < pcell.RequiresPrimary[i])
                     return false;
             }
 
             for (int i = 0; i < pcell.RequiresStatus.Count; ++i)
-                if (!SharedGameResources.Camp!.CheckStatus(pcell.RequiresStatus[i]))
+                if (!camp.CheckStatus(pcell.RequiresStatus[i]))
                     return false;
 
             for (int i = 0; i < pcell.RequiresNotStatus.Count; ++i)
-                if (SharedGameResources.Camp.CheckStatus(pcell.RequiresNotStatus[i]))
+                if (camp.CheckStatus(pcell.RequiresNotStatus[i]))
                     return false;
 
             for (int i = 0; i < pcell.RequiresPower.Count; ++i)
@@ -782,9 +805,9 @@ namespace FlareEngine
                     return false;
             }
 
-            if (SharedGameResources.Powers!.IsValid(pcell.Id) && SharedGameResources.Powers.Powers[pcell.Id]!.Passive && SharedGameResources.Pc.Stats.Hp > 0)
+            if (powers.IsValid(pcell.Id) && powers.Powers[pcell.Id]!.Passive && pc.Stats.Hp > 0)
             {
-                if (!SharedGameResources.Pc.Stats.CanUsePower(pcell.Id, StatBlock.CanUsePassive))
+                if (!pc.Stats.CanUsePower(pcell.Id, StatBlock.CanUsePassive))
                     return false;
             }
 
@@ -793,15 +816,17 @@ namespace FlareEngine
 
         private bool CheckRequirementStatus(MenuPowersCell? pcell)
         {
+            var camp = SharedGameResources.Camp!;
+
             if (pcell == null)
                 return false;
 
             for (int i = 0; i < pcell.RequiresStatus.Count; ++i)
-                if (!SharedGameResources.Camp!.CheckStatus(pcell.RequiresStatus[i]))
+                if (!camp.CheckStatus(pcell.RequiresStatus[i]))
                     return false;
 
             for (int i = 0; i < pcell.RequiresNotStatus.Count; ++i)
-                if (SharedGameResources.Camp.CheckStatus(pcell.RequiresNotStatus[i]))
+                if (camp.CheckStatus(pcell.RequiresNotStatus[i]))
                     return false;
 
             return true;
@@ -853,27 +878,31 @@ namespace FlareEngine
 
         private void LockCell(MenuPowersCell pcell)
         {
+            var powers = SharedGameResources.Powers!;
+            var pc = SharedGameResources.Pc!;
+            var menu = SharedGameResources.Menu!;
+
             pcell.IsUnlocked = false;
 
-            if (SharedGameResources.Powers!.Powers[pcell.Id]!.Passive && pcell.PassiveOn)
+            if (powers.Powers[pcell.Id]!.Passive && pcell.PassiveOn)
             {
-                int passiveIt = SharedGameResources.Pc!.Stats.PowersPassive.IndexOf(pcell.Id);
+                int passiveIt = pc.Stats.PowersPassive.IndexOf(pcell.Id);
                 if (passiveIt != -1)
-                    SharedGameResources.Pc.Stats.PowersPassive.RemoveAt(passiveIt);
+                    pc.Stats.PowersPassive.RemoveAt(passiveIt);
 
-                if (!SharedGameResources.Powers.Powers[pcell.Id]!.PassiveEffectsPersist)
+                if (!powers.Powers[pcell.Id]!.PassiveEffectsPersist)
                 {
-                    SharedGameResources.Pc.Stats.Effects.RemoveEffectPassive(pcell.Id);
+                    pc.Stats.Effects.RemoveEffectPassive(pcell.Id);
                 }
                 pcell.PassiveOn = false;
-                SharedGameResources.Pc.Stats.RefreshStats = true;
+                pc.Stats.RefreshStats = true;
             }
 
-            int it = SharedGameResources.Pc.Stats.PowersList.IndexOf(pcell.Id);
+            int it = pc.Stats.PowersList.IndexOf(pcell.Id);
             if (it != -1)
-                SharedGameResources.Pc.Stats.PowersList.RemoveAt(it);
+                pc.Stats.PowersList.RemoveAt(it);
 
-            SharedGameResources.Menu!.Act!.AddPower(0, pcell.Id);
+            menu.Act!.AddPower(0, pcell.Id);
 
             if (pcell.Next != null)
             {
@@ -927,20 +956,26 @@ namespace FlareEngine
 
         private void UpgradePower(MenuPowersCell? pcell, bool ignoreTab)
         {
+            var pc = SharedGameResources.Pc!;
+
             if (pcell == null || pcell.Next == null)
                 return;
 
             if (_tabControl == null || ignoreTab || _tabControl.GetActiveTab() == _powerCell[pcell.Group].Tab)
             {
                 pcell.Next.IsUnlocked = true;
-                SharedGameResources.Pc!.Stats.PowersList.Add(pcell.Next.Id);
-                SharedGameResources.Pc.Stats.CheckTitle = true;
+                pc.Stats.PowersList.Add(pcell.Next.Id);
+                pc.Stats.CheckTitle = true;
             }
             SetUnlockedPowers();
         }
 
         public void SetUnlockedPowers()
         {
+            var pc = SharedGameResources.Pc!;
+            var powers = SharedGameResources.Powers!;
+            var menu = SharedGameResources.Menu!;
+
             bool didCellLock = false;
 
             ClearActionBarBonusLevels();
@@ -951,7 +986,7 @@ namespace FlareEngine
                 {
                     if (!_recentlyLockedCells.Contains(_powerCell[i].Cells[j]))
                     {
-                        if (SharedGameResources.Pc!.Stats.PowersList.Contains(_powerCell[i].Cells[j].Id))
+                        if (pc.Stats.PowersList.Contains(_powerCell[i].Cells[j].Id))
                         {
                             _powerCell[i].Cells[j].IsUnlocked = true;
                         }
@@ -959,7 +994,7 @@ namespace FlareEngine
                         {
                             if (CheckUnlocked(_powerCell[i].Cells[j]))
                             {
-                                SharedGameResources.Pc.Stats.PowersList.Add(_powerCell[i].Cells[j].Id);
+                                pc.Stats.PowersList.Add(_powerCell[i].Cells[j].Id);
                                 _powerCell[i].Cells[j].IsUnlocked = true;
                             }
                         }
@@ -980,11 +1015,11 @@ namespace FlareEngine
                         else
                         {
                             if (_powerCell[i].CurrentCell != j)
-                                SharedGameResources.Menu!.Act!.AddPower(_powerCell[i].Cells[j].Id, _powerCell[i].GetCurrent().Id);
+                                menu.Act!.AddPower(_powerCell[i].Cells[j].Id, _powerCell[i].GetCurrent().Id);
 
                             _powerCell[i].CurrentCell = j;
                             if (Slots[i] != null)
-                                Slots[i]!.SetIcon(SharedGameResources.Powers!.Powers[_powerCell[i].Cells[j].Id]!.Icon, WidgetSlot.NoOverlay);
+                                Slots[i]!.SetIcon(powers.Powers[_powerCell[i].Cells[j].Id]!.Icon, WidgetSlot.NoOverlay);
                         }
                     }
                 }
@@ -1010,47 +1045,47 @@ namespace FlareEngine
                     {
                         MenuPowersCell pcell = _powerCell[i].Cells[j];
 
-                        if (!ReferenceEquals(pcell, bonusPcell) || (pcell.PassiveOn && SharedGameResources.Powers!.Powers[pcell.Id]!.Passive && (!CheckRequirements(currentPcell) || (!pcell.IsUnlocked && !IsBonusCell(pcell)))))
+                        if (!ReferenceEquals(pcell, bonusPcell) || (pcell.PassiveOn && powers.Powers[pcell.Id]!.Passive && (!CheckRequirements(currentPcell) || (!pcell.IsUnlocked && !IsBonusCell(pcell)))))
                         {
-                            int passiveIt = SharedGameResources.Pc!.Stats.PowersPassive.IndexOf(pcell.Id);
+                            int passiveIt = pc.Stats.PowersPassive.IndexOf(pcell.Id);
                             if (passiveIt != -1)
                             {
-                                SharedGameResources.Pc.Stats.PowersPassive.RemoveAt(passiveIt);
+                                pc.Stats.PowersPassive.RemoveAt(passiveIt);
 
-                                if (!SharedGameResources.Powers.Powers[pcell.Id]!.PassiveEffectsPersist)
+                                if (!powers.Powers[pcell.Id]!.PassiveEffectsPersist)
                                 {
-                                    SharedGameResources.Pc.Stats.Effects.RemoveEffectPassive(pcell.Id);
+                                    pc.Stats.Effects.RemoveEffectPassive(pcell.Id);
                                 }
                                 pcell.PassiveOn = false;
-                                SharedGameResources.Pc.Stats.RefreshStats = true;
+                                pc.Stats.RefreshStats = true;
 
-                                SharedGameResources.Menu!.Inv!.ApplyEquipment();
+                                menu.Inv!.ApplyEquipment();
                             }
                         }
-                        else if (ReferenceEquals(pcell, bonusPcell) && !pcell.PassiveOn && SharedGameResources.Powers!.Powers[pcell.Id]!.Passive && CheckRequirements(currentPcell))
+                        else if (ReferenceEquals(pcell, bonusPcell) && !pcell.PassiveOn && powers.Powers[pcell.Id]!.Passive && CheckRequirements(currentPcell))
                         {
-                            int passiveIt = SharedGameResources.Pc!.Stats.PowersPassive.IndexOf(pcell.Id);
+                            int passiveIt = pc.Stats.PowersPassive.IndexOf(pcell.Id);
                             if (passiveIt == -1)
                             {
-                                SharedGameResources.Pc.Stats.PowersPassive.Add(pcell.Id);
+                                pc.Stats.PowersPassive.Add(pcell.Id);
 
                                 pcell.PassiveOn = true;
-                                if (SharedGameResources.Pc.Stats.Effects.TriggeredOthers)
-                                    SharedGameResources.Powers.ActivateSinglePassive(SharedGameResources.Pc.Stats, pcell.Id);
+                                if (pc.Stats.Effects.TriggeredOthers)
+                                    powers.ActivateSinglePassive(pc.Stats, pcell.Id);
 
-                                SharedGameResources.Menu!.Inv!.ApplyEquipment();
+                                menu.Inv!.ApplyEquipment();
                             }
                         }
 
-                        if (!SharedGameResources.Powers!.Powers[pcell.Id]!.SpawnType.Equals(""))
+                        if (!powers.Powers[pcell.Id]!.SpawnType.Equals(""))
                         {
-                            SharedGameResources.Pc!.Stats.UpdateSummonPowerIDs(pcell.Id, bonusPcell.Id);
+                            pc.Stats.UpdateSummonPowerIDs(pcell.Id, bonusPcell.Id);
                         }
                     }
 
                     if (!ReferenceEquals(currentPcell, bonusPcell))
                     {
-                        SharedGameResources.Menu!.Act!.AddPower(bonusPcell.Id, currentPcell.Id);
+                        menu.Act!.AddPower(bonusPcell.Id, currentPcell.Id);
                     }
                 }
                 else
@@ -1059,9 +1094,9 @@ namespace FlareEngine
                     {
                         MenuPowersCell pcell = _powerCell[i].Cells[j];
 
-                        if (!SharedGameResources.Powers!.Powers[pcell.Id]!.SpawnType.Equals(""))
+                        if (!powers.Powers[pcell.Id]!.SpawnType.Equals(""))
                         {
-                            SharedGameResources.Pc!.Stats.UpdateSummonPowerIDs(pcell.Id, 0);
+                            pc.Stats.UpdateSummonPowerIDs(pcell.Id, 0);
                         }
                     }
                 }
@@ -1070,11 +1105,12 @@ namespace FlareEngine
 
         private int GetPointsUsed()
         {
+            var pc = SharedGameResources.Pc!;
             int used = 0;
 
-            for (int i = 0; i < SharedGameResources.Pc!.Stats.PowersList.Count; ++i)
+            for (int i = 0; i < pc.Stats.PowersList.Count; ++i)
             {
-                MenuPowersCell? pcell = GetCellByPowerIndex(SharedGameResources.Pc.Stats.PowersList[i]);
+                MenuPowersCell? pcell = GetCellByPowerIndex(pc.Stats.PowersList[i]);
                 if (pcell != null && pcell.RequiresPoint)
                     used++;
             }
@@ -1084,11 +1120,14 @@ namespace FlareEngine
 
         public void CreateTooltipFromActionBar(TooltipData tipData, uint slot, int tooltipLength)
         {
-            if (slot >= SharedGameResources.Menu!.Act!.Hotkeys.Count || slot >= SharedGameResources.Menu.Act.HotkeysMod.Count)
+            var menu = SharedGameResources.Menu!;
+            var powers = SharedGameResources.Powers!;
+
+            if (slot >= menu.Act!.Hotkeys.Count || slot >= menu.Act.HotkeysMod.Count)
                 return;
 
-            PowerID powerIndex = SharedGameResources.Menu.Act.Hotkeys[(int)slot];
-            PowerID modPowerIndex = SharedGameResources.Menu.Act.HotkeysMod[(int)slot];
+            PowerID powerIndex = menu.Act.Hotkeys[(int)slot];
+            PowerID modPowerIndex = menu.Act.HotkeysMod[(int)slot];
 
             PowerID pindex = modPowerIndex;
             MenuPowersCell? pcell = GetCellByPowerIndex(pindex);
@@ -1098,7 +1137,7 @@ namespace FlareEngine
                 PowerID testPindex = powerIndex;
                 MenuPowersCell? testPcell = GetCellByPowerIndex(testPindex);
 
-                if (testPcell != null && SharedGameResources.Powers!.Powers[testPindex]!.MetaPowerProvidesTooltip)
+                if (testPcell != null && powers.Powers[testPindex]!.MetaPowerProvidesTooltip)
                 {
                     pindex = testPindex;
                     pcell = testPcell;
@@ -1118,12 +1157,18 @@ namespace FlareEngine
         private void CreateTooltip(TooltipData tipData, MenuPowersCell? pcell, PowerID powerIndex, bool showUnlockPrompt, int tooltipLength)
         {
             var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+            var powers = SharedGameResources.Powers!;
+            var pc = SharedGameResources.Pc!;
+            var inpt = SharedResources.Inpt!;
+
             MenuPowersCell? pcellBonus = null;
             if (pcell != null)
             {
                 pcellBonus = _powerCell[pcell.Group].GetBonusCurrent(pcell);
             }
-            Power pwr = pcellBonus != null ? SharedGameResources.Powers!.Powers[pcellBonus.Id]! : SharedGameResources.Powers!.Powers[powerIndex]!;
+            Power pwr = pcellBonus != null ? powers.Powers[pcellBonus.Id]! : powers.Powers[powerIndex]!;
 
             {
                 StringBuilder ss = new StringBuilder();
@@ -1131,7 +1176,7 @@ namespace FlareEngine
                 if (pcell != null && pcell.UpgradeLevel > 0)
                 {
                     ss.Append(" (");
-                    ss.Append(SharedResources.Msg!.GetV("Level %d", pcell.UpgradeLevel));
+                    ss.Append(msg.GetV("Level %d", pcell.UpgradeLevel));
                     int bonusLevels = _powerCell[pcell.Group].GetBonusLevels();
                     if (bonusLevels > 0)
                         ss.Append(", +").Append(bonusLevels);
@@ -1143,30 +1188,30 @@ namespace FlareEngine
             if (tooltipLength == TooltipShort || (pcell == null && tooltipLength != TooltipLongAll))
                 return;
 
-            if (pwr.Passive) tipData.AddText(SharedResources.Msg!.Get("Passive"));
+            if (pwr.Passive) tipData.AddText(msg.Get("Passive"));
             if (pwr.Description != "")
             {
-                tipData.AddColoredText(Utils.SubstituteVarsInString(pwr.Description, SharedGameResources.Pc), SharedResources.Font!.GetColor(FontEngine.ColorItemFlavor));
+                tipData.AddColoredText(Utils.SubstituteVarsInString(pwr.Description, pc), font.GetColor(FontEngine.ColorItemFlavor));
             }
 
             if (pwr.RequiresMp > 0)
             {
-                tipData.AddText(SharedResources.Msg!.GetV("Costs %s MP", Utils.FloatToString(pwr.RequiresMp, SharedResources.Eset!.NumberFormat.PowerTooltips)));
+                tipData.AddText(msg.GetV("Costs %s MP", Utils.FloatToString(pwr.RequiresMp, eset.NumberFormat.PowerTooltips)));
             }
             if (pwr.RequiresHp > 0)
             {
-                tipData.AddText(SharedResources.Msg!.GetV("Costs %s HP", Utils.FloatToString(pwr.RequiresHp, SharedResources.Eset!.NumberFormat.PowerTooltips)));
+                tipData.AddText(msg.GetV("Costs %s HP", Utils.FloatToString(pwr.RequiresHp, eset.NumberFormat.PowerTooltips)));
             }
             for (int i = 0; i < pwr.RequiresResourceStat.Count; ++i)
             {
-                if (pwr.RequiresResourceStat[i] > 0 && !SharedResources.Eset!.ResourceStats.Stats[i].TextTooltipCost.Equals(""))
+                if (pwr.RequiresResourceStat[i] > 0 && !eset.ResourceStats.Stats[i].TextTooltipCost.Equals(""))
                 {
-                    tipData.AddText(SharedResources.Eset.ResourceStats.Stats[i].TextTooltipCost + ": " + Utils.FloatToString(pwr.RequiresResourceStat[i], SharedResources.Eset.NumberFormat.PowerTooltips));
+                    tipData.AddText(eset.ResourceStats.Stats[i].TextTooltipCost + ": " + Utils.FloatToString(pwr.RequiresResourceStat[i], eset.NumberFormat.PowerTooltips));
                 }
             }
             if (pwr.Cooldown > 0)
             {
-                tipData.AddText(SharedResources.Msg!.Get("Cooldown:") + " " + Utils.GetDurationString(pwr.Cooldown, SharedResources.Eset!.NumberFormat.Durations));
+                tipData.AddText(msg.Get("Cooldown:") + " " + Utils.GetDurationString(pwr.Cooldown, eset.NumberFormat.Durations));
             }
 
             if (pwr.UseHazard || pwr.Type == Power.TypeRepeater)
@@ -1180,11 +1225,11 @@ namespace FlareEngine
 
                     if (pwr.ModDamageValueMax == 0 || pwr.ModDamageValueMin == pwr.ModDamageValueMax)
                     {
-                        ss.Append(Utils.FloatToString(pwr.ModDamageValueMin, SharedResources.Eset!.NumberFormat.PowerTooltips));
+                        ss.Append(Utils.FloatToString(pwr.ModDamageValueMin, eset.NumberFormat.PowerTooltips));
                     }
                     else
                     {
-                        ss.Append(Utils.FloatToString(pwr.ModDamageValueMin, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append('-').Append(Utils.FloatToString(pwr.ModDamageValueMax, SharedResources.Eset.NumberFormat.PowerTooltips));
+                        ss.Append(Utils.FloatToString(pwr.ModDamageValueMin, eset.NumberFormat.PowerTooltips)).Append('-').Append(Utils.FloatToString(pwr.ModDamageValueMax, eset.NumberFormat.PowerTooltips));
                     }
 
                     if (pwr.ModDamageMode == Power.StatModifierModeMultiply)
@@ -1193,22 +1238,22 @@ namespace FlareEngine
                     }
                     ss.Append(' ');
 
-                    if (pwr.BaseDamage != SharedResources.Eset!.DamageTypes.Types.Count)
+                    if (pwr.BaseDamage != eset.DamageTypes.Types.Count)
                     {
-                        ss.Append(SharedResources.Eset.DamageTypes.Types[pwr.BaseDamage].Name);
+                        ss.Append(eset.DamageTypes.Types[pwr.BaseDamage].Name);
                     }
 
                     if (pwr.Count > 1 && pwr.Type != Power.TypeRepeater)
                         ss.Append(" (x").Append(pwr.Count).Append(')');
 
                     if (ss.Length > 0)
-                        tipData.AddColoredText(ss.ToString(), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                        tipData.AddColoredText(ss.ToString(), font.GetColor(FontEngine.ColorMenuBonus));
                 }
                 else
                 {
-                    if (pwr.BaseDamage != SharedResources.Eset!.DamageTypes.Types.Count)
+                    if (pwr.BaseDamage != eset.DamageTypes.Types.Count)
                     {
-                        tipData.AddText(SharedResources.Eset.DamageTypes.Types[pwr.BaseDamage].Name);
+                        tipData.AddText(eset.DamageTypes.Types[pwr.BaseDamage].Name);
                     }
                 }
             }
@@ -1228,11 +1273,11 @@ namespace FlareEngine
                     Effect.TypeIsResourceStat(effectType))
                 {
                     if (pwr.PostEffects[i].IsMultiplier)
-                        ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips + 2)).Append('×');
+                        ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips + 2)).Append('×');
                     else if (pwr.PostEffects[i].Magnitude > 0)
-                        ss.Append('+').Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips));
+                        ss.Append('+').Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips));
                     else
-                        ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips));
+                        ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips));
                 }
 
                 if (Effect.TypeIsStat(effectType))
@@ -1247,12 +1292,12 @@ namespace FlareEngine
                 else if (Effect.TypeIsDmgMin(effectType))
                 {
                     int index = Effect.GetDmgFromType(effectType);
-                    ss.Append(' ').Append(SharedResources.Eset!.DamageTypes.Types[index].NameMin);
+                    ss.Append(' ').Append(eset.DamageTypes.Types[index].NameMin);
                 }
                 else if (Effect.TypeIsDmgMax(effectType))
                 {
                     int index = Effect.GetDmgFromType(effectType);
-                    ss.Append(' ').Append(SharedResources.Eset!.DamageTypes.Types[index].NameMax);
+                    ss.Append(' ').Append(eset.DamageTypes.Types[index].NameMax);
                 }
                 else if (Effect.TypeIsResist(effectType))
                 {
@@ -1261,12 +1306,12 @@ namespace FlareEngine
                     {
                         ss.Append('%');
                     }
-                    ss.Append(' ').Append(SharedResources.Eset!.DamageTypes.Types[index].NameResist);
+                    ss.Append(' ').Append(eset.DamageTypes.Types[index].NameResist);
                 }
                 else if (Effect.TypeIsPrimary(effectType))
                 {
                     int index = Effect.GetPrimaryFromType(effectType);
-                    ss.Append(' ').Append(SharedResources.Eset!.PrimaryStats.Stats[index].Name);
+                    ss.Append(' ').Append(eset.PrimaryStats.Stats[index].Name);
                 }
                 else if (Effect.TypeIsResourceStat(effectType))
                 {
@@ -1277,7 +1322,7 @@ namespace FlareEngine
                     {
                         ss.Append('%');
                     }
-                    ss.Append(' ').Append(SharedResources.Eset!.ResourceStats.Stats[index].Text[subIndex]);
+                    ss.Append(' ').Append(eset.ResourceStats.Stats[index].Text[subIndex]);
                 }
                 else if (Effect.TypeIsResourceEffect(effectType))
                 {
@@ -1286,16 +1331,16 @@ namespace FlareEngine
 
                     if (subIndex == EngineSettings.ResourceStatsSettings.StatHeal)
                     {
-                        ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append(' ').Append(SharedResources.Eset.ResourceStats.Stats[index].TextTooltipHeal);
+                        ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append(' ').Append(eset.ResourceStats.Stats[index].TextTooltipHeal);
                     }
                     else if (subIndex == EngineSettings.ResourceStatsSettings.StatHealPercent)
                     {
-                        ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append("% ").Append(SharedResources.Eset.ResourceStats.Stats[index].TextTooltipHeal);
+                        ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append("% ").Append(eset.ResourceStats.Stats[index].TextTooltipHeal);
                     }
                 }
                 else if (effectType == Effect.Damage)
                 {
-                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append(' ').Append(SharedResources.Msg!.Get("Damage per second"));
+                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append(' ').Append(msg.Get("Damage per second"));
                     if (effectPtr != null && effectPtr.DamageIsTyped)
                     {
                         ss.Append("（")
@@ -1305,7 +1350,7 @@ namespace FlareEngine
                 }
                 else if (effectType == Effect.DamagePercent)
                 {
-                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append("% ").Append(SharedResources.Msg!.Get("Damage per second"));
+                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append("% ").Append(msg.Get("Damage per second"));
                     if (effectPtr != null && effectPtr.DamageIsTyped)
                     {
                         ss.Append("（")
@@ -1315,92 +1360,92 @@ namespace FlareEngine
                 }
                 else if (effectType == Effect.Hpot)
                 {
-                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append(' ').Append(SharedResources.Msg!.Get("HP per second"));
+                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append(' ').Append(msg.Get("HP per second"));
                 }
                 else if (effectType == Effect.HpotPercent)
                 {
-                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append("% ").Append(SharedResources.Msg!.Get("HP per second"));
+                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append("% ").Append(msg.Get("HP per second"));
                 }
                 else if (effectType == Effect.Mpot)
                 {
-                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append(' ').Append(SharedResources.Msg!.Get("MP per second"));
+                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append(' ').Append(msg.Get("MP per second"));
                 }
                 else if (effectType == Effect.MpotPercent)
                 {
-                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append("% ").Append(SharedResources.Msg!.Get("MP per second"));
+                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append("% ").Append(msg.Get("MP per second"));
                 }
                 else if (effectType == Effect.Speed)
                 {
                     if (pwr.PostEffects[i].Magnitude == 0)
-                        ss.Append(SharedResources.Msg!.Get("Immobilize"));
+                        ss.Append(msg.Get("Immobilize"));
                     else
-                        ss.Append(SharedResources.Msg!.GetV("%s%% Speed", Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)));
+                        ss.Append(msg.GetV("%s%% Speed", Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)));
                 }
                 else if (effectType == Effect.AttackSpeed)
                 {
-                    ss.Append(SharedResources.Msg!.GetV("%s%% Attack Speed", Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)));
+                    ss.Append(msg.GetV("%s%% Attack Speed", Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)));
                 }
                 else if (effectType == Effect.ResistAll)
                 {
-                    ss.Append('+').Append(pwr.PostEffects[i].Magnitude).Append("% ").Append(SharedResources.Msg!.Get("Resist All Negative Effects"));
+                    ss.Append('+').Append(pwr.PostEffects[i].Magnitude).Append("% ").Append(msg.Get("Resist All Negative Effects"));
                 }
 
                 else if (effectType == Effect.Stun)
                 {
-                    ss.Append(SharedResources.Msg!.Get("Stun"));
+                    ss.Append(msg.Get("Stun"));
                 }
                 else if (effectType == Effect.Revive)
                 {
-                    ss.Append(SharedResources.Msg!.Get("Automatic revive on death"));
+                    ss.Append(msg.Get("Automatic revive on death"));
                 }
                 else if (effectType == Effect.Convert)
                 {
-                    ss.Append(SharedResources.Msg!.Get("Convert"));
+                    ss.Append(msg.Get("Convert"));
                 }
                 else if (effectType == Effect.Fear)
                 {
-                    ss.Append(SharedResources.Msg!.Get("Fear"));
+                    ss.Append(msg.Get("Fear"));
                 }
                 else if (effectType == Effect.DeathSentence)
                 {
-                    ss.Append(SharedResources.Msg!.Get("Lifespan"));
+                    ss.Append(msg.Get("Lifespan"));
                 }
                 else if (effectType == Effect.Shield)
                 {
-                    if (pwr.BaseDamage == SharedResources.Eset!.DamageTypes.Types.Count)
+                    if (pwr.BaseDamage == eset.DamageTypes.Types.Count)
                         continue;
 
                     if (pwr.ModDamageMode == Power.StatModifierModeMultiply)
                     {
-                        float magnitude = SharedResources.Eset.Combat.ResourceRound(SharedGameResources.Pc!.Stats.GetDamageMax(pwr.BaseDamage) * pwr.ModDamageValueMin / 100);
-                        ss.Append(Utils.FloatToString(magnitude, SharedResources.Eset.NumberFormat.PowerTooltips));
+                        float magnitude = eset.Combat.ResourceRound(pc.Stats.GetDamageMax(pwr.BaseDamage) * pwr.ModDamageValueMin / 100);
+                        ss.Append(Utils.FloatToString(magnitude, eset.NumberFormat.PowerTooltips));
                     }
                     else if (pwr.ModDamageMode == Power.StatModifierModeAdd)
                     {
-                        float magnitude = SharedResources.Eset.Combat.ResourceRound(SharedGameResources.Pc!.Stats.GetDamageMax(pwr.BaseDamage) + pwr.ModDamageValueMin);
-                        ss.Append(Utils.FloatToString(magnitude, SharedResources.Eset.NumberFormat.PowerTooltips));
+                        float magnitude = eset.Combat.ResourceRound(pc.Stats.GetDamageMax(pwr.BaseDamage) + pwr.ModDamageValueMin);
+                        ss.Append(Utils.FloatToString(magnitude, eset.NumberFormat.PowerTooltips));
                     }
                     else if (pwr.ModDamageMode == Power.StatModifierModeAbsolute)
                     {
                         if (pwr.ModDamageValueMax == 0 || pwr.ModDamageValueMin == pwr.ModDamageValueMax)
-                            ss.Append(Utils.FloatToString(SharedResources.Eset.Combat.ResourceRound(pwr.ModDamageValueMin), SharedResources.Eset.NumberFormat.PowerTooltips));
+                            ss.Append(Utils.FloatToString(eset.Combat.ResourceRound(pwr.ModDamageValueMin), eset.NumberFormat.PowerTooltips));
                         else
-                            ss.Append(Utils.FloatToString(SharedResources.Eset.Combat.ResourceRound(pwr.ModDamageValueMin), SharedResources.Eset.NumberFormat.PowerTooltips)).Append('-').Append(Utils.FloatToString(SharedResources.Eset.Combat.ResourceRound(pwr.ModDamageValueMax), SharedResources.Eset.NumberFormat.PowerTooltips));
+                            ss.Append(Utils.FloatToString(eset.Combat.ResourceRound(pwr.ModDamageValueMin), eset.NumberFormat.PowerTooltips)).Append('-').Append(Utils.FloatToString(eset.Combat.ResourceRound(pwr.ModDamageValueMax), eset.NumberFormat.PowerTooltips));
                     }
                     else
                     {
-                        ss.Append(Utils.FloatToString(SharedResources.Eset.Combat.ResourceRound(SharedGameResources.Pc!.Stats.GetDamageMax(pwr.BaseDamage)), SharedResources.Eset.NumberFormat.PowerTooltips));
+                        ss.Append(Utils.FloatToString(eset.Combat.ResourceRound(pc.Stats.GetDamageMax(pwr.BaseDamage)), eset.NumberFormat.PowerTooltips));
                     }
 
                     ss.Append(' ').Append(_tooltipTextShield);
                 }
                 else if (effectType == Effect.Heal)
                 {
-                    if (pwr.BaseDamage == SharedResources.Eset!.DamageTypes.Types.Count)
+                    if (pwr.BaseDamage == eset.DamageTypes.Types.Count)
                         continue;
 
-                    float magMin = SharedGameResources.Pc!.Stats.GetDamageMin(pwr.BaseDamage);
-                    float magMax = SharedGameResources.Pc.Stats.GetDamageMax(pwr.BaseDamage);
+                    float magMin = pc.Stats.GetDamageMin(pwr.BaseDamage);
+                    float magMax = pc.Stats.GetDamageMax(pwr.BaseDamage);
 
                     if (pwr.ModDamageMode == Power.StatModifierModeMultiply)
                     {
@@ -1425,21 +1470,21 @@ namespace FlareEngine
 
                     magMax = Math.Max(magMin, magMax);
 
-                    ss.Append(Utils.FloatToString(magMin, SharedResources.Eset!.NumberFormat.PowerTooltips));
+                    ss.Append(Utils.FloatToString(magMin, eset.NumberFormat.PowerTooltips));
                     if (magMin != magMax)
-                        ss.Append('-').Append(Utils.FloatToString(magMax, SharedResources.Eset.NumberFormat.PowerTooltips));
+                        ss.Append('-').Append(Utils.FloatToString(magMax, eset.NumberFormat.PowerTooltips));
 
                     ss.Append(' ').Append(_tooltipTextHeal);
                 }
                 else if (effectType == Effect.Knockback)
                 {
-                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append(' ').Append(SharedResources.Msg!.Get("Knockback"));
+                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append(' ').Append(msg.Get("Knockback"));
                 }
                 else if (effectPtr != null && !effectPtr.Name.Equals("") && pwr.PostEffects[i].Magnitude > 0)
                 {
                     if (effectPtr.CanStack)
                         ss.Append('+');
-                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, SharedResources.Eset!.NumberFormat.PowerTooltips)).Append(' ').Append(SharedResources.Msg!.Get(effectPtr.Name));
+                    ss.Append(Utils.FloatToString(pwr.PostEffects[i].Magnitude, eset.NumberFormat.PowerTooltips)).Append(' ').Append(msg.Get(effectPtr.Name));
                 }
                 else if (pwr.PostEffects[i].Magnitude == 0)
                 {
@@ -1452,11 +1497,11 @@ namespace FlareEngine
                     {
                         if (effectType == Effect.DeathSentence)
                         {
-                            ss.Append(": ").Append(Utils.GetDurationString(pwr.PostEffects[i].Duration, SharedResources.Eset!.NumberFormat.Durations));
+                            ss.Append(": ").Append(Utils.GetDurationString(pwr.PostEffects[i].Duration, eset.NumberFormat.Durations));
                         }
                         else
                         {
-                            ss.Append(" (").Append(Utils.GetDurationString(pwr.PostEffects[i].Duration, SharedResources.Eset!.NumberFormat.Durations)).Append(')');
+                            ss.Append(" (").Append(Utils.GetDurationString(pwr.PostEffects[i].Duration, eset.NumberFormat.Durations)).Append(')');
                         }
 
                         if (pwr.PostEffects[i].Chance != 100)
@@ -1464,10 +1509,10 @@ namespace FlareEngine
                     }
                     if (pwr.PostEffects[i].Chance != 100)
                     {
-                        ss.Append('(').Append(SharedResources.Msg!.GetV("%s%% chance", Utils.FloatToString(pwr.PostEffects[i].Chance, SharedResources.Eset!.NumberFormat.PowerTooltips))).Append(')');
+                        ss.Append('(').Append(msg.GetV("%s%% chance", Utils.FloatToString(pwr.PostEffects[i].Chance, eset.NumberFormat.PowerTooltips))).Append(')');
                     }
 
-                    tipData.AddColoredText(ss.ToString(), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                    tipData.AddColoredText(ss.ToString(), font.GetColor(FontEngine.ColorMenuBonus));
                 }
             }
 
@@ -1482,7 +1527,7 @@ namespace FlareEngine
                     if (pwr.ModAccuracyMode == Power.StatModifierModeAdd && pwr.ModAccuracyValue > 0)
                         ss.Append('+');
 
-                    ss.Append(Utils.FloatToString(pwr.ModAccuracyValue, SharedResources.Eset!.NumberFormat.PowerTooltips));
+                    ss.Append(Utils.FloatToString(pwr.ModAccuracyValue, eset.NumberFormat.PowerTooltips));
 
                     if (pwr.ModAccuracyMode == Power.StatModifierModeMultiply)
                     {
@@ -1490,10 +1535,10 @@ namespace FlareEngine
                     }
                     ss.Append(' ');
 
-                    ss.Append(SharedResources.Msg!.Get("Base Accuracy"));
+                    ss.Append(msg.Get("Base Accuracy"));
 
                     if (ss.Length > 0)
-                        tipData.AddColoredText(ss.ToString(), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                        tipData.AddColoredText(ss.ToString(), font.GetColor(FontEngine.ColorMenuBonus));
                 }
 
                 if (pwr.ModCritMode > -1)
@@ -1503,7 +1548,7 @@ namespace FlareEngine
                     if (pwr.ModCritMode == Power.StatModifierModeAdd && pwr.ModCritValue > 0)
                         ss.Append('+');
 
-                    ss.Append(Utils.FloatToString(pwr.ModCritValue, SharedResources.Eset!.NumberFormat.PowerTooltips));
+                    ss.Append(Utils.FloatToString(pwr.ModCritValue, eset.NumberFormat.PowerTooltips));
 
                     if (pwr.ModCritMode == Power.StatModifierModeMultiply)
                     {
@@ -1511,35 +1556,35 @@ namespace FlareEngine
                     }
                     ss.Append(' ');
 
-                    ss.Append(SharedResources.Msg!.Get("Base Critical Chance"));
+                    ss.Append(msg.Get("Base Critical Chance"));
 
                     if (ss.Length > 0)
-                        tipData.AddColoredText(ss.ToString(), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                        tipData.AddColoredText(ss.ToString(), font.GetColor(FontEngine.ColorMenuBonus));
                 }
 
                 if (pwr.TraitArmorPenetration)
                 {
                     ss.Clear();
-                    ss.Append(SharedResources.Msg!.Get("Ignores Absorption"));
-                    tipData.AddColoredText(ss.ToString(), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                    ss.Append(msg.Get("Ignores Absorption"));
+                    tipData.AddColoredText(ss.ToString(), font.GetColor(FontEngine.ColorMenuBonus));
                 }
                 if (pwr.TraitAvoidanceIgnore)
                 {
                     ss.Clear();
-                    ss.Append(SharedResources.Msg!.Get("Ignores Avoidance"));
-                    tipData.AddColoredText(ss.ToString(), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                    ss.Append(msg.Get("Ignores Avoidance"));
+                    tipData.AddColoredText(ss.ToString(), font.GetColor(FontEngine.ColorMenuBonus));
                 }
                 if (pwr.TraitCritsImpaired > 0)
                 {
                     ss.Clear();
-                    ss.Append(SharedResources.Msg!.GetV("%s%% Chance to crit slowed targets", Utils.FloatToString(pwr.TraitCritsImpaired, SharedResources.Eset!.NumberFormat.PowerTooltips)));
-                    tipData.AddColoredText(ss.ToString(), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                    ss.Append(msg.GetV("%s%% Chance to crit slowed targets", Utils.FloatToString(pwr.TraitCritsImpaired, eset.NumberFormat.PowerTooltips)));
+                    tipData.AddColoredText(ss.ToString(), font.GetColor(FontEngine.ColorMenuBonus));
                 }
-                if (pwr.ConvertedDamage < SharedResources.Eset!.DamageTypes.Types.Count)
+                if (pwr.ConvertedDamage < eset.DamageTypes.Types.Count)
                 {
                     ss.Clear();
-                    ss.Append(SharedResources.Msg!.GetV("Damage dealt as: %s", SharedResources.Eset.DamageTypes.Types[pwr.ConvertedDamage].Name));
-                    tipData.AddColoredText(ss.ToString(), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                    ss.Append(msg.GetV("Damage dealt as: %s", eset.DamageTypes.Types[pwr.ConvertedDamage].Name));
+                    tipData.AddColoredText(ss.ToString(), font.GetColor(FontEngine.ColorMenuBonus));
                 }
             }
 
@@ -1548,41 +1593,41 @@ namespace FlareEngine
                 int spawnLimit = (int)pwr.SpawnLimitCount;
                 if (pwr.SpawnLimitMode == Power.SpawnLimitModeStat)
                 {
-                    if (pwr.SpawnLimitStat < SharedResources.Eset!.PrimaryStats.Stats.Count)
+                    if (pwr.SpawnLimitStat < eset.PrimaryStats.Stats.Count)
                     {
-                        spawnLimit = (int)(pwr.SpawnLimitCount * ((float)SharedGameResources.Pc!.Stats.GetPrimary(pwr.SpawnLimitStat) / pwr.SpawnLimitRatio));
+                        spawnLimit = (int)(pwr.SpawnLimitCount * ((float)pc.Stats.GetPrimary(pwr.SpawnLimitStat) / pwr.SpawnLimitRatio));
                     }
                 }
-                tipData.AddColoredText(SharedResources.Msg!.GetV("Spawn limit: %d", spawnLimit), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                tipData.AddColoredText(msg.GetV("Spawn limit: %d", spawnLimit), font.GetColor(FontEngine.ColorMenuBonus));
             }
 
             foreach (int flagIndex in pwr.RequiresFlags.OrderBy(x => x))
             {
-                string requiredFlag = SharedResources.Eset!.EquipFlags.Flags[flagIndex].Name;
+                string requiredFlag = eset.EquipFlags.Flags[flagIndex].Name;
                 if (!requiredFlag.Equals(""))
-                    tipData.AddText(SharedResources.Msg!.GetV("Requires a %s", SharedResources.Msg.Get(requiredFlag)));
+                    tipData.AddText(msg.GetV("Requires a %s", msg.Get(requiredFlag)));
             }
 
             if (pcell != null)
             {
-                for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
                 {
                     if (pcell.RequiresPrimary[i] > 0)
                     {
-                        if (SharedGameResources.Pc!.Stats.GetPrimary(i) < pcell.RequiresPrimary[i])
-                            tipData.AddColoredText(SharedResources.Msg!.GetV("Requires %s %d", SharedResources.Eset.PrimaryStats.Stats[i].Name, pcell.RequiresPrimary[i]), SharedResources.Font!.GetColor(FontEngine.ColorMenuPenalty));
+                        if (pc.Stats.GetPrimary(i) < pcell.RequiresPrimary[i])
+                            tipData.AddColoredText(msg.GetV("Requires %s %d", eset.PrimaryStats.Stats[i].Name, pcell.RequiresPrimary[i]), font.GetColor(FontEngine.ColorMenuPenalty));
                         else
-                            tipData.AddText(SharedResources.Msg!.GetV("Requires %s %d", SharedResources.Eset.PrimaryStats.Stats[i].Name, pcell.RequiresPrimary[i]));
+                            tipData.AddText(msg.GetV("Requires %s %d", eset.PrimaryStats.Stats[i].Name, pcell.RequiresPrimary[i]));
                     }
                 }
 
-                if ((pcell.RequiresLevel > 0) && SharedGameResources.Pc!.Stats.Level < pcell.RequiresLevel)
+                if ((pcell.RequiresLevel > 0) && pc.Stats.Level < pcell.RequiresLevel)
                 {
-                    tipData.AddColoredText(SharedResources.Msg!.GetV("Requires Level %d", pcell.RequiresLevel), SharedResources.Font!.GetColor(FontEngine.ColorMenuPenalty));
+                    tipData.AddColoredText(msg.GetV("Requires Level %d", pcell.RequiresLevel), font.GetColor(FontEngine.ColorMenuPenalty));
                 }
-                else if ((pcell.RequiresLevel > 0) && SharedGameResources.Pc.Stats.Level >= pcell.RequiresLevel)
+                else if ((pcell.RequiresLevel > 0) && pc.Stats.Level >= pcell.RequiresLevel)
                 {
-                    tipData.AddText(SharedResources.Msg!.GetV("Requires Level %d", pcell.RequiresLevel));
+                    tipData.AddText(msg.GetV("Requires Level %d", pcell.RequiresLevel));
                 }
 
                 for (int j = 0; j < pcell.RequiresPower.Count; ++j)
@@ -1593,33 +1638,33 @@ namespace FlareEngine
 
                     string reqPowerName;
                     if (reqCell.UpgradeLevel > 0)
-                        reqPowerName = SharedGameResources.Powers!.Powers[reqCell.Id]!.Name + " (" + SharedResources.Msg!.GetV("Level %d", reqCell.UpgradeLevel) + ")";
+                        reqPowerName = powers.Powers[reqCell.Id]!.Name + " (" + msg.GetV("Level %d", reqCell.UpgradeLevel) + ")";
                     else
-                        reqPowerName = SharedGameResources.Powers!.Powers[reqCell.Id]!.Name;
+                        reqPowerName = powers.Powers[reqCell.Id]!.Name;
 
                     if (!CheckUnlocked(reqCell))
                     {
-                        tipData.AddColoredText(SharedResources.Msg!.GetV("Requires Power: %s", reqPowerName), SharedResources.Font!.GetColor(FontEngine.ColorMenuPenalty));
+                        tipData.AddColoredText(msg.GetV("Requires Power: %s", reqPowerName), font.GetColor(FontEngine.ColorMenuPenalty));
                     }
                     else
                     {
-                        tipData.AddText(SharedResources.Msg!.GetV("Requires Power: %s", reqPowerName));
+                        tipData.AddText(msg.GetV("Requires Power: %s", reqPowerName));
                     }
                 }
 
-                if (pcell.RequiresPoint && !SharedGameResources.Pc!.Stats.PowersList.Contains(pcell.Id))
+                if (pcell.RequiresPoint && !pc.Stats.PowersList.Contains(pcell.Id))
                 {
                     MenuPowersCell? unlockCell = GetCellByPowerIndex(pcell.Id);
-                    if (showUnlockPrompt && pcell.UpgradeLevel <= 1 && _pointsLeft > 0 && SharedResources.Inpt!.UsingMouse() && CheckUnlock(unlockCell))
+                    if (showUnlockPrompt && pcell.UpgradeLevel <= 1 && _pointsLeft > 0 && inpt.UsingMouse() && CheckUnlock(unlockCell))
                     {
-                        tipData.AddColoredText(SharedResources.Msg!.Get("Click to Unlock (uses 1 Skill Point)"), SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+                        tipData.AddColoredText(msg.Get("Click to Unlock (uses 1 Skill Point)"), font.GetColor(FontEngine.ColorMenuBonus));
                     }
                     else
                     {
                         if (pcell.RequiresPoint && _pointsLeft < 1)
-                            tipData.AddColoredText(SharedResources.Msg!.Get("Requires 1 Skill Point"), SharedResources.Font!.GetColor(FontEngine.ColorMenuPenalty));
+                            tipData.AddColoredText(msg.Get("Requires 1 Skill Point"), font.GetColor(FontEngine.ColorMenuPenalty));
                         else
-                            tipData.AddText(SharedResources.Msg!.Get("Requires 1 Skill Point"));
+                            tipData.AddText(msg.Get("Requires 1 Skill Point"));
                     }
                 }
             }
@@ -1627,42 +1672,46 @@ namespace FlareEngine
 
         private void CreateTooltipInputHint(TooltipData tipData, bool enableActivateMsg)
         {
+            var inpt = SharedResources.Inpt!;
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+
             bool showActivateMsg = false;
             string activateBindStr = "";
 
             bool showMoreMsg = false;
             string moreBindStr = "";
 
-            if (SharedResources.Inpt!.Mode == InputState.ModeTouchscreen)
+            if (inpt.Mode == InputState.ModeTouchscreen)
             {
-                tipData.AddColoredText('\n' + SharedResources.Msg!.Get("Tap icon again for more options"), SharedResources.Font!.GetColor(FontEngine.ColorItemBonus));
+                tipData.AddColoredText('\n' + msg.Get("Tap icon again for more options"), font.GetColor(FontEngine.ColorItemBonus));
             }
-            else if (SharedResources.Inpt.Mode == InputState.ModeJoystick)
+            else if (inpt.Mode == InputState.ModeJoystick)
             {
                 if (enableActivateMsg)
                 {
                     showActivateMsg = true;
-                    activateBindStr = SharedResources.Inpt.GetGamepadBindingString(Input.MenuActivate);
+                    activateBindStr = inpt.GetGamepadBindingString(Input.MenuActivate);
                 }
 
                 showMoreMsg = true;
-                moreBindStr = SharedResources.Inpt.GetGamepadBindingString(Input.Accept);
+                moreBindStr = inpt.GetGamepadBindingString(Input.Accept);
             }
-            else if (!SharedResources.Inpt.UsingMouse())
+            else if (!inpt.UsingMouse())
             {
                 if (enableActivateMsg)
                 {
                     showActivateMsg = true;
-                    activateBindStr = SharedResources.Inpt.GetBindingString(Input.MenuActivate);
+                    activateBindStr = inpt.GetBindingString(Input.MenuActivate);
                 }
 
                 showMoreMsg = true;
-                moreBindStr = SharedResources.Inpt.GetBindingString(Input.Accept);
+                moreBindStr = inpt.GetBindingString(Input.Accept);
             }
             else
             {
                 showActivateMsg = enableActivateMsg;
-                activateBindStr = SharedResources.Inpt.GetBindingString(Input.Main2);
+                activateBindStr = inpt.GetBindingString(Input.Main2);
             }
 
             if (showActivateMsg || showMoreMsg)
@@ -1672,12 +1721,12 @@ namespace FlareEngine
 
             if (showActivateMsg)
             {
-                tipData.AddColoredText(SharedResources.Msg!.GetV("Press [%s] to use", activateBindStr), SharedResources.Font!.GetColor(FontEngine.ColorItemBonus));
+                tipData.AddColoredText(msg.GetV("Press [%s] to use", activateBindStr), font.GetColor(FontEngine.ColorItemBonus));
             }
 
             if (showMoreMsg)
             {
-                tipData.AddColoredText(SharedResources.Msg!.GetV("Press [%s] for more options", moreBindStr), SharedResources.Font!.GetColor(FontEngine.ColorItemBonus));
+                tipData.AddColoredText(msg.GetV("Press [%s] for more options", moreBindStr), font.GetColor(FontEngine.ColorItemBonus));
             }
         }
 
@@ -1726,6 +1775,9 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var pc = SharedGameResources.Pc!;
+            var snd = SharedResources.Snd!;
+
             if (!Visible && _tabControl != null && _defaultPowerTab > -1)
             {
                 _tabControl.SetActiveTab((uint)_defaultPowerTab);
@@ -1734,7 +1786,7 @@ namespace FlareEngine
 
             SetUnlockedPowers();
 
-            _pointsLeft = (SharedGameResources.Pc!.Stats.Level * SharedGameResources.Pc.Stats.PowerPointsPerLevel) - GetPointsUsed();
+            _pointsLeft = (pc.Stats.Level * pc.Stats.PowerPointsPerLevel) - GetPointsUsed();
             if (_pointsLeft > 0)
             {
                 NewPowerNotification = true;
@@ -1758,17 +1810,17 @@ namespace FlareEngine
                         UpgradePower(pcell, UpgradePowerAllTabs);
                         pcell = _powerCell[i].GetCurrent();
                         if (_powerCell[i].UpgradeButton != null)
-                            _powerCell[i].UpgradeButton!.Enabled = (SharedGameResources.Pc!.Stats.Hp > 0 && IsCellVisible(pcell) && CheckUpgrade(pcell));
+                            _powerCell[i].UpgradeButton!.Enabled = (pc.Stats.Hp > 0 && IsCellVisible(pcell) && CheckUpgrade(pcell));
                     }
                     else
                     {
                         if (_powerCell[i].UpgradeButton != null)
-                            _powerCell[i].UpgradeButton!.Enabled = (SharedGameResources.Pc!.Stats.Hp > 0 && IsCellVisible(pcell));
+                            _powerCell[i].UpgradeButton!.Enabled = (pc.Stats.Hp > 0 && IsCellVisible(pcell));
                         break;
                     }
                 }
 
-                if (Visible && SharedGameResources.Pc!.Stats.Hp > 0 && _powerCell[i].UpgradeButton != null)
+                if (Visible && pc.Stats.Hp > 0 && _powerCell[i].UpgradeButton != null)
                 {
                     if ((_tabControl == null || _powerCell[i].Tab == _tabControl.GetActiveTab()) && _powerCell[i].UpgradeButton!.CheckClick())
                     {
@@ -1795,7 +1847,7 @@ namespace FlareEngine
             if (_closeButton!.CheckClick())
             {
                 Visible = false;
-                SharedResources.Snd!.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
             }
 
             if (_tabControl != null)
@@ -1899,6 +1951,10 @@ namespace FlareEngine
 
         public void RenderTooltips(Int2 position)
         {
+            var msg = SharedResources.Msg!;
+            var powers = SharedGameResources.Powers!;
+            var tooltipm = SharedResources.Tooltipm!;
+
             if (!Visible || !Utils.IsWithinRect(WindowArea, position))
                 return;
 
@@ -1920,19 +1976,19 @@ namespace FlareEngine
                     CreateTooltip(tipData, tipCell, tipCell.Id, !baseUnlocked, TooltipLongMenu);
                     if (baseUnlocked && tipCell.Next != null)
                     {
-                        tipData.AddText("\n" + SharedResources.Msg!.Get("Next Level:"));
+                        tipData.AddText("\n" + msg.Get("Next Level:"));
                         CreateTooltip(tipData, tipCell.Next, tipCell.Next.Id, baseUnlocked, TooltipLongMenu);
                     }
                     CreateTooltipInputHint(tipData, !TooltipShowActivateHint);
 
-                    SharedResources.Tooltipm!.Push(tipData, position, TooltipData.StyleFloat);
+                    tooltipm.Push(tipData, position, TooltipData.StyleFloat);
 
                     break;
                 }
                 else if (_powerCell[i].UpgradeButton != null)
                 {
                     if (_powerCell[i].UpgradeButton!.Enabled && tipCell.Next != null)
-                        _powerCell[i].UpgradeButton!.Tooltip = SharedResources.Msg!.GetV("Upgrade to: %s (Level %d)\nUses 1 Skill Point", SharedGameResources.Powers!.Powers[tipCell.Next.Id]!.Name, tipCell.Next.UpgradeLevel);
+                        _powerCell[i].UpgradeButton!.Tooltip = msg.GetV("Upgrade to: %s (Level %d)\nUses 1 Skill Point", powers.Powers[tipCell.Next.Id]!.Name, tipCell.Next.UpgradeLevel);
                     else
                         _powerCell[i].UpgradeButton!.Tooltip = "";
                 }
@@ -1941,6 +1997,9 @@ namespace FlareEngine
 
         public MenuPowersClick Click(Int2 mouse)
         {
+            var inpt = SharedResources.Inpt!;
+            var powers = SharedGameResources.Powers!;
+
             MenuPowersClick result = new MenuPowersClick();
 
             int activeTab = (_tabControl != null) ? _tabControl.GetActiveTab() : 0;
@@ -1949,7 +2008,7 @@ namespace FlareEngine
             {
                 if (Slots[i] != null && Utils.IsWithinRect(Slots[i]!.Pos, mouse) && (_powerCell[i].Tab == activeTab))
                 {
-                    if (SharedResources.Inpt!.Mode == InputState.ModeTouchscreen)
+                    if (inpt.Mode == InputState.ModeTouchscreen)
                     {
                         bool slotHadFocus = Slots[i]!.InFocus;
 
@@ -1981,9 +2040,9 @@ namespace FlareEngine
                         result.Unlock = pcell.Id;
                     }
 
-                    if (CheckUnlocked(pcell) && !SharedGameResources.Powers!.Powers[pcell.Id]!.Passive)
+                    if (CheckUnlocked(pcell) && !powers.Powers[pcell.Id]!.Passive)
                     {
-                        if (SharedResources.Inpt.UsingMouse() && SharedResources.Inpt.Mode != InputState.ModeTouchscreen)
+                        if (inpt.UsingMouse() && inpt.Mode != InputState.ModeTouchscreen)
                         {
                             Slots[i]!.Defocus();
                             if (_tabs.Count > 0)
@@ -2009,16 +2068,19 @@ namespace FlareEngine
 
         public void ClickUnlock(PowerID powerIndex)
         {
+            var pc = SharedGameResources.Pc!;
+            var menu = SharedGameResources.Menu!;
+
             MenuPowersCell? pcell = GetCellByPowerIndex(powerIndex);
             if (pcell == null)
                 return;
 
             if (!CheckUnlocked(pcell))
             {
-                SharedGameResources.Pc!.Stats.PowersList.Add(powerIndex);
-                SharedGameResources.Pc.Stats.CheckTitle = true;
+                pc.Stats.PowersList.Add(powerIndex);
+                pc.Stats.CheckTitle = true;
                 SetUnlockedPowers();
-                SharedGameResources.Menu!.Act!.AddPower(powerIndex, 0);
+                menu.Act!.AddPower(powerIndex, 0);
             }
             else
             {
@@ -2043,6 +2105,9 @@ namespace FlareEngine
 
         public bool MeetsUsageStats(PowerID powerIndex)
         {
+            var pc = SharedGameResources.Pc!;
+            var eset = SharedResources.Eset!;
+
             MenuPowersCell? pcell = GetCellByPowerIndex(powerIndex);
 
             if (pcell == null)
@@ -2050,12 +2115,12 @@ namespace FlareEngine
 
             MenuPowersCell basePcell = _powerCell[pcell.Group].GetCurrent();
 
-            if (SharedGameResources.Pc!.Stats.Level < basePcell.RequiresLevel)
+            if (pc.Stats.Level < basePcell.RequiresLevel)
                 return false;
 
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
-                if (SharedGameResources.Pc.Stats.GetPrimary(i) < basePcell.RequiresPrimary[i])
+                if (pc.Stats.GetPrimary(i) < basePcell.RequiresPrimary[i])
                     return false;
             }
 
@@ -2109,15 +2174,18 @@ namespace FlareEngine
 
         public string GetItemBonusPowerReqString(PowerID powerIndex)
         {
+            var powers = SharedGameResources.Powers!;
+            var msg = SharedResources.Msg!;
+
             MenuPowersCell? pcell = GetCellByPowerIndex(powerIndex);
 
             if (pcell == null)
                 return "";
 
-            string output = SharedGameResources.Powers!.Powers[powerIndex]!.Name;
+            string output = powers.Powers[powerIndex]!.Name;
             if (pcell.UpgradeLevel > 0)
             {
-                output += " (" + SharedResources.Msg!.GetV("Level %d", pcell.UpgradeLevel) + ")";
+                output += " (" + msg.GetV("Level %d", pcell.UpgradeLevel) + ")";
             }
 
             return output;

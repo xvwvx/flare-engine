@@ -58,6 +58,8 @@ namespace FlareEngine
 
         public CursorManager()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             ShowCursor = true;
             _cursorNormal = null;
             _cursorInteract = null;
@@ -81,7 +83,7 @@ namespace FlareEngine
                     if (infile.Key == "normal")
                     {
                         // @ATTR normal|filename|Filename of an image for the normal cursor.
-                        graphics = SharedResources.RenderDevice!.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
+                        graphics = renderDevice.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
                         if (graphics != null)
                         {
                             _cursorNormal = graphics.CreateSprite();
@@ -92,7 +94,7 @@ namespace FlareEngine
                     else if (infile.Key == "interact")
                     {
                         // @ATTR interact|filename|Filename of an image for the object interaction cursor.
-                        graphics = SharedResources.RenderDevice!.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
+                        graphics = renderDevice.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
                         if (graphics != null)
                         {
                             _cursorInteract = graphics.CreateSprite();
@@ -103,7 +105,7 @@ namespace FlareEngine
                     else if (infile.Key == "talk")
                     {
                         // @ATTR talk|filename|Filename of an image for the NPC interaction cursor.
-                        graphics = SharedResources.RenderDevice!.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
+                        graphics = renderDevice.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
                         if (graphics != null)
                         {
                             _cursorTalk = graphics.CreateSprite();
@@ -114,7 +116,7 @@ namespace FlareEngine
                     else if (infile.Key == "attack")
                     {
                         // @ATTR attack|filename|Filename of an image for the cursor when attacking enemies.
-                        graphics = SharedResources.RenderDevice!.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
+                        graphics = renderDevice.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
                         if (graphics != null)
                         {
                             _cursorAttack = graphics.CreateSprite();
@@ -125,7 +127,7 @@ namespace FlareEngine
                     else if (infile.Key == "lowhp_normal")
                     {
                         // @ATTR lowhp_normal|filename|Filename of an image for the normal cursor when health is low.
-                        graphics = SharedResources.RenderDevice!.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
+                        graphics = renderDevice.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
                         if (graphics != null)
                         {
                             _cursorLhpNormal = graphics.CreateSprite();
@@ -136,7 +138,7 @@ namespace FlareEngine
                     else if (infile.Key == "lowhp_interact")
                     {
                         // @ATTR lowhp_interact|filename|Filename of an image for the object interaction cursor when health is low.
-                        graphics = SharedResources.RenderDevice!.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
+                        graphics = renderDevice.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
                         if (graphics != null)
                         {
                             _cursorLhpInteract = graphics.CreateSprite();
@@ -147,7 +149,7 @@ namespace FlareEngine
                     else if (infile.Key == "lowhp_talk")
                     {
                         // @ATTR lowhp_talk|filename|Filename of an image for the NPC interaction cursor when health is low.
-                        graphics = SharedResources.RenderDevice!.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
+                        graphics = renderDevice.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
                         if (graphics != null)
                         {
                             _cursorLhpTalk = graphics.CreateSprite();
@@ -158,7 +160,7 @@ namespace FlareEngine
                     else if (infile.Key == "lowhp_attack")
                     {
                         // @ATTR lowhp_attack|filename|Filename of an image for the cursor when attacking enemies and health is low.
-                        graphics = SharedResources.RenderDevice!.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
+                        graphics = renderDevice.LoadImage(Parse.PopFirstString(ref infile.Val), RenderDevice.ErrorNormal);
                         if (graphics != null)
                         {
                             _cursorLhpAttack = graphics.CreateSprite();
@@ -196,15 +198,18 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+
             if (!ShowCursor)
             {
-                SharedResources.Inpt!.HideCursor();
+                inpt.HideCursor();
                 return;
             }
 
-            if (SharedResources.Settings!.HardwareCursor)
+            if (settings.HardwareCursor)
             {
-                SharedResources.Inpt!.ShowCursor();
+                inpt.ShowCursor();
                 return;
             }
 
@@ -216,30 +221,37 @@ namespace FlareEngine
 
         public void Render()
         {
-            if (SharedResources.Settings!.HardwareCursor || !ShowCursor) return;
+            var renderDevice = SharedResources.RenderDevice!;
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+
+            if (settings.HardwareCursor || !ShowCursor) return;
 
             if (_cursorCurrent != null)
             {
                 if (_offsetCurrent != null)
                 {
-                    _cursorCurrent.SetDest(SharedResources.Inpt!.Mouse.X + _offsetCurrent.Value.X, SharedResources.Inpt.Mouse.Y + _offsetCurrent.Value.Y);
+                    _cursorCurrent.SetDest(inpt.Mouse.X + _offsetCurrent.Value.X, inpt.Mouse.Y + _offsetCurrent.Value.Y);
                 }
                 else
                 {
-                    _cursorCurrent.SetDest(SharedResources.Inpt!.Mouse.X, SharedResources.Inpt.Mouse.Y);
+                    _cursorCurrent.SetDest(inpt.Mouse.X, inpt.Mouse.Y);
                 }
 
-                SharedResources.RenderDevice!.Render(_cursorCurrent);
+                renderDevice.Render(_cursorCurrent);
             }
         }
 
         public void SetCursor(int type)
         {
-            if (SharedResources.Settings!.HardwareCursor) return;
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+
+            if (settings.HardwareCursor) return;
 
             if (type == CursorInteract && (_cursorInteract != null || (_cursorLhpInteract != null && LowHp)))
             {
-                SharedResources.Inpt!.HideCursor();
+                inpt.HideCursor();
                 if (LowHp && _cursorLhpInteract != null)
                 {
                     _cursorCurrent = _cursorLhpInteract;
@@ -253,7 +265,7 @@ namespace FlareEngine
             }
             else if (type == CursorTalk && (_cursorTalk != null || (_cursorLhpTalk != null && LowHp)))
             {
-                SharedResources.Inpt!.HideCursor();
+                inpt.HideCursor();
                 if (LowHp && _cursorLhpTalk != null)
                 {
                     _cursorCurrent = _cursorLhpTalk;
@@ -267,7 +279,7 @@ namespace FlareEngine
             }
             else if (type == CursorAttack && (_cursorAttack != null || (_cursorLhpAttack != null && LowHp)))
             {
-                SharedResources.Inpt!.HideCursor();
+                inpt.HideCursor();
                 if (LowHp && _cursorLhpAttack != null)
                 {
                     _cursorCurrent = _cursorLhpAttack;
@@ -281,7 +293,7 @@ namespace FlareEngine
             }
             else if (_cursorNormal != null || (_cursorLhpNormal != null && LowHp))
             {
-                SharedResources.Inpt!.HideCursor();
+                inpt.HideCursor();
                 if (LowHp && _cursorLhpNormal != null)
                 {
                     _cursorCurrent = _cursorLhpNormal;
@@ -297,7 +309,7 @@ namespace FlareEngine
             {
                 // system cursor
                 _cursorCurrent = null;
-                SharedResources.Inpt!.ShowCursor();
+                inpt.ShowCursor();
             }
         }
     }

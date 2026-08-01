@@ -380,6 +380,8 @@ namespace FlareEngine
         /// <summary>对应 C++ <c>void SDLInputState::setBind(...)</c>。</summary>
         public override void SetBind(int action, int type, int bind, ref string? keybindMsg)
         {
+            var msg = SharedResources.Msg!;
+
             if (action < 0 || action >= KeyCount)
                 return;
 
@@ -395,7 +397,7 @@ namespace FlareEngine
                 {
                     if (type == _restrictedBindings[i].Type && bind == _restrictedBindings[i].Bind)
                     {
-                        keybindMsg = SharedResources.Msg!.GetV("Can not bind: %s", GetInputBindName(type, bind));
+                        keybindMsg = msg.GetV("Can not bind: %s", GetInputBindName(type, bind));
                         return;
                     }
                 }
@@ -406,7 +408,7 @@ namespace FlareEngine
                     {
                         if (type == Binding[i][j - 1].Type && bind == Binding[i][j - 1].Bind)
                         {
-                            keybindMsg = SharedResources.Msg!.GetV("'%s' is no longer bound to:", GetInputBindName(type, bind)) + " '" + BindingName[i] + "'";
+                            keybindMsg = msg.GetV("'%s' is no longer bound to:", GetInputBindName(type, bind)) + " '" + BindingName[i] + "'";
                             RemoveBind(i, j - 1);
                         }
                     }
@@ -435,6 +437,8 @@ namespace FlareEngine
         /// <summary>对应 C++ <c>void SDLInputState::initJoystick()</c>。</summary>
         public override void InitJoystick()
         {
+            var settings = SharedResources.Settings!;
+
             if (_gamepad != null)
             {
                 Sdl?.GameControllerClose(_gamepad);
@@ -458,7 +462,7 @@ namespace FlareEngine
                 {
                     Utils.LogInfo("InputState: No gamepads were found.");
                 }
-                SharedResources.Settings!.EnableJoystick = false;
+                settings.EnableJoystick = false;
             }
             else
             {
@@ -468,18 +472,18 @@ namespace FlareEngine
                 }
             }
 
-            if (SharedResources.Settings!.JoystickDevice >= _gamepadIds.Count)
-                SharedResources.Settings.JoystickDevice = 0;
+            if (settings.JoystickDevice >= _gamepadIds.Count)
+                settings.JoystickDevice = 0;
 
             for (int i = 0; i < _gamepadIds.Count; ++i)
             {
-                if (SharedResources.Settings.EnableJoystick && i == SharedResources.Settings.JoystickDevice)
+                if (settings.EnableJoystick && i == settings.JoystickDevice)
                 {
                     _gamepad = Sdl?.GameControllerOpen(_gamepadIds[i]);
                 }
                 if (enableLogMsg)
                 {
-                    if (SharedResources.Settings.EnableJoystick && i == SharedResources.Settings.JoystickDevice)
+                    if (settings.EnableJoystick && i == settings.JoystickDevice)
                     {
                         Utils.LogInfo("InputState: Gamepad #%d, %s [*]", i, Sdl?.GameControllerNameForIndex(i) ?? "");
                     }
@@ -613,6 +617,12 @@ namespace FlareEngine
         {
             base.Handle();
 
+            var settings = SharedResources.Settings!;
+            var curs = SharedResources.Curs!;
+            var snd = SharedResources.Snd!;
+            var menu = SharedGameResources.Menu;
+            var saveLoad = SharedResources.SaveLoad!;
+
             SdlPollEvent evt;
 
             while (Sdl != null && Sdl.PollEvent(out evt))
@@ -636,7 +646,7 @@ namespace FlareEngine
                         {
                             Mode = ModeKeyboardAndMouse;
                             Mouse = ScaleMouse((uint)evt.Motion.X, (uint)evt.Motion.Y);
-                            SharedResources.Curs!.ShowCursor = true;
+                            curs.ShowCursor = true;
                         }
                         break;
                     case SdlInputEventType.MouseWheel:
@@ -658,13 +668,13 @@ namespace FlareEngine
                         {
                             Mode = ModeKeyboardAndMouse;
                             Mouse = ScaleMouse((uint)evt.Button.X, (uint)evt.Button.Y);
-                            SharedResources.Curs!.ShowCursor = true;
+                            curs.ShowCursor = true;
                         }
                         else
                         {
                             Mode = ModeKeyboardAndMouse;
                             Mouse = ScaleMouse((uint)evt.Button.X, (uint)evt.Button.Y);
-                            SharedResources.Curs!.ShowCursor = true;
+                            curs.ShowCursor = true;
                             for (int key = 0; key < KeyCount; key++)
                             {
                                 for (int i = 0; i < Binding[key].Count; ++i)
@@ -680,7 +690,7 @@ namespace FlareEngine
                         break;
                     case SdlInputEventType.MouseButtonUp:
                         Mouse = ScaleMouse((uint)evt.Button.X, (uint)evt.Button.Y);
-                        SharedResources.Curs!.ShowCursor = true;
+                        curs.ShowCursor = true;
                         for (int key = 0; key < KeyCount; key++)
                         {
                             for (int i = 0; i < Binding[key].Count; ++i)
@@ -696,54 +706,54 @@ namespace FlareEngine
                     case SdlInputEventType.WindowEvent:
                         if (evt.Window.Event == SdlWindowEventId.SizeChanged)
                         {
-                            _resizeCooldown.Duration = (uint)(SharedResources.Settings!.MaxFramesPerSec / 4);
+                            _resizeCooldown.Duration = (uint)(settings.MaxFramesPerSec / 4);
                         }
                         else if (evt.Window.Event == SdlWindowEventId.Minimized)
                         {
                             if (Platform.Instance.IsMobileDevice)
                             {
                                 Utils.LogInfo("InputState: Minimizing app, saving...");
-                                SharedResources.SaveLoad!.SaveGame();
+                                saveLoad.SaveGame();
                                 Utils.LogInfo("InputState: Game saved");
                             }
                             WindowMinimized = true;
-                            SharedResources.Snd!.PauseAll();
-                            if (SharedGameResources.Menu != null)
-                                SharedGameResources.Menu.ShowExitMenu();
+                            snd.PauseAll();
+                            if (menu != null)
+                                menu.ShowExitMenu();
                         }
                         else if (evt.Window.Event == SdlWindowEventId.Restored)
                         {
                             WindowRestored = true;
-                            SharedResources.Snd!.ResumeAll();
+                            snd.ResumeAll();
                         }
                         else if (evt.Window.Event == SdlWindowEventId.FocusLost)
                         {
-                            if (SharedResources.Settings!.PauseOnFocusLoss && SharedGameResources.Menu != null)
+                            if (settings.PauseOnFocusLoss && menu != null)
                             {
-                                SharedGameResources.Menu.ShowExitMenu();
+                                menu.ShowExitMenu();
                             }
-                            if (SharedResources.Settings.MuteOnFocusLoss)
+                            if (settings.MuteOnFocusLoss)
                             {
-                                SharedResources.Snd!.SetVolumeSFX(0);
-                                SharedResources.Snd!.SetVolumeMusic(0);
+                                snd.SetVolumeSFX(0);
+                                snd.SetVolumeMusic(0);
                             }
                         }
                         else if (evt.Window.Event == SdlWindowEventId.FocusGained)
                         {
-                            if (SharedResources.Settings!.MuteOnFocusLoss)
+                            if (settings.MuteOnFocusLoss)
                             {
-                                SharedResources.Snd!.SetVolumeSFX(SharedResources.Settings.SoundVolume);
-                                SharedResources.Snd!.SetVolumeMusic(SharedResources.Settings.MusicVolume);
+                                snd.SetVolumeSFX(settings.SoundVolume);
+                                snd.SetVolumeMusic(settings.MusicVolume);
                             }
                         }
                         break;
                     case SdlInputEventType.FingerMotion:
-                        if (SharedResources.Settings!.Touchscreen)
+                        if (settings.Touchscreen)
                         {
                             Mode = ModeTouchscreen;
-                            SharedResources.Curs!.ShowCursor = false;
-                            Mouse.X = (int)((evt.TFinger.X + evt.TFinger.Dx) * SharedResources.Settings.ViewW);
-                            Mouse.Y = (int)((evt.TFinger.Y + evt.TFinger.Dy) * SharedResources.Settings.ViewH);
+                            curs.ShowCursor = false;
+                            Mouse.X = (int)((evt.TFinger.X + evt.TFinger.Dx) * settings.ViewW);
+                            Mouse.Y = (int)((evt.TFinger.Y + evt.TFinger.Dy) * settings.ViewH);
                             Pressing[Input.Main1] = true;
                             UnPress[Input.Main1] = false;
 
@@ -767,13 +777,13 @@ namespace FlareEngine
                         }
                         break;
                     case SdlInputEventType.FingerDown:
-                        if (SharedResources.Settings!.Touchscreen)
+                        if (settings.Touchscreen)
                         {
                             Mode = ModeTouchscreen;
-                            SharedResources.Curs!.ShowCursor = false;
+                            curs.ShowCursor = false;
                             TouchLocked = true;
-                            Mouse.X = (int)(evt.TFinger.X * SharedResources.Settings.ViewW);
-                            Mouse.Y = (int)(evt.TFinger.Y * SharedResources.Settings.ViewH);
+                            Mouse.X = (int)(evt.TFinger.X * settings.ViewW);
+                            Mouse.Y = (int)(evt.TFinger.Y * settings.ViewH);
                             Pressing[Input.Main1] = true;
                             UnPress[Input.Main1] = false;
 
@@ -785,11 +795,11 @@ namespace FlareEngine
                         }
                         break;
                     case SdlInputEventType.FingerUp:
-                        if (SharedResources.Settings!.Touchscreen)
+                        if (settings.Touchscreen)
                         {
                             UnPress[Input.Main1] = false;
 
-                            SharedResources.Curs!.ShowCursor = false;
+                            curs.ShowCursor = false;
                             for (int i = 0; i < TouchFingers.Count; ++i)
                             {
                                 if (TouchFingers[i].Id == evt.TFinger.FingerId)
@@ -851,7 +861,7 @@ namespace FlareEngine
                         break;
                     case SdlInputEventType.ControllerButtonDown:
                     {
-                        if (SharedResources.Settings!.EnableJoystick && _gamepad != null)
+                        if (settings.EnableJoystick && _gamepad != null)
                         {
                             Mode = ModeJoystick;
 
@@ -864,7 +874,7 @@ namespace FlareEngine
                                     {
                                         if (Binding[key][i].Type == InputBind.Gamepad && Binding[key][i].Bind == evt.CButton.Button)
                                         {
-                                            SharedResources.Curs!.ShowCursor = false;
+                                            curs.ShowCursor = false;
                                             HideCursor();
                                             Pressing[key] = true;
                                             UnPress[key] = false;
@@ -877,7 +887,7 @@ namespace FlareEngine
                     }
                     case SdlInputEventType.ControllerButtonUp:
                     {
-                        if (SharedResources.Settings!.EnableJoystick && _gamepad != null)
+                        if (settings.EnableJoystick && _gamepad != null)
                         {
                             Mode = ModeJoystick;
 
@@ -901,7 +911,7 @@ namespace FlareEngine
                     }
                     case SdlInputEventType.ControllerAxisMotion:
                     {
-                        if (SharedResources.Settings!.EnableJoystick && _gamepad != null)
+                        if (settings.EnableJoystick && _gamepad != null)
                         {
                             LastJoyaxis = -1;
 
@@ -918,21 +928,21 @@ namespace FlareEngine
                                             bool isDown;
                                             if (bindAxis == SdlControllerAxis.Triggerleft || bindAxis == SdlControllerAxis.Triggerright)
                                             {
-                                                isDown = (evt.CAxis.Value >= SharedResources.Settings.JoyDeadzone);
+                                                isDown = (evt.CAxis.Value >= settings.JoyDeadzone);
                                             }
                                             else if (Binding[key][i].Bind % 2 == 0)
                                             {
-                                                isDown = (evt.CAxis.Value >= SharedResources.Settings.JoyDeadzone);
+                                                isDown = (evt.CAxis.Value >= settings.JoyDeadzone);
                                             }
                                             else
                                             {
-                                                isDown = (evt.CAxis.Value <= -(SharedResources.Settings.JoyDeadzone));
+                                                isDown = (evt.CAxis.Value <= -(settings.JoyDeadzone));
                                             }
 
                                             if (isDown)
                                             {
                                                 Mode = ModeJoystick;
-                                                SharedResources.Curs!.ShowCursor = false;
+                                                curs.ShowCursor = false;
                                                 HideCursor();
                                                 Pressing[key] = true;
                                                 UnPress[key] = false;
@@ -946,9 +956,9 @@ namespace FlareEngine
                                         }
                                     }
                                 }
-                                if (evt.CAxis.Value >= SharedResources.Settings.JoyDeadzone)
+                                if (evt.CAxis.Value >= settings.JoyDeadzone)
                                     LastJoyaxis = evt.CAxis.Axis * 2;
-                                else if (evt.CAxis.Value <= -(SharedResources.Settings.JoyDeadzone))
+                                else if (evt.CAxis.Value <= -(settings.JoyDeadzone))
                                     LastJoyaxis = (evt.CAxis.Axis * 2) + 1;
                             }
                         }
@@ -964,10 +974,10 @@ namespace FlareEngine
                             Utils.LogInfo("InputState: Joystick added.");
                             JoysticksChanged = true;
 
-                            if (SharedResources.Settings!.JoystickDevice == 0)
+                            if (settings.JoystickDevice == 0)
                             {
-                                SharedResources.Settings.EnableJoystick = true;
-                                SharedResources.Settings.JoystickDevice = evt.JDevice.Which;
+                                settings.EnableJoystick = true;
+                                settings.JoystickDevice = evt.JDevice.Which;
                             }
 
                             InitJoystick();
@@ -1013,13 +1023,13 @@ namespace FlareEngine
                 {
                     if (!Pressing[i])
                     {
-                        RepeatCooldown[i].Duration = SharedResources.Settings!.MaxFramesPerSec;
+                        RepeatCooldown[i].Duration = settings.MaxFramesPerSec;
                     }
                     else if (Pressing[i] && !Lock[i])
                     {
                         Lock[i] = true;
                         int prevDuration = (int)RepeatCooldown[i].Duration;
-                        RepeatCooldown[i].Duration = (uint)Math.Max(SharedResources.Settings.MaxFramesPerSec / 10, prevDuration - (SharedResources.Settings.MaxFramesPerSec / 2));
+                        RepeatCooldown[i].Duration = (uint)Math.Max(settings.MaxFramesPerSec / 10, prevDuration - (settings.MaxFramesPerSec / 2));
                     }
                     else if (Pressing[i] && Lock[i])
                     {
@@ -1058,70 +1068,72 @@ namespace FlareEngine
         /// <summary>对应 C++ <c>std::string SDLInputState::getKeyName(int key, bool get_short_string)</c>。</summary>
         public string GetKeyName(int key, bool getShortString = !GetShortString)
         {
+            var msg = SharedResources.Msg!;
+
             key = Sdl?.GetKeyFromScancode(key) ?? key;
 
             if (getShortString)
             {
                 switch (key)
                 {
-                    case SdlKeycode.Backspace: return SharedResources.Msg!.Get("BkSp");
-                    case SdlKeycode.Capslock: return SharedResources.Msg!.Get("Caps");
-                    case SdlKeycode.Delete: return SharedResources.Msg!.Get("Del");
-                    case SdlKeycode.Down: return SharedResources.Msg!.Get("Down");
-                    case SdlKeycode.End: return SharedResources.Msg!.Get("End");
-                    case SdlKeycode.Escape: return SharedResources.Msg!.Get("Esc");
-                    case SdlKeycode.Home: return SharedResources.Msg!.Get("Home");
-                    case SdlKeycode.Insert: return SharedResources.Msg!.Get("Ins");
-                    case SdlKeycode.LAlt: return SharedResources.Msg!.Get("LAlt");
-                    case SdlKeycode.LCtrl: return SharedResources.Msg!.Get("LCtrl");
-                    case SdlKeycode.Left: return SharedResources.Msg!.Get("Left");
-                    case SdlKeycode.LShift: return SharedResources.Msg!.Get("LShft");
-                    case SdlKeycode.Numlockclear: return SharedResources.Msg!.Get("Num");
-                    case SdlKeycode.PageDown: return SharedResources.Msg!.Get("PgDn");
-                    case SdlKeycode.PageUp: return SharedResources.Msg!.Get("PgUp");
-                    case SdlKeycode.Pause: return SharedResources.Msg!.Get("Pause");
-                    case SdlKeycode.Printscreen: return SharedResources.Msg!.Get("Print");
-                    case SdlKeycode.RAlt: return SharedResources.Msg!.Get("RAlt");
-                    case SdlKeycode.RCtrl: return SharedResources.Msg!.Get("RCtrl");
-                    case SdlKeycode.Return: return SharedResources.Msg!.Get("Ret");
-                    case SdlKeycode.Right: return SharedResources.Msg!.Get("Right");
-                    case SdlKeycode.RShift: return SharedResources.Msg!.Get("RShft");
-                    case SdlKeycode.Scrolllock: return SharedResources.Msg!.Get("SLock");
-                    case SdlKeycode.Space: return SharedResources.Msg!.Get("Spc");
-                    case SdlKeycode.Tab: return SharedResources.Msg!.Get("Tab");
-                    case SdlKeycode.Up: return SharedResources.Msg!.Get("Up");
+                    case SdlKeycode.Backspace: return msg.Get("BkSp");
+                    case SdlKeycode.Capslock: return msg.Get("Caps");
+                    case SdlKeycode.Delete: return msg.Get("Del");
+                    case SdlKeycode.Down: return msg.Get("Down");
+                    case SdlKeycode.End: return msg.Get("End");
+                    case SdlKeycode.Escape: return msg.Get("Esc");
+                    case SdlKeycode.Home: return msg.Get("Home");
+                    case SdlKeycode.Insert: return msg.Get("Ins");
+                    case SdlKeycode.LAlt: return msg.Get("LAlt");
+                    case SdlKeycode.LCtrl: return msg.Get("LCtrl");
+                    case SdlKeycode.Left: return msg.Get("Left");
+                    case SdlKeycode.LShift: return msg.Get("LShft");
+                    case SdlKeycode.Numlockclear: return msg.Get("Num");
+                    case SdlKeycode.PageDown: return msg.Get("PgDn");
+                    case SdlKeycode.PageUp: return msg.Get("PgUp");
+                    case SdlKeycode.Pause: return msg.Get("Pause");
+                    case SdlKeycode.Printscreen: return msg.Get("Print");
+                    case SdlKeycode.RAlt: return msg.Get("RAlt");
+                    case SdlKeycode.RCtrl: return msg.Get("RCtrl");
+                    case SdlKeycode.Return: return msg.Get("Ret");
+                    case SdlKeycode.Right: return msg.Get("Right");
+                    case SdlKeycode.RShift: return msg.Get("RShft");
+                    case SdlKeycode.Scrolllock: return msg.Get("SLock");
+                    case SdlKeycode.Space: return msg.Get("Spc");
+                    case SdlKeycode.Tab: return msg.Get("Tab");
+                    case SdlKeycode.Up: return msg.Get("Up");
                 }
             }
             else
             {
                 switch (key)
                 {
-                    case SdlKeycode.Backspace: return SharedResources.Msg!.Get("Backspace");
-                    case SdlKeycode.Capslock: return SharedResources.Msg!.Get("CapsLock");
-                    case SdlKeycode.Delete: return SharedResources.Msg!.Get("Delete");
-                    case SdlKeycode.Down: return SharedResources.Msg!.Get("Down");
-                    case SdlKeycode.End: return SharedResources.Msg!.Get("End");
-                    case SdlKeycode.Escape: return SharedResources.Msg!.Get("Escape");
-                    case SdlKeycode.Home: return SharedResources.Msg!.Get("Home");
-                    case SdlKeycode.Insert: return SharedResources.Msg!.Get("Insert");
-                    case SdlKeycode.LAlt: return SharedResources.Msg!.Get("Left Alt");
-                    case SdlKeycode.LCtrl: return SharedResources.Msg!.Get("Left Ctrl");
-                    case SdlKeycode.Left: return SharedResources.Msg!.Get("Left");
-                    case SdlKeycode.LShift: return SharedResources.Msg!.Get("Left Shift");
-                    case SdlKeycode.Numlockclear: return SharedResources.Msg!.Get("NumLock");
-                    case SdlKeycode.PageDown: return SharedResources.Msg!.Get("PageDown");
-                    case SdlKeycode.PageUp: return SharedResources.Msg!.Get("PageUp");
-                    case SdlKeycode.Pause: return SharedResources.Msg!.Get("Pause");
-                    case SdlKeycode.Printscreen: return SharedResources.Msg!.Get("PrintScreen");
-                    case SdlKeycode.RAlt: return SharedResources.Msg!.Get("Right Alt");
-                    case SdlKeycode.RCtrl: return SharedResources.Msg!.Get("Right Ctrl");
-                    case SdlKeycode.Return: return SharedResources.Msg!.Get("Return");
-                    case SdlKeycode.Right: return SharedResources.Msg!.Get("Right");
-                    case SdlKeycode.RShift: return SharedResources.Msg!.Get("Right Shift");
-                    case SdlKeycode.Scrolllock: return SharedResources.Msg!.Get("ScrollLock");
-                    case SdlKeycode.Space: return SharedResources.Msg!.Get("Space");
-                    case SdlKeycode.Tab: return SharedResources.Msg!.Get("Tab");
-                    case SdlKeycode.Up: return SharedResources.Msg!.Get("Up");
+                    case SdlKeycode.Backspace: return msg.Get("Backspace");
+                    case SdlKeycode.Capslock: return msg.Get("CapsLock");
+                    case SdlKeycode.Delete: return msg.Get("Delete");
+                    case SdlKeycode.Down: return msg.Get("Down");
+                    case SdlKeycode.End: return msg.Get("End");
+                    case SdlKeycode.Escape: return msg.Get("Escape");
+                    case SdlKeycode.Home: return msg.Get("Home");
+                    case SdlKeycode.Insert: return msg.Get("Insert");
+                    case SdlKeycode.LAlt: return msg.Get("Left Alt");
+                    case SdlKeycode.LCtrl: return msg.Get("Left Ctrl");
+                    case SdlKeycode.Left: return msg.Get("Left");
+                    case SdlKeycode.LShift: return msg.Get("Left Shift");
+                    case SdlKeycode.Numlockclear: return msg.Get("NumLock");
+                    case SdlKeycode.PageDown: return msg.Get("PageDown");
+                    case SdlKeycode.PageUp: return msg.Get("PageUp");
+                    case SdlKeycode.Pause: return msg.Get("Pause");
+                    case SdlKeycode.Printscreen: return msg.Get("PrintScreen");
+                    case SdlKeycode.RAlt: return msg.Get("Right Alt");
+                    case SdlKeycode.RCtrl: return msg.Get("Right Ctrl");
+                    case SdlKeycode.Return: return msg.Get("Return");
+                    case SdlKeycode.Right: return msg.Get("Right");
+                    case SdlKeycode.RShift: return msg.Get("Right Shift");
+                    case SdlKeycode.Scrolllock: return msg.Get("ScrollLock");
+                    case SdlKeycode.Space: return msg.Get("Space");
+                    case SdlKeycode.Tab: return msg.Get("Tab");
+                    case SdlKeycode.Up: return msg.Get("Up");
                 }
             }
 
@@ -1230,22 +1242,23 @@ namespace FlareEngine
         /// <summary>对应 C++ <c>std::string SDLInputState::getMovementString()</c>。</summary>
         public override string GetMovementString()
         {
+            var settings = SharedResources.Settings!;
             string output = "[";
 
             if (SharedResources.Inpt!.UsingTouchscreen())
             {
                 output += SharedResources.Msg!.Get("Touch control D-Pad");
             }
-            else if (SharedResources.Settings!.EnableJoystick)
+            else if (settings.EnableJoystick)
             {
                 output += GetGamepadBindingString(Input.Left) + "/";
                 output += GetGamepadBindingString(Input.Right) + "/";
                 output += GetGamepadBindingString(Input.Up) + "/";
                 output += GetGamepadBindingString(Input.Down);
             }
-            else if (SharedResources.Settings.MouseMove)
+            else if (settings.MouseMove)
             {
-                output += (SharedResources.Settings.MouseMoveSwap ? GetBindingString(Input.Main2) : GetBindingString(Input.Main1));
+                output += (settings.MouseMoveSwap ? GetBindingString(Input.Main2) : GetBindingString(Input.Main1));
             }
             else
             {
@@ -1353,85 +1366,87 @@ namespace FlareEngine
         /// <summary>对应 C++ <c>void SDLInputState::setCommonStrings()</c>。</summary>
         public override void SetCommonStrings()
         {
-            BindingName[Input.Cancel] = SharedResources.Msg!.Get("Cancel");
-            BindingName[Input.Accept] = SharedResources.Msg!.Get("Accept");
-            BindingName[Input.Up] = SharedResources.Msg!.Get("Up");
-            BindingName[Input.Down] = SharedResources.Msg!.Get("Down");
-            BindingName[Input.Left] = SharedResources.Msg!.Get("Left");
-            BindingName[Input.Right] = SharedResources.Msg!.Get("Right");
-            BindingName[Input.Bar1] = SharedResources.Msg!.Get("Bar1");
-            BindingName[Input.Bar2] = SharedResources.Msg!.Get("Bar2");
-            BindingName[Input.Bar3] = SharedResources.Msg!.Get("Bar3");
-            BindingName[Input.Bar4] = SharedResources.Msg!.Get("Bar4");
-            BindingName[Input.Bar5] = SharedResources.Msg!.Get("Bar5");
-            BindingName[Input.Bar6] = SharedResources.Msg!.Get("Bar6");
-            BindingName[Input.Bar7] = SharedResources.Msg!.Get("Bar7");
-            BindingName[Input.Bar8] = SharedResources.Msg!.Get("Bar8");
-            BindingName[Input.Bar9] = SharedResources.Msg!.Get("Bar9");
-            BindingName[Input.Bar0] = SharedResources.Msg!.Get("Bar0");
-            BindingName[Input.Character] = SharedResources.Msg!.Get("Character");
-            BindingName[Input.Inventory] = SharedResources.Msg!.Get("Inventory");
-            BindingName[Input.Powers] = SharedResources.Msg!.Get("Powers");
-            BindingName[Input.Log] = SharedResources.Msg!.Get("Log");
-            BindingName[Input.Main1] = SharedResources.Msg!.Get("Main1");
-            BindingName[Input.Main2] = SharedResources.Msg!.Get("Main2");
-            BindingName[Input.EquipmentSwap] = SharedResources.Msg!.Get("Next Equip Set");
-            BindingName[Input.EquipmentSwapPrev] = SharedResources.Msg!.Get("Previous Equip Set");
-            BindingName[Input.MinimapMode] = SharedResources.Msg!.Get("Mini-map Mode");
-            BindingName[Input.LootTooltipMode] = SharedResources.Msg!.Get("Loot Tooltip Mode");
-            BindingName[Input.Actionbar] = SharedResources.Msg!.Get("Action Bar Edit");
-            BindingName[Input.MenuPageNext] = SharedResources.Msg!.Get("Menu: Next Page");
-            BindingName[Input.MenuPagePrev] = SharedResources.Msg!.Get("Menu: Previous Page");
-            BindingName[Input.MenuActivate] = SharedResources.Msg!.Get("Menu: Activate");
-            BindingName[Input.Pause] = SharedResources.Msg!.Get("Pause Game");
-            BindingName[Input.CycleMenus] = SharedResources.Msg!.Get("Cycle Menus");
-            BindingName[Input.AimUp] = SharedResources.Msg!.Get("Aim Up");
-            BindingName[Input.AimDown] = SharedResources.Msg!.Get("Aim Down");
-            BindingName[Input.AimLeft] = SharedResources.Msg!.Get("Aim Left");
-            BindingName[Input.AimRight] = SharedResources.Msg!.Get("Aim Right");
-            BindingName[Input.DeveloperMenu] = SharedResources.Msg!.Get("Developer Menu");
-            BindingName[Input.DeveloperCmd1] = SharedResources.Msg!.Get("Developer Command 1");
-            BindingName[Input.DeveloperCmd2] = SharedResources.Msg!.Get("Developer Command 2");
-            BindingName[Input.DeveloperCmd3] = SharedResources.Msg!.Get("Developer Command 3");
-            BindingName[Input.Ctrl] = SharedResources.Msg!.Get("Ctrl");
-            BindingName[Input.Shift] = SharedResources.Msg!.Get("Shift");
-            BindingName[Input.Alt] = SharedResources.Msg!.Get("Alt");
-            BindingName[Input.Del] = SharedResources.Msg!.Get("Delete");
+            var msg = SharedResources.Msg!;
 
-            MouseButton[0] = SharedResources.Msg!.Get("Left Mouse");
-            MouseButton[1] = SharedResources.Msg!.Get("Middle Mouse");
-            MouseButton[2] = SharedResources.Msg!.Get("Right Mouse");
-            MouseButton[3] = SharedResources.Msg!.Get("Wheel Up");
-            MouseButton[4] = SharedResources.Msg!.Get("Wheel Down");
-            MouseButton[5] = SharedResources.Msg!.Get("Mouse X1");
-            MouseButton[6] = SharedResources.Msg!.Get("Mouse X2");
+            BindingName[Input.Cancel] = msg.Get("Cancel");
+            BindingName[Input.Accept] = msg.Get("Accept");
+            BindingName[Input.Up] = msg.Get("Up");
+            BindingName[Input.Down] = msg.Get("Down");
+            BindingName[Input.Left] = msg.Get("Left");
+            BindingName[Input.Right] = msg.Get("Right");
+            BindingName[Input.Bar1] = msg.Get("Bar1");
+            BindingName[Input.Bar2] = msg.Get("Bar2");
+            BindingName[Input.Bar3] = msg.Get("Bar3");
+            BindingName[Input.Bar4] = msg.Get("Bar4");
+            BindingName[Input.Bar5] = msg.Get("Bar5");
+            BindingName[Input.Bar6] = msg.Get("Bar6");
+            BindingName[Input.Bar7] = msg.Get("Bar7");
+            BindingName[Input.Bar8] = msg.Get("Bar8");
+            BindingName[Input.Bar9] = msg.Get("Bar9");
+            BindingName[Input.Bar0] = msg.Get("Bar0");
+            BindingName[Input.Character] = msg.Get("Character");
+            BindingName[Input.Inventory] = msg.Get("Inventory");
+            BindingName[Input.Powers] = msg.Get("Powers");
+            BindingName[Input.Log] = msg.Get("Log");
+            BindingName[Input.Main1] = msg.Get("Main1");
+            BindingName[Input.Main2] = msg.Get("Main2");
+            BindingName[Input.EquipmentSwap] = msg.Get("Next Equip Set");
+            BindingName[Input.EquipmentSwapPrev] = msg.Get("Previous Equip Set");
+            BindingName[Input.MinimapMode] = msg.Get("Mini-map Mode");
+            BindingName[Input.LootTooltipMode] = msg.Get("Loot Tooltip Mode");
+            BindingName[Input.Actionbar] = msg.Get("Action Bar Edit");
+            BindingName[Input.MenuPageNext] = msg.Get("Menu: Next Page");
+            BindingName[Input.MenuPagePrev] = msg.Get("Menu: Previous Page");
+            BindingName[Input.MenuActivate] = msg.Get("Menu: Activate");
+            BindingName[Input.Pause] = msg.Get("Pause Game");
+            BindingName[Input.CycleMenus] = msg.Get("Cycle Menus");
+            BindingName[Input.AimUp] = msg.Get("Aim Up");
+            BindingName[Input.AimDown] = msg.Get("Aim Down");
+            BindingName[Input.AimLeft] = msg.Get("Aim Left");
+            BindingName[Input.AimRight] = msg.Get("Aim Right");
+            BindingName[Input.DeveloperMenu] = msg.Get("Developer Menu");
+            BindingName[Input.DeveloperCmd1] = msg.Get("Developer Command 1");
+            BindingName[Input.DeveloperCmd2] = msg.Get("Developer Command 2");
+            BindingName[Input.DeveloperCmd3] = msg.Get("Developer Command 3");
+            BindingName[Input.Ctrl] = msg.Get("Ctrl");
+            BindingName[Input.Shift] = msg.Get("Shift");
+            BindingName[Input.Alt] = msg.Get("Alt");
+            BindingName[Input.Del] = msg.Get("Delete");
 
-            _xboxButtons[SdlControllerButton.A] = SharedResources.Msg!.Get("X360: A");
-            _xboxButtons[SdlControllerButton.B] = SharedResources.Msg!.Get("X360: B");
-            _xboxButtons[SdlControllerButton.X] = SharedResources.Msg!.Get("X360: X");
-            _xboxButtons[SdlControllerButton.Y] = SharedResources.Msg!.Get("X360: Y");
-            _xboxButtons[SdlControllerButton.Back] = SharedResources.Msg!.Get("X360: Back");
-            _xboxButtons[SdlControllerButton.Guide] = SharedResources.Msg!.Get("X360: Guide");
-            _xboxButtons[SdlControllerButton.Start] = SharedResources.Msg!.Get("X360: Start");
-            _xboxButtons[SdlControllerButton.Leftstick] = SharedResources.Msg!.Get("X360: L3");
-            _xboxButtons[SdlControllerButton.Rightstick] = SharedResources.Msg!.Get("X360: R3");
-            _xboxButtons[SdlControllerButton.Leftshoulder] = SharedResources.Msg!.Get("X360: L1");
-            _xboxButtons[SdlControllerButton.Rightshoulder] = SharedResources.Msg!.Get("X360: R1");
-            _xboxButtons[SdlControllerButton.DpadUp] = SharedResources.Msg!.Get("X360: D-Up");
-            _xboxButtons[SdlControllerButton.DpadDown] = SharedResources.Msg!.Get("X360: D-Down");
-            _xboxButtons[SdlControllerButton.DpadLeft] = SharedResources.Msg!.Get("X360: D-Left");
-            _xboxButtons[SdlControllerButton.DpadRight] = SharedResources.Msg!.Get("X360: D-Right");
+            MouseButton[0] = msg.Get("Left Mouse");
+            MouseButton[1] = msg.Get("Middle Mouse");
+            MouseButton[2] = msg.Get("Right Mouse");
+            MouseButton[3] = msg.Get("Wheel Up");
+            MouseButton[4] = msg.Get("Wheel Down");
+            MouseButton[5] = msg.Get("Mouse X1");
+            MouseButton[6] = msg.Get("Mouse X2");
 
-            _xboxAxes[(SdlControllerAxis.Leftx * 2)] = SharedResources.Msg!.Get("X360: Left X+");
-            _xboxAxes[(SdlControllerAxis.Leftx * 2) + 1] = SharedResources.Msg!.Get("X360: Left X-");
-            _xboxAxes[(SdlControllerAxis.Lefty * 2)] = SharedResources.Msg!.Get("X360: Left Y+");
-            _xboxAxes[(SdlControllerAxis.Lefty * 2) + 1] = SharedResources.Msg!.Get("X360: Left Y-");
-            _xboxAxes[(SdlControllerAxis.Rightx * 2)] = SharedResources.Msg!.Get("X360: Right X+");
-            _xboxAxes[(SdlControllerAxis.Rightx * 2) + 1] = SharedResources.Msg!.Get("X360: Right X-");
-            _xboxAxes[(SdlControllerAxis.Righty * 2)] = SharedResources.Msg!.Get("X360: Right Y+");
-            _xboxAxes[(SdlControllerAxis.Righty * 2) + 1] = SharedResources.Msg!.Get("X360: Right Y-");
-            _xboxAxes[(SdlControllerAxis.Triggerleft * 2)] = SharedResources.Msg!.Get("X360: L2");
-            _xboxAxes[(SdlControllerAxis.Triggerright * 2)] = SharedResources.Msg!.Get("X360: R2");
+            _xboxButtons[SdlControllerButton.A] = msg.Get("X360: A");
+            _xboxButtons[SdlControllerButton.B] = msg.Get("X360: B");
+            _xboxButtons[SdlControllerButton.X] = msg.Get("X360: X");
+            _xboxButtons[SdlControllerButton.Y] = msg.Get("X360: Y");
+            _xboxButtons[SdlControllerButton.Back] = msg.Get("X360: Back");
+            _xboxButtons[SdlControllerButton.Guide] = msg.Get("X360: Guide");
+            _xboxButtons[SdlControllerButton.Start] = msg.Get("X360: Start");
+            _xboxButtons[SdlControllerButton.Leftstick] = msg.Get("X360: L3");
+            _xboxButtons[SdlControllerButton.Rightstick] = msg.Get("X360: R3");
+            _xboxButtons[SdlControllerButton.Leftshoulder] = msg.Get("X360: L1");
+            _xboxButtons[SdlControllerButton.Rightshoulder] = msg.Get("X360: R1");
+            _xboxButtons[SdlControllerButton.DpadUp] = msg.Get("X360: D-Up");
+            _xboxButtons[SdlControllerButton.DpadDown] = msg.Get("X360: D-Down");
+            _xboxButtons[SdlControllerButton.DpadLeft] = msg.Get("X360: D-Left");
+            _xboxButtons[SdlControllerButton.DpadRight] = msg.Get("X360: D-Right");
+
+            _xboxAxes[(SdlControllerAxis.Leftx * 2)] = msg.Get("X360: Left X+");
+            _xboxAxes[(SdlControllerAxis.Leftx * 2) + 1] = msg.Get("X360: Left X-");
+            _xboxAxes[(SdlControllerAxis.Lefty * 2)] = msg.Get("X360: Left Y+");
+            _xboxAxes[(SdlControllerAxis.Lefty * 2) + 1] = msg.Get("X360: Left Y-");
+            _xboxAxes[(SdlControllerAxis.Rightx * 2)] = msg.Get("X360: Right X+");
+            _xboxAxes[(SdlControllerAxis.Rightx * 2) + 1] = msg.Get("X360: Right X-");
+            _xboxAxes[(SdlControllerAxis.Righty * 2)] = msg.Get("X360: Right Y+");
+            _xboxAxes[(SdlControllerAxis.Righty * 2) + 1] = msg.Get("X360: Right Y-");
+            _xboxAxes[(SdlControllerAxis.Triggerleft * 2)] = msg.Get("X360: L2");
+            _xboxAxes[(SdlControllerAxis.Triggerright * 2)] = msg.Get("X360: R2");
         }
 
         private string GetInputBindName(int type, int bind)
