@@ -19,6 +19,7 @@ Engine features:
 	- Added 'meta_power_provides_tooltip' property to Powers.
 	- Added 'melee_unlocked' as a possible value for 'starting_pos'.
 	- Added 'dispel' property to Powers.
+	- Added 'damage_type' property to Effects.
 
 * Animations
 	- Add support for multiple images to uncompressed animations with AnimationSet property, 'animation.image'.
@@ -30,12 +31,14 @@ Engine features:
 	- Added support for renaming "Magical Shield" and "Healing" in power tooltips to menus/powers.txt config.
 	- Fixed healing power tooltip showing min and max amount when both are equal.
 	- Shield effects now display time remaining (if the effect has a duration) in their active effect icon tooltip.
+	- Tooltips for Character menu upgrade buttons now show bonuses that will be applied to minor stats.
 
 * System
 	- Add "Minimum Render Size" video setting.
 	- Added 'raycast_resolution' property to engine/misc.txt config.
 	- Melee-range targeting assist has been extended to work with all targeted powers. Targeting assist can be bypassed by holding Shift while attacking.
 	- Support saving and clearing the value of the --data-path command line flag with --save-data-path and --clear-data-path.
+	- Added --ignore-data-path command line flag for temporarily bypassing any saved data path.
 	- Better stand-alone game support through game.txt file. When used, user settings get stored in a game-specific directory, and the Mods configuration page is filtered to match the current game.
 
 Engine fixes:
@@ -52,12 +55,18 @@ Engine fixes:
 	- Fixed dead enemy HP bar not being hidden with suppress_hp=true.
 	- Activation of on_death powers can now happen on the enemy death animation's active frame(s).
 	- Enemy/ally power chance is now a float, just like chance_pursue and chance_flee.
+	- Fixed a bug where uninitalized memory could cause HP regen to behave incorrectly.
+
+* Powers
+	- Fixed repeater powers not respecting the 'starting_pos' property.
 
 * UI
 	- Fixed bug where player could change equipment mid-attack. Trying to switch equipment while attacking now simply resets the player to the 'stance' state.
 	- Fixed bug where an item wouldn't be returned to a vendor if the player moved away while dragging an item.
 	- Fixed crash when unable to load save slot background image in the save selection menu.
 	- Fixed being able to swap equipment sets while paused.
+	- Fixed actionbar cooldowns animations showing when power wouldn't be able to be used for other reasons.
+	- Fixed crash in Powers menu when trying to load an invalid Power ID.
 
 * Sound
 	- Fix menu close sound effect not playing when closing Char/Inv/Pow/Log menu with the Cancel key.
