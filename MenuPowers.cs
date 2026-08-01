@@ -492,6 +492,11 @@ namespace FlareEngine
 
         private void LoadPower(FileParser infile)
         {
+            if (_powerCell.Count == 0)
+            {
+                return;
+            }
+            
             MenuPowersCellGroup cellGroup = _powerCell[^1];
 
             if (cellGroup.Cells.Count == 0)
