@@ -506,6 +506,8 @@ namespace FlareEngine
             // @CLASS PowerManager: Effects|Description of powers/effects.txt
             if (!infile.Open("powers/effects.txt", FileParser.ModFile, FileParser.ErrorNormal))
                 return;
+            
+            var eset = SharedResources.Eset!;
 
             EffectDef temp = new EffectDef();
             EffectDef current = temp;
@@ -609,6 +611,24 @@ namespace FlareEngine
                 else if (infile.Key == "ignore_resist")
                 {
                     current.IgnoreResist = Parse.ToBool(infile.Val);
+                }
+                else if (infile.Key == "damage_type")
+                {
+                    current.DamageIsTyped = false;
+                    for (int i = 0; i < eset.DamageTypes.Count; i++)
+                    {
+                        if (eset.DamageTypes.Types[i].Id == infile.Val)
+                        {
+                            current.DamageType = i;
+                            current.DamageIsTyped = true;
+                            break;
+                        }
+
+                        if (!current.DamageIsTyped)
+                        {
+                            infile.Error("PowerManager: '%s' is not a known damage type.", infile.Key);
+                        }
+                    }
                 }
                 else
                 {

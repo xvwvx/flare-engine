@@ -1610,20 +1610,59 @@ namespace FlareEngine
 
             if (TransformDuration > 0)
                 TransformDuration--;
+            
+            // apply damage over time (DOT)
+            if (Hp > 0)
+            {
+                var eset = SharedResources.Eset!;
+                var comb = SharedResources.Comb!;
+                var damageForText = 0f;
+                // apply neutral DOT
+                if (Effects.Damage > 0)
+                {
+                    float damage = Effects.Damage;
+                    damage = eset.Combat.ResourceRound(damage);
+                    TakeDamage(damage, !TakeDmgCrit, Effects.GetDamageSourceType(Effect.Damage));
+                    damageForText += damage;
+                }
 
-            if (Effects.Damage > 0 && Hp > 0)
-            {
-                float damage = Effects.Damage;
-                damage = SharedResources.Eset!.Combat.ResourceRound(damage);
-                TakeDamage(damage, !TakeDmgCrit, Effects.GetDamageSourceType(Effect.Damage));
-                SharedResources.Comb!.AddFloat(damage, Pos, CombatText.MsgTakedmg);
-            }
-            if (Effects.DamagePercent > 0 && Hp > 0)
-            {
-                float damage = (Get(Stats.HpMax) * Effects.DamagePercent) / 100;
-                damage = SharedResources.Eset!.Combat.ResourceRound(damage);
-                TakeDamage(damage, !TakeDmgCrit, Effects.GetDamageSourceType(Effect.DamagePercent));
-                SharedResources.Comb!.AddFloat(damage, Pos, CombatText.MsgTakedmg);
+                if (Effects.DamagePercent > 0)
+                {
+                    float damage = Get(Stats.HpMax) * Effects.DamagePercent / 100;
+                    damage = eset.Combat.ResourceRound(damage);
+                    TakeDamage(damage, !TakeDmgCrit, Effects.GetDamageSourceType(Effect.DamagePercent));
+                    damageForText += damage; 
+                }
+
+                if (Effects.Damage > 0 || Effects.DamagePercent > 0)
+                {
+                    comb.AddFloat(damageForText, Pos, CombatText.MsgTakedmg);
+                }
+
+                for (int i = 0; i < Effects.TypedDamage.Count; i++)
+                {
+                    damageForText = 0;
+                    if (Effects.TypedDamage[i] > 0)
+                    {
+                        float damage = ApplyResistToDamage(i, Effects.TypedDamage[i]);
+                        damage = eset.Combat.ResourceRound(damage);
+                        TakeDamage(damage, !TakeDmgCrit, Effects.GetDamageSourceType(Effect.Damage));
+                        damageForText += damage;
+                    }
+
+                    if (Effects.TypedDamagePercent[i] > 0)
+                    {
+                        float damage = ApplyResistToDamage(i, Get(Stats.HpMax) * Effects.TypedDamagePercent[i] / 100);
+                        damage = eset.Combat.ResourceRound(damage);
+                        TakeDamage(damage, !TakeDmgCrit, Effects.GetDamageSourceType(Effect.DamagePercent));
+                        damageForText += damage; 
+                    }
+
+                    if (Effects.TypedDamage[i] > 0 || Effects.TypedDamagePercent[i] > 0)
+                    {
+                        comb.AddFloat(damageForText, Pos, CombatText.MsgTakedmg);
+                    }
+                }
             }
 
             if (Effects.DeathSentence)
@@ -2089,6 +2128,27 @@ namespace FlareEngine
         {
             int offsetIndex = Stats.Count + SharedResources.Eset!.DamageTypes.Count;
             return Current[offsetIndex + (resourceIndex * 4) + fieldOffset];
+        }
+
+        public float ApplyResistToDamage(int dmgType, float damage)
+        {
+            var eset = SharedResources.Eset!;
+            var resist = GetDamageResist(dmgType);
+            var damageOut = damage;
+            
+            if (resist >= 0)
+            {
+                if (resist < eset.Combat.MinResist)
+                {
+                    resist = eset.Combat.MinResist;
+                }
+                if (resist > eset.Combat.MaxResist)
+                {
+                    resist = eset.Combat.MaxResist;
+                }
+            }
+
+            return (damageOut * (100 - resist)) / 100;
         }
 
         public void CheckGfxPaths()

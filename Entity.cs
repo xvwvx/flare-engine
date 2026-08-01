@@ -471,21 +471,8 @@ namespace FlareEngine
                     else if (h.HazardPower!.ModDamageMode == Power.StatModifierModeAbsolute)
                         dmgPart = MathUtils.RandBetweenF(h.HazardPower!.ModDamageValueMin, h.HazardPower!.ModDamageValueMax);
                 }
-
-                // apply resistance
-                float resist = Stats.GetDamageResist(i);
-                // resist values < 0 are weakness, and are unaffected by min/max resist setting
-                if (resist >= 0)
-                {
-                    if (resist < SharedResources.Eset!.Combat.MinResist)
-                        resist = SharedResources.Eset!.Combat.MinResist;
-                    if (resist > SharedResources.Eset!.Combat.MaxResist)
-                        resist = SharedResources.Eset!.Combat.MaxResist;
-                }
-
-                dmgPart = (dmgPart * (100 - resist)) / 100;
-
-                dmg += dmgPart;
+                
+                dmg += Stats.ApplyResistToDamage(i, dmgPart);
             }
 
             if (!h.HazardPower!.TraitArmorPenetration)

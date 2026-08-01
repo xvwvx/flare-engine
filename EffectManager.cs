@@ -65,6 +65,8 @@ namespace FlareEngine
         public string AttackSpeedAnim = "";
         public bool IsMultiplier;
         public bool IgnoreResist;
+        public bool DamageIsTyped;
+        public int DamageType;
 
         public Effect()
         {
@@ -88,6 +90,8 @@ namespace FlareEngine
             AttackSpeedAnim = "";
             IsMultiplier = false;
             IgnoreResist = false;
+            DamageIsTyped = false;
+            DamageType = 0;
         }
 
         /// <summary>
@@ -137,6 +141,8 @@ namespace FlareEngine
             AttackSpeedAnim = other.AttackSpeedAnim;
             IsMultiplier = other.IsMultiplier;
             IgnoreResist = other.IgnoreResist;
+            DamageIsTyped = other.DamageIsTyped;
+            DamageType = other.DamageType;
 
             return this;
         }
@@ -404,6 +410,8 @@ namespace FlareEngine
         public byte AlphaMod;
         public string AttackSpeedAnim = "";
         public bool IgnoreResist;
+        public bool DamageIsTyped;
+        public int DamageType;
 
         /// <summary>handling of deprecated types（原始注释）。</summary>
         public bool IsImmunityType;
@@ -423,6 +431,8 @@ namespace FlareEngine
             AlphaMod = 255;
             AttackSpeedAnim = "";
             IgnoreResist = false;
+            DamageIsTyped = false;
+            DamageType = 0;
             IsImmunityType = false;
         }
     }
@@ -485,10 +495,13 @@ namespace FlareEngine
         public bool DeathSentence;
         public bool Fear;
         public float KnockbackSpeed;
+        public bool DamageIsTyped;
 
         public List<float> Bonus = new List<float>();
         public List<float> BonusMultiplier = new List<float>();
         public List<int> BonusPrimary = new List<int>();
+        public List<float> TypedDamage = new ();
+        public List<float> TypedDamagePercent = new ();
 
         // 历史注释（原始头文件）：可考虑改为数组
         public bool TriggeredOthers;
@@ -514,6 +527,8 @@ namespace FlareEngine
                 BonusMultiplier.Add(1);
             }
             BonusPrimary = new List<int>(new int[SharedResources.Eset.PrimaryStats.Stats.Count]);
+            TypedDamage = new List<float>(new float[SharedResources.Eset.DamageTypes.Count]);
+            TypedDamagePercent = new List<float>(new float[SharedResources.Eset.DamageTypes.Count]);
             TriggeredOthers = false;
             TriggeredBlock = false;
             TriggeredHit = false;
@@ -573,6 +588,12 @@ namespace FlareEngine
                 ResourceOt[i] = 0;
                 ResourceOtPercent[i] = 0;
             }
+            
+            for (int i = 0; i < TypedDamage.Count; ++i)
+            {
+                TypedDamage[i] = 0;
+                TypedDamagePercent[i] = 0;
+            }
         }
 
         public void Logic()
@@ -604,9 +625,29 @@ namespace FlareEngine
                 bool doTimedEffect = ei.EffectTimer.IsWholeSecond() || (ei.EffectTimer.Duration < SharedResources.Settings!.MaxFramesPerSec && ei.EffectTimer.IsBegin());
 
                 // @TYPE damage|Damage per second
-                if (ei.Type == Effect.Damage && doTimedEffect) Damage += ei.Magnitude;
+                if (ei.Type == Effect.Damage && doTimedEffect)
+                {
+                    if (!ei.DamageIsTyped)
+                    {
+                        Damage += ei.Magnitude;
+                    }
+                    else
+                    {
+                        TypedDamage[ei.DamageType] += ei.Magnitude;
+                    }
+                }
                 // @TYPE damage_percent|Damage per second (percentage of max HP)
-                else if (ei.Type == Effect.DamagePercent && doTimedEffect) DamagePercent += ei.Magnitude;
+                else if (ei.Type == Effect.DamagePercent && doTimedEffect)
+                {
+                    if (!ei.DamageIsTyped)
+                    {
+                        DamagePercent += ei.Magnitude;
+                    }
+                    else
+                    {
+                        TypedDamagePercent[ei.DamageType] += ei.Magnitude;
+                    }
+                }
                 // @TYPE hpot|HP restored per second
                 else if (ei.Type == Effect.Hpot && doTimedEffect) Hpot += ei.Magnitude;
                 // @TYPE hpot_percent|HP restored per second (percentage of max HP)
@@ -849,6 +890,8 @@ namespace FlareEngine
             e.AlphaMod = effect.AlphaMod;
             e.AttackSpeedAnim = effect.AttackSpeedAnim;
             e.IgnoreResist = effect.IgnoreResist;
+            e.DamageIsTyped= effect.DamageIsTyped;
+            e.DamageType = effect.DamageType;
 
             if (!string.IsNullOrEmpty(effect.AnimationName))
             {
