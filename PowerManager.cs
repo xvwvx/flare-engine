@@ -2147,7 +2147,22 @@ namespace FlareEngine
             speed.X = repeaterSpeed * MathF.Cos(theta);
             speed.Y = repeaterSpeed * MathF.Sin(theta);
 
-            locationIterator = origin;
+            if (power.StartingPos == Power.StartingPosSource)
+            {
+                locationIterator = origin;
+            }
+            else if(power.StartingPos == Power.StartingPosTarget)
+            {
+                locationIterator = Utils.ClampDistance(0, power.TargetRange, origin, target); 
+            }
+            else if(power.StartingPos == Power.StartingPosMelee)
+            {
+                locationIterator = Utils.CalcVector(origin, srcStats.Direction, srcStats.MeleeRange); 
+            }
+            else if(power.StartingPos == Power.StartingPosMeleeUnlocked)
+            {
+                locationIterator = Utils.ClampDistance(srcStats.MeleeRange, srcStats.MeleeRange, origin, target); 
+            }
 
             Hazard? parentHaz = null;
             bool firstHitWall = false;
