@@ -70,14 +70,18 @@ namespace FlareEngine
                 infile.Close();
             }
 
-            _label.SetText(SharedResources.Msg!.Get("Game Over"));
-            _label.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+            var eset = SharedResources.Eset!;
 
-            _buttonContinue.SetLabel(SharedResources.Msg.Get("Continue"));
-            if (SharedResources.Eset!.Misc.SaveOnexit)
-                _buttonExit.SetLabel(SharedResources.Msg.Get("Save & Exit"));
+            _label.SetText(msg.Get("Game Over"));
+            _label.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
+
+            _buttonContinue.SetLabel(msg.Get("Continue"));
+            if (eset.Misc.SaveOnexit)
+                _buttonExit.SetLabel(msg.Get("Save & Exit"));
             else
-                _buttonExit.SetLabel(SharedResources.Msg.Get("Exit"));
+                _buttonExit.SetLabel(msg.Get("Exit"));
 
             Tablist.Add(_buttonContinue);
             Tablist.Add(_buttonExit);

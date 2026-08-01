@@ -188,6 +188,10 @@ namespace FlareEngine
 
         public void Update()
         {
+            var pc = SharedGameResources.Pc!;
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+
             if (!_enabled)
                 return;
 
@@ -195,38 +199,38 @@ namespace FlareEngine
             {
                 _statCurPrev.Unsigned = _statCur.Unsigned;
                 _statMin.Unsigned = 0;
-                _statCur.Unsigned = SharedGameResources.Pc!.Stats.Xp - SharedResources.Eset!.Xp.GetLevelXP(SharedGameResources.Pc!.Stats.Level);
-                _statMax.Unsigned = SharedResources.Eset!.Xp.GetLevelXP(SharedGameResources.Pc!.Stats.Level + 1) - SharedResources.Eset!.Xp.GetLevelXP(SharedGameResources.Pc!.Stats.Level);
+                _statCur.Unsigned = pc.Stats.Xp - eset.Xp.GetLevelXP(pc.Stats.Level);
+                _statMax.Unsigned = eset.Xp.GetLevelXP(pc.Stats.Level + 1) - eset.Xp.GetLevelXP(pc.Stats.Level);
 
-                if (SharedGameResources.Pc!.Stats.Level == SharedResources.Eset!.Xp.GetMaxLevel())
+                if (pc.Stats.Level == eset.Xp.GetMaxLevel())
                 {
-                    _customString = SharedResources.Msg!.GetV("XP: %lu", SharedGameResources.Pc!.Stats.Xp);
+                    _customString = msg.GetV("XP: %lu", pc.Stats.Xp);
                 }
                 else
                 {
-                    _customString = SharedResources.Msg!.GetV("XP: %lu/%lu", _statCur.Unsigned, _statMax.Unsigned);
+                    _customString = msg.GetV("XP: %lu/%lu", _statCur.Unsigned, _statMax.Unsigned);
                 }
             }
             else if (_type == TypeHp)
             {
                 _statCurPrev.Float = _statCur.Float;
                 _statMin.Float = 0;
-                _statCur.Float = SharedGameResources.Pc!.Stats.Hp;
-                _statMax.Float = SharedGameResources.Pc!.Stats.Get(global::FlareEngine.Stats.HpMax);
+                _statCur.Float = pc.Stats.Hp;
+                _statMax.Float = pc.Stats.Get(global::FlareEngine.Stats.HpMax);
             }
             else if (_type == TypeMp)
             {
                 _statCurPrev.Float = _statCur.Float;
                 _statMin.Float = 0;
-                _statCur.Float = SharedGameResources.Pc!.Stats.Mp;
-                _statMax.Float = SharedGameResources.Pc!.Stats.Get(global::FlareEngine.Stats.MpMax);
+                _statCur.Float = pc.Stats.Mp;
+                _statMax.Float = pc.Stats.Get(global::FlareEngine.Stats.MpMax);
             }
             else if (_type == TypeResourceStat)
             {
                 _statCurPrev.Float = _statCur.Float;
                 _statMin.Float = 0;
-                _statCur.Float = SharedGameResources.Pc!.Stats.ResourceStats[_resourceStatIndex];
-                _statMax.Float = SharedGameResources.Pc!.Stats.GetResourceStat(_resourceStatIndex, EngineSettings.ResourceStatsSettings.StatBase);
+                _statCur.Float = pc.Stats.ResourceStats[_resourceStatIndex];
+                _statMax.Float = pc.Stats.GetResourceStat(_resourceStatIndex, EngineSettings.ResourceStatsSettings.StatBase);
             }
         }
 
@@ -261,6 +265,12 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+            var settings = SharedResources.Settings!;
+            var inpt = SharedResources.Inpt!;
+            var menu = SharedGameResources.Menu!;
+            var eset = SharedResources.Eset!;
+
             if (Disappear()) return;
 
             Rectangle src;
@@ -338,12 +348,12 @@ namespace FlareEngine
             {
                 _bar.SetClipFromRect(src);
                 _bar.SetDestFromRect(dest);
-                SharedResources.RenderDevice!.Render(_bar);
+                renderDevice.Render(_bar);
             }
 
             if (_textPos == null || !_textPos.Hidden)
             {
-                if (SharedResources.Settings!.StatbarLabels || (SharedResources.Inpt!.UsingMouse() && Utils.IsWithinRect(barDest, SharedResources.Inpt!.Mouse) && !SharedGameResources.Menu!.Exit!.Visible))
+                if (settings.StatbarLabels || (inpt.UsingMouse() && Utils.IsWithinRect(barDest, inpt.Mouse) && !menu.Exit!.Visible))
                 {
                     StringBuilder ss = new StringBuilder();
                     if (_customString != "")
@@ -351,7 +361,7 @@ namespace FlareEngine
                     else if (_type == TypeXp)
                         ss.Append(_statCur.Unsigned).Append('/').Append(_statMax.Unsigned);
                     else
-                        ss.Append(Utils.FloatToString(_statCur.Float, SharedResources.Eset!.NumberFormat.PlayerStatbar)).Append('/').Append(Utils.FloatToString(_statMax.Float, SharedResources.Eset!.NumberFormat.PlayerStatbar));
+                        ss.Append(Utils.FloatToString(_statCur.Float, eset.NumberFormat.PlayerStatbar)).Append('/').Append(Utils.FloatToString(_statMax.Float, eset.NumberFormat.PlayerStatbar));
 
                     _label.SetText(ss.ToString());
                     _label.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));

@@ -118,6 +118,10 @@ namespace FlareEngine
 
         private void LoadBook()
         {
+            var msg = SharedResources.Msg!;
+            var snd = SharedResources.Snd!;
+            var eventm = SharedGameResources.Eventm!;
+
             if (_lastBookName != _bookName)
             {
                 _lastBookName = "";
@@ -254,7 +258,7 @@ namespace FlareEngine
                 }
 
                 _buttons[i].Button!.SetBasePos(_buttons[i].Dest.X, _buttons[i].Dest.Y, Utils.AlignTopLeft);
-                _buttons[i].Button!.SetLabel(SharedResources.Msg!.Get(_buttons[i].Label));
+                _buttons[i].Button!.SetLabel(msg.Get(_buttons[i].Label));
                 _buttons[i].Button!.Refresh();
 
                 Tablist.Add(_buttons[i].Button!);
@@ -271,11 +275,11 @@ namespace FlareEngine
 
             Align();
 
-            SharedResources.Snd!.Play(SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+            snd.Play(SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
 
-            if (_eventOpen != null && SharedGameResources.Eventm!.IsActive(_eventOpen))
+            if (_eventOpen != null && eventm.IsActive(_eventOpen))
             {
-                SharedGameResources.Eventm.ExecuteEvent(_eventOpen);
+                eventm.ExecuteEvent(_eventOpen);
             }
 
             _bookLoaded = true;
@@ -283,6 +287,8 @@ namespace FlareEngine
 
         private void LoadImage(FileParser infile, BookImage bimage)
         {
+            var camp = SharedGameResources.Camp!;
+
             // @ATTR image.image_pos|point|Position of the image.
             if (infile.Key == "image_pos")
             {
@@ -322,7 +328,7 @@ namespace FlareEngine
                 string temp = Parse.PopFirstString(ref infile.Val);
                 while (temp != "")
                 {
-                    bimage.RequiresStatus.Add(SharedGameResources.Camp!.RegisterStatus(temp));
+                    bimage.RequiresStatus.Add(camp.RegisterStatus(temp));
                     temp = Parse.PopFirstString(ref infile.Val);
                 }
             }
@@ -332,7 +338,7 @@ namespace FlareEngine
                 string temp = Parse.PopFirstString(ref infile.Val);
                 while (temp != "")
                 {
-                    bimage.RequiresNotStatus.Add(SharedGameResources.Camp!.RegisterStatus(temp));
+                    bimage.RequiresNotStatus.Add(camp.RegisterStatus(temp));
                     temp = Parse.PopFirstString(ref infile.Val);
                 }
             }
@@ -344,6 +350,8 @@ namespace FlareEngine
 
         private void LoadText(FileParser infile, BookText btext)
         {
+            var camp = SharedGameResources.Camp!;
+
             // @ATTR text.text_pos|int, int, int, ["left", "center", "right"] : X, Y, Width, Text justify|Position of the text.
             if (infile.Key == "text_pos")
             {
@@ -384,7 +392,7 @@ namespace FlareEngine
                 string temp = Parse.PopFirstString(ref infile.Val);
                 while (temp != "")
                 {
-                    btext.RequiresStatus.Add(SharedGameResources.Camp!.RegisterStatus(temp));
+                    btext.RequiresStatus.Add(camp.RegisterStatus(temp));
                     temp = Parse.PopFirstString(ref infile.Val);
                 }
             }
@@ -394,7 +402,7 @@ namespace FlareEngine
                 string temp = Parse.PopFirstString(ref infile.Val);
                 while (temp != "")
                 {
-                    btext.RequiresNotStatus.Add(SharedGameResources.Camp!.RegisterStatus(temp));
+                    btext.RequiresNotStatus.Add(camp.RegisterStatus(temp));
                     temp = Parse.PopFirstString(ref infile.Val);
                 }
             }
@@ -499,9 +507,11 @@ namespace FlareEngine
 
         public void CloseWindow()
         {
-            if (_eventClose != null && SharedGameResources.Eventm!.IsActive(_eventClose))
+            var eventm = SharedGameResources.Eventm!;
+
+            if (_eventClose != null && eventm.IsActive(_eventClose))
             {
-                SharedGameResources.Eventm.ExecuteEvent(_eventClose);
+                eventm.ExecuteEvent(_eventClose);
             }
 
             ClearBook();
@@ -514,27 +524,32 @@ namespace FlareEngine
 
         private void RefreshText()
         {
+            var msg = SharedResources.Msg!;
+            var pc = SharedGameResources.Pc!;
+            var font = SharedResources.Font!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             for (int i = _text.Count; i > 0;)
             {
                 i--;
 
-                string textNew = Utils.SubstituteVarsInString(SharedResources.Msg!.Get(_text[i].TextRaw), SharedGameResources.Pc);
+                string textNew = Utils.SubstituteVarsInString(msg.Get(_text[i].TextRaw), pc);
                 if (_text[i].Text == textNew)
                     continue;
 
                 _text[i].Text = textNew;
 
                 // render text to surface
-                SharedResources.Font!.SetFont(_text[i].Font);
-                Int2 pSize = SharedResources.Font.CalcSizeWrapped(_text[i].Text, _text[i].Size.Width);
+                font.SetFont(_text[i].Font);
+                Int2 pSize = font.CalcSizeWrapped(_text[i].Text, _text[i].Size.Width);
                 Image? graphics = null;
                 if (_text[i].Shadow)
                 {
-                    graphics = SharedResources.RenderDevice!.CreateImage(_text[i].Size.Width + 1, pSize.Y + 1);
+                    graphics = renderDevice.CreateImage(_text[i].Size.Width + 1, pSize.Y + 1);
                 }
                 else
                 {
-                    graphics = SharedResources.RenderDevice.CreateImage(_text[i].Size.Width, pSize.Y);
+                    graphics = renderDevice.CreateImage(_text[i].Size.Width, pSize.Y);
                 }
 
                 if (graphics != null)
@@ -547,9 +562,9 @@ namespace FlareEngine
 
                     if (_text[i].Shadow)
                     {
-                        SharedResources.Font.Render(_text[i].Text, xOffset, 0, _text[i].Justify, graphics, _text[i].Size.Width, SharedResources.Font.GetColor(FontEngine.ColorBlack), FontEngine.ShadowOffset);
+                        font.Render(_text[i].Text, xOffset, 0, _text[i].Justify, graphics, _text[i].Size.Width, font.GetColor(FontEngine.ColorBlack), FontEngine.ShadowOffset);
                     }
-                    SharedResources.Font.Render(_text[i].Text, xOffset, 0, _text[i].Justify, graphics, _text[i].Size.Width, _text[i].Color, !FontEngine.ShadowOffset);
+                    font.Render(_text[i].Text, xOffset, 0, _text[i].Justify, graphics, _text[i].Size.Width, _text[i].Color, !FontEngine.ShadowOffset);
                     _text[i].Sprite = graphics.CreateSprite();
                     graphics.Unref();
                 }
@@ -561,6 +576,10 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var snd = SharedResources.Snd!;
+            var inpt = SharedResources.Inpt!;
+            var eventm = SharedGameResources.Eventm!;
+
             if (_bookName == "")
                 return;
             else
@@ -577,32 +596,32 @@ namespace FlareEngine
             if (_closeButton!.CheckClick())
             {
                 CloseWindow();
-                SharedResources.Snd!.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
             }
-            else if (SharedResources.Inpt!.Pressing[Input.Accept] && !SharedResources.Inpt.Lock[Input.Accept] && Tablist.GetCurrent() == -1)
+            else if (inpt.Pressing[Input.Accept] && !inpt.Lock[Input.Accept] && Tablist.GetCurrent() == -1)
             {
-                SharedResources.Inpt.Lock[Input.Accept] = true;
+                inpt.Lock[Input.Accept] = true;
                 CloseWindow();
-                SharedResources.Snd!.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
             }
-            else if (SharedResources.Inpt.Pressing[Input.Cancel] && !SharedResources.Inpt.Lock[Input.Cancel])
+            else if (inpt.Pressing[Input.Cancel] && !inpt.Lock[Input.Cancel])
             {
-                SharedResources.Inpt.Lock[Input.Cancel] = true;
+                inpt.Lock[Input.Cancel] = true;
                 CloseWindow();
-                SharedResources.Snd!.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
             }
 
             RefreshText();
 
             for (int i = 0; i < _buttons.Count; ++i)
             {
-                if (_buttons[i].Event.Components.Count == 0 || !SharedGameResources.Eventm!.IsActive(_buttons[i].Event))
+                if (_buttons[i].Event.Components.Count == 0 || !eventm.IsActive(_buttons[i].Event))
                 {
                     _buttons[i].Button!.Enabled = false;
                     _buttons[i].Button!.Refresh();
 
                     // defocus the disabled button. MenuManager will auto-select the next enabled one
-                    if (!SharedResources.Inpt.UsingMouse() && _buttons[i].Button == Tablist.GetWidgetByIndex(Tablist.GetCurrent()))
+                    if (!inpt.UsingMouse() && _buttons[i].Button == Tablist.GetWidgetByIndex(Tablist.GetCurrent()))
                     {
                         Tablist.Defocus();
                     }
@@ -615,23 +634,23 @@ namespace FlareEngine
 
                 if (_buttons[i].Button!.CheckClick())
                 {
-                    if (SharedGameResources.Eventm.ExecuteEvent(_buttons[i].Event))
+                    if (eventm.ExecuteEvent(_buttons[i].Event))
                     {
                         _buttons[i].Event = new Event();
                     }
                 }
-                else if (SharedResources.Inpt.UsingMouse() && _buttons[i].Button!.Enabled && _buttons[i].EnableNavLeft && SharedResources.Inpt.Pressing[Input.Left] && !SharedResources.Inpt.Lock[Input.Left])
+                else if (inpt.UsingMouse() && _buttons[i].Button!.Enabled && _buttons[i].EnableNavLeft && inpt.Pressing[Input.Left] && !inpt.Lock[Input.Left])
                 {
-                    SharedResources.Inpt.Lock[Input.Left] = true;
-                    if (SharedGameResources.Eventm.ExecuteEvent(_buttons[i].Event))
+                    inpt.Lock[Input.Left] = true;
+                    if (eventm.ExecuteEvent(_buttons[i].Event))
                     {
                         _buttons[i].Event = new Event();
                     }
                 }
-                else if (SharedResources.Inpt.UsingMouse() && _buttons[i].Button!.Enabled && _buttons[i].EnableNavRight && SharedResources.Inpt.Pressing[Input.Right] && !SharedResources.Inpt.Lock[Input.Right])
+                else if (inpt.UsingMouse() && _buttons[i].Button!.Enabled && _buttons[i].EnableNavRight && inpt.Pressing[Input.Right] && !inpt.Lock[Input.Right])
                 {
-                    SharedResources.Inpt.Lock[Input.Right] = true;
-                    if (SharedGameResources.Eventm.ExecuteEvent(_buttons[i].Event))
+                    inpt.Lock[Input.Right] = true;
+                    if (eventm.ExecuteEvent(_buttons[i].Event))
                     {
                         _buttons[i].Event = new Event();
                     }
@@ -641,6 +660,10 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var camp = SharedGameResources.Camp!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var icons = SharedResources.Icons!;
+
             if (!Visible)
                 return;
 
@@ -653,20 +676,20 @@ namespace FlareEngine
 
                 for (int j = 0; j < _text[i].RequiresStatus.Count; ++j)
                 {
-                    if (!SharedGameResources.Camp!.CheckStatus(_text[i].RequiresStatus[j]))
+                    if (!camp.CheckStatus(_text[i].RequiresStatus[j]))
                         skip = true;
                 }
 
                 for (int j = 0; j < _text[i].RequiresNotStatus.Count; ++j)
                 {
-                    if (SharedGameResources.Camp!.CheckStatus(_text[i].RequiresNotStatus[j]))
+                    if (camp.CheckStatus(_text[i].RequiresNotStatus[j]))
                         skip = true;
                 }
 
                 if (skip)
                     continue;
 
-                SharedResources.RenderDevice!.Render(_text[i].Sprite!);
+                renderDevice.Render(_text[i].Sprite!);
             }
             for (int i = 0; i < _images.Count; ++i)
             {
@@ -674,13 +697,13 @@ namespace FlareEngine
 
                 for (int j = 0; j < _images[i].RequiresStatus.Count; ++j)
                 {
-                    if (!SharedGameResources.Camp!.CheckStatus(_images[i].RequiresStatus[j]))
+                    if (!camp.CheckStatus(_images[i].RequiresStatus[j]))
                         skip = true;
                 }
 
                 for (int j = 0; j < _images[i].RequiresNotStatus.Count; ++j)
                 {
-                    if (SharedGameResources.Camp!.CheckStatus(_images[i].RequiresNotStatus[j]))
+                    if (camp.CheckStatus(_images[i].RequiresNotStatus[j]))
                         skip = true;
                 }
 
@@ -689,12 +712,12 @@ namespace FlareEngine
 
                 if (_images[i].Image != null)
                 {
-                    SharedResources.RenderDevice!.Render(_images[i].Image!);
+                    renderDevice.Render(_images[i].Image!);
                 }
                 else if (_images[i].Icon != -1)
                 {
-                    SharedResources.Icons!.SetIcon(_images[i].Icon, new Int2(_images[i].Dest.X + WindowArea.X, _images[i].Dest.Y + WindowArea.Y));
-                    SharedResources.Icons.Render();
+                    icons.SetIcon(_images[i].Icon, new Int2(_images[i].Dest.X + WindowArea.X, _images[i].Dest.Y + WindowArea.Y));
+                    icons.Render();
                 }
             }
             for (int i = 0; i < _buttons.Count; ++i)

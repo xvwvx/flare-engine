@@ -68,9 +68,10 @@ namespace FlareEngine
         /// </summary>
         public MapCollision()
         {
+            var eset = SharedResources.Eset!;
             _hasEmptyTile = false;
-            _raycastResolution = SharedResources.Eset!.Misc.RaycastResolution;
-            _raycastResolutionRecip = 1f / SharedResources.Eset!.Misc.RaycastResolution;
+            _raycastResolution = eset.Misc.RaycastResolution;
+            _raycastResolutionRecip = 1f / eset.Misc.RaycastResolution;
             MapSize = default;
 
             ResizeList(Colmap, 1, () => new List<ushort>());

@@ -494,15 +494,18 @@ namespace FlareEngine
                 return;
             }
 
+            var inpt = SharedResources.Inpt!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             SdlPumpEvents();
-            SharedResources.Inpt!.Handle();
+            inpt.Handle();
 
             _gswitch!.Logic();
-            SharedResources.Inpt!.ResetScroll();
+            inpt.ResetScroll();
 
-            SharedResources.RenderDevice!.BlankScreen();
+            renderDevice.BlankScreen();
             _gswitch!.Render();
-            SharedResources.RenderDevice!.CommitFrame();
+            renderDevice.CommitFrame();
         }
 
         public static int Main(string[] args)

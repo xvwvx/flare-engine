@@ -194,6 +194,7 @@ namespace FlareEngine
         /// </summary>
         public void Dispose()
         {
+            var anim = SharedResources.Anim!;
             if (Parent == null && Children.Count != 0)
             {
                 // 把下一个子节点提升为现有子节点们的父节点
@@ -226,7 +227,7 @@ namespace FlareEngine
 
             if (!string.IsNullOrEmpty(_animationName))
             {
-                SharedResources.Anim!.DecreaseCount(_animationName);
+                anim.DecreaseCount(_animationName);
             }
 
             if (_activeAnimation != null)
@@ -235,7 +236,7 @@ namespace FlareEngine
                 _activeAnimation = null;
             }
 
-            SharedResources.Anim!.CleanUp();
+            anim.CleanUp();
         }
 
         public void Logic()
@@ -326,9 +327,11 @@ namespace FlareEngine
 
         public void LoadAnimation(string s)
         {
+            var anim = SharedResources.Anim!;
+
             if (!string.IsNullOrEmpty(_animationName))
             {
-                SharedResources.Anim!.DecreaseCount(_animationName);
+                anim.DecreaseCount(_animationName);
             }
             if (_activeAnimation != null)
             {
@@ -338,12 +341,12 @@ namespace FlareEngine
             _animationName = s;
             if (_animationName != "")
             {
-                SharedResources.Anim!.IncreaseCount(_animationName);
-                AnimationSet? animationSet = SharedResources.Anim.GetAnimationSet(_animationName);
+                anim.IncreaseCount(_animationName);
+                AnimationSet? animationSet = anim.GetAnimationSet(_animationName);
                 _activeAnimation = animationSet!.GetAnimation("");
             }
 
-            SharedResources.Anim!.CleanUp();
+            anim.CleanUp();
         }
 
         public bool IsDangerousNow()

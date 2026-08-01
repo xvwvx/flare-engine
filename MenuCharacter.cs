@@ -69,12 +69,17 @@ namespace FlareEngine
             _showResists = true;
             _nameMaxWidth = 0;
 
-            _labelCharacter.SetText(SharedResources.Msg!.Get("Character"));
-            _labelCharacter.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
-            _labelUnspent.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus));
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var font = SharedResources.Font!;
+            var pc = SharedGameResources.Pc!;
+
+            _labelCharacter.SetText(msg.Get("Character"));
+            _labelCharacter.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
+            _labelUnspent.SetColor(font.GetColor(FontEngine.ColorMenuBonus));
 
             // 2 is added here to account for CSTAT_NAME and CSTAT_LEVEL
-            while (_cstat.Count < SharedResources.Eset!.PrimaryStats.Stats.Count + 2)
+            while (_cstat.Count < eset.PrimaryStats.Stats.Count + 2)
             {
                 _cstat.Add(new CharStat());
             }
@@ -87,25 +92,25 @@ namespace FlareEngine
                 _cstat[i].Hover.X = _cstat[i].Hover.Y = 0;
                 _cstat[i].Hover.Width = _cstat[i].Hover.Height = 0;
 
-                _cstat[i].Label.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+                _cstat[i].Label!.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
-                _cstat[i].Value.SetVAlign(LabelInfo.ValignCenter);
-                _cstat[i].Value.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+                _cstat[i].Value!.SetVAlign(LabelInfo.ValignCenter);
+                _cstat[i].Value!.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
             }
-            _cstat[CStatName].Label!.SetText(SharedResources.Msg!.Get("Name"));
-            _cstat[CStatLevel].Label!.SetText(SharedResources.Msg!.Get("Level"));
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            _cstat[CStatName].Label!.SetText(msg.Get("Name"));
+            _cstat[CStatLevel].Label!.SetText(msg.Get("Level"));
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
-                _cstat[i + 2].Label!.SetText(SharedResources.Eset!.PrimaryStats.Stats[i].Name);
+                _cstat[i + 2].Label!.SetText(eset.PrimaryStats.Stats[i].Name);
             }
-            _cstat[CStatName].Label!.SetText(SharedResources.Msg!.Get("Name"));
-            _cstat[CStatLevel].Label!.SetText(SharedResources.Msg!.Get("Level"));
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            _cstat[CStatName].Label!.SetText(msg.Get("Name"));
+            _cstat[CStatLevel].Label!.SetText(msg.Get("Level"));
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
-                _cstat[i + 2].Label!.SetText(SharedResources.Eset!.PrimaryStats.Stats[i].Name);
+                _cstat[i + 2].Label!.SetText(eset.PrimaryStats.Stats[i].Name);
             }
 
-            _showStat = new List<bool>(new bool[Stats.Count + SharedResources.Eset!.DamageTypes.Count + SharedResources.Eset!.ResourceStats.StatCountValue + 2]);
+            _showStat = new List<bool>(new bool[Stats.Count + eset.DamageTypes.Count + eset.ResourceStats.StatCountValue + 2]);
             for (int i = 0; i < _showStat.Count; i++)
             {
                 if (i >= Stats.ResistDamageOverTime && i < Stats.Count)
@@ -113,18 +118,18 @@ namespace FlareEngine
                     // some stats are hidden by default
                     _showStat[i] = false;
                 }
-                else if (i >= Stats.Count && i < Stats.Count + SharedResources.Eset!.DamageTypes.Count)
+                else if (i >= Stats.Count && i < Stats.Count + eset.DamageTypes.Count)
                 {
                     int damageSubIndex = i - Stats.Count;
                     int damageIndex = damageSubIndex / 3;
                     int damageSubStat = damageSubIndex % 3;
 
-                    if (SharedResources.Eset!.DamageTypes.Types[damageIndex].IsDeprecatedElement && damageSubStat != 2)
+                    if (eset.DamageTypes.Types[damageIndex].IsDeprecatedElement && damageSubStat != 2)
                     {
                         // don't show damage for elements loaded from engine/elements.txt by default
                         _showStat[i] = false;
                     }
-                    else if (!SharedResources.Eset!.DamageTypes.Types[damageIndex].IsElemental && damageSubStat == 2)
+                    else if (!eset.DamageTypes.Types[damageIndex].IsElemental && damageSubStat == 2)
                     {
                         // don't show resists for non-elemental damage types by default
                         _showStat[i] = false;
@@ -141,10 +146,10 @@ namespace FlareEngine
             }
 
             // Upgrade buttons
-            _primaryUp = new List<bool>(new bool[SharedResources.Eset!.PrimaryStats.Stats.Count]);
-            _upgradeButton = new List<WidgetButton?>(new WidgetButton?[SharedResources.Eset!.PrimaryStats.Stats.Count]);
+            _primaryUp = new List<bool>(new bool[eset.PrimaryStats.Stats.Count]);
+            _upgradeButton = new List<WidgetButton?>(new WidgetButton?[eset.PrimaryStats.Stats.Count]);
 
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
                 _primaryUp[i] = false;
                 _upgradeButton[i] = new WidgetButton(WidgetButton.UpgradeStatFile);
@@ -174,9 +179,9 @@ namespace FlareEngine
                     {
                         string val = infile.Val;
                         string primStat = Parse.PopFirstString(ref val);
-                        int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(primStat);
+                        int primStatIndex = eset.PrimaryStats.GetIndexByID(primStat);
 
-                        if (primStatIndex != SharedResources.Eset!.PrimaryStats.Stats.Count)
+                        if (primStatIndex != eset.PrimaryStats.Stats.Count)
                         {
                             Int2 pos = Parse.ToPoint(val);
                             _upgradeButton[primStatIndex]!.SetBasePos(pos.X, pos.Y, Utils.AlignTopLeft);
@@ -208,9 +213,9 @@ namespace FlareEngine
                     {
                         string val = infile.Val;
                         string primStat = Parse.PopFirstString(ref val);
-                        int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(primStat);
+                        int primStatIndex = eset.PrimaryStats.GetIndexByID(primStat);
 
-                        if (primStatIndex != SharedResources.Eset!.PrimaryStats.Stats.Count)
+                        if (primStatIndex != eset.PrimaryStats.Stats.Count)
                         {
                             _cstat[primStatIndex + 2].Label!.SetFromLabelInfo(Parse.PopLabelInfo(val));
                         }
@@ -237,9 +242,9 @@ namespace FlareEngine
                     {
                         string val = infile.Val;
                         string primStat = Parse.PopFirstString(ref val);
-                        int primStatIndex = SharedResources.Eset!.PrimaryStats.GetIndexByID(primStat);
+                        int primStatIndex = eset.PrimaryStats.GetIndexByID(primStat);
 
-                        if (primStatIndex != SharedResources.Eset!.PrimaryStats.Stats.Count)
+                        if (primStatIndex != eset.PrimaryStats.Stats.Count)
                         {
                             Rectangle r = Parse.ToRect(val);
                             _cstat[primStatIndex + 2].ValuePos = r;
@@ -290,15 +295,15 @@ namespace FlareEngine
 
             Align();
 
-            _baseStats = new List<int>(new int[SharedResources.Eset!.PrimaryStats.Stats.Count]);
-            _baseStatsAdd = new List<int>(new int[SharedResources.Eset!.PrimaryStats.Stats.Count]);
-            _baseBonus = new List<List<float>?>(new List<float>?[SharedResources.Eset!.PrimaryStats.Stats.Count]);
+            _baseStats = new List<int>(new int[eset.PrimaryStats.Stats.Count]);
+            _baseStatsAdd = new List<int>(new int[eset.PrimaryStats.Stats.Count]);
+            _baseBonus = new List<List<float>?>(new List<float>?[eset.PrimaryStats.Stats.Count]);
 
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
                 _baseStats[i] = i;
                 _baseStatsAdd[i] = i;
-                _baseBonus[i] = SharedGameResources.Pc!.Stats.PerPrimary[i];
+                _baseBonus[i] = pc.Stats.PerPrimary[i];
             }
         }
 
@@ -370,36 +375,41 @@ namespace FlareEngine
         /// </summary>
         public void RefreshStats()
         {
-            SharedGameResources.Pc!.Stats.RefreshStats = false;
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var font = SharedResources.Font!;
+            var pc = SharedGameResources.Pc!;
+
+            pc.Stats.RefreshStats = false;
 
             StringBuilder ss = new StringBuilder();
 
             // update stat text
             string trimmedName;
             if (_nameMaxWidth > 0)
-                trimmedName = SharedResources.Font!.TrimTextToWidth(SharedGameResources.Pc!.Stats.Name, _nameMaxWidth, FontEngine.UseEllipsis, 0);
+                trimmedName = font.TrimTextToWidth(pc.Stats.Name, _nameMaxWidth, FontEngine.UseEllipsis, 0);
             else
-                trimmedName = SharedGameResources.Pc!.Stats.Name;
+                trimmedName = pc.Stats.Name;
 
             _cstat[CStatName].Value!.SetText(trimmedName);
 
             ss.Clear();
-            ss.Append(SharedGameResources.Pc!.Stats.Level);
+            ss.Append(pc.Stats.Level);
             _cstat[CStatLevel].Value!.SetText(ss.ToString());
             _cstat[CStatLevel].Value!.SetJustify(FontEngine.JustifyCenter);
 
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
                 ss.Clear();
-                ss.Append(SharedGameResources.Pc!.Stats.GetPrimary(i));
+                ss.Append(pc.Stats.GetPrimary(i));
                 _cstat[i + 2].Value!.SetText(ss.ToString());
                 _cstat[i + 2].Value!.SetJustify(FontEngine.JustifyCenter);
-                _cstat[i + 2].Value!.SetColor(BonusColor(SharedGameResources.Pc!.Stats.PrimaryAdditional[i]));
+                _cstat[i + 2].Value!.SetColor(BonusColor(pc.Stats.PrimaryAdditional[i]));
             }
 
             if (_skillPoints >= 1)
             {
-                _labelUnspent!.SetText(SharedResources.Msg!.GetV("Available stat points: %d", _skillPoints));
+                _labelUnspent!.SetText(msg.GetV("Available stat points: %d", _skillPoints));
             }
             else
             {
@@ -408,11 +418,11 @@ namespace FlareEngine
 
             // scrolling stat list
             uint statIndex = 0;
-            int resourceOffsetIndex = Stats.Count + SharedResources.Eset!.DamageTypes.Count;
-            int speedOffsetIndex = resourceOffsetIndex + SharedResources.Eset!.ResourceStats.StatCountValue;
+            int resourceOffsetIndex = Stats.Count + eset.DamageTypes.Count;
+            int speedOffsetIndex = resourceOffsetIndex + eset.ResourceStats.StatCountValue;
 
             ss.Clear();
-            ss.Append(SharedResources.Msg!.Get("Core Stats"));
+            ss.Append(msg.Get("Core Stats"));
             _statList!.Set(statIndex, ss.ToString(), "");
             _statList.SetRowHighlight(statIndex, true);
             statIndex++;
@@ -431,14 +441,14 @@ namespace FlareEngine
                 ss.Append(' ');
                 ss.Append(Stats.Name[i]);
                 ss.Append(": ");
-                ss.Append(Utils.FloatToString(SharedGameResources.Pc!.Stats.Get(i), 2));
+                ss.Append(Utils.FloatToString(pc.Stats.Get(i), 2));
                 if (Stats.Percent[i]) ss.Append('%');
                 _statList.Set(statIndex, ss.ToString(), StatTooltip(i));
                 statIndex++;
             }
 
             // insert resource stats (execpt stealing)
-            for (int j = 0; j < SharedResources.Eset!.ResourceStats.Stats.Count; ++j)
+            for (int j = 0; j < eset.ResourceStats.Stats.Count; ++j)
             {
                 for (int k = 0; k < EngineSettings.ResourceStatsSettings.StatSteal; ++k)
                 {
@@ -446,9 +456,9 @@ namespace FlareEngine
                     {
                         ss.Clear();
                         ss.Append(' ');
-                        ss.Append(SharedResources.Eset!.ResourceStats.Stats[j].Text[k]);
+                        ss.Append(eset.ResourceStats.Stats[j].Text[k]);
                         ss.Append(": ");
-                        ss.Append(Utils.FloatToString(SharedGameResources.Pc!.Stats.GetResourceStat(j, k), SharedResources.Eset!.NumberFormat.CharacterMenu));
+                        ss.Append(Utils.FloatToString(pc.Stats.GetResourceStat(j, k), eset.NumberFormat.CharacterMenu));
                         _statList.Set(statIndex, ss.ToString(), ResourceStatTooltip(j, k));
                         statIndex++;
                     }
@@ -456,29 +466,29 @@ namespace FlareEngine
             }
 
             ss.Clear();
-            ss.Append(SharedResources.Msg!.Get("Offensive Stats"));
+            ss.Append(msg.Get("Offensive Stats"));
             _statList.Set(statIndex, ss.ToString(), "");
             _statList.SetRowHighlight(statIndex, true);
             statIndex++;
 
             // insert damage stats
-            for (int j = 0; j < SharedResources.Eset!.DamageTypes.Types.Count; ++j)
+            for (int j = 0; j < eset.DamageTypes.Types.Count; ++j)
             {
                 if (_showStat[Stats.Count + EngineSettings.DamageTypesSettings.IndexToMin(j)] || _showStat[Stats.Count + EngineSettings.DamageTypesSettings.IndexToMax(j)])
                 {
-                    float minDmg = SharedGameResources.Pc!.Stats.GetDamageMin(j);
-                    float maxDmg = SharedGameResources.Pc!.Stats.GetDamageMax(j);
+                    float minDmg = pc.Stats.GetDamageMin(j);
+                    float maxDmg = pc.Stats.GetDamageMax(j);
 
                     ss.Clear();
                     ss.Append(' ');
 
-                    if (SharedResources.Eset!.DamageTypes.Types[j].IsDeprecatedElement)
-                        ss.Append(SharedResources.Msg!.GetV("Elemental Damage (%s)", SharedResources.Eset!.DamageTypes.Types[j].Name));
+                    if (eset.DamageTypes.Types[j].IsDeprecatedElement)
+                        ss.Append(msg.GetV("Elemental Damage (%s)", eset.DamageTypes.Types[j].Name));
                     else
-                        ss.Append(SharedResources.Eset!.DamageTypes.Types[j].Name);
+                        ss.Append(eset.DamageTypes.Types[j].Name);
 
                     ss.Append(": ");
-                    ss.Append(Utils.CreateMinMaxString(minDmg, maxDmg, SharedResources.Eset!.NumberFormat.CharacterMenu));
+                    ss.Append(Utils.CreateMinMaxString(minDmg, maxDmg, eset.NumberFormat.CharacterMenu));
 
                     _statList.Set(statIndex, ss.ToString(), DamageTooltip(j));
                     statIndex++;
@@ -495,22 +505,22 @@ namespace FlareEngine
                 ss.Append(' ');
                 ss.Append(Stats.Name[i]);
                 ss.Append(": ");
-                ss.Append(Utils.FloatToString(SharedGameResources.Pc!.Stats.Get(i), 2));
+                ss.Append(Utils.FloatToString(pc.Stats.Get(i), 2));
                 if (Stats.Percent[i]) ss.Append('%');
                 _statList.Set(statIndex, ss.ToString(), StatTooltip(i));
                 statIndex++;
             }
 
             // insert resource stealing stats after HP/MP steal
-            for (int j = 0; j < SharedResources.Eset!.ResourceStats.Stats.Count; ++j)
+            for (int j = 0; j < eset.ResourceStats.Stats.Count; ++j)
             {
                 if (_showStat[resourceOffsetIndex + (j * EngineSettings.ResourceStatsSettings.StatCount) + EngineSettings.ResourceStatsSettings.StatSteal])
                 {
                     ss.Clear();
                     ss.Append(' ');
-                    ss.Append(SharedResources.Eset!.ResourceStats.Stats[j].Text[EngineSettings.ResourceStatsSettings.StatSteal]);
+                    ss.Append(eset.ResourceStats.Stats[j].Text[EngineSettings.ResourceStatsSettings.StatSteal]);
                     ss.Append(": ");
-                    ss.Append(Utils.FloatToString(SharedGameResources.Pc!.Stats.GetResourceStat(j, EngineSettings.ResourceStatsSettings.StatSteal), SharedResources.Eset!.NumberFormat.CharacterMenu));
+                    ss.Append(Utils.FloatToString(pc.Stats.GetResourceStat(j, EngineSettings.ResourceStatsSettings.StatSteal), eset.NumberFormat.CharacterMenu));
                     ss.Append('%');
                     _statList.Set(statIndex, ss.ToString(), ResourceStatTooltip(j, EngineSettings.ResourceStatsSettings.StatSteal));
                     statIndex++;
@@ -518,16 +528,16 @@ namespace FlareEngine
             }
 
             ss.Clear();
-            ss.Append(SharedResources.Msg!.Get("Defensive Stats"));
+            ss.Append(msg.Get("Defensive Stats"));
             _statList.Set(statIndex, ss.ToString(), "");
             _statList.SetRowHighlight(statIndex, true);
             statIndex++;
 
             ss.Clear();
             ss.Append(' ');
-            ss.Append(SharedResources.Msg!.Get("Absorb"));
+            ss.Append(msg.Get("Absorb"));
             ss.Append(": ");
-            ss.Append(Utils.CreateMinMaxString(SharedGameResources.Pc!.Stats.Get(Stats.AbsMin), SharedGameResources.Pc!.Stats.Get(Stats.AbsMax), SharedResources.Eset!.NumberFormat.CharacterMenu));
+            ss.Append(Utils.CreateMinMaxString(pc.Stats.Get(Stats.AbsMin), pc.Stats.Get(Stats.AbsMax), eset.NumberFormat.CharacterMenu));
             _statList.Set(statIndex, ss.ToString(), StatTooltip(Stats.AbsMin));
             statIndex++;
 
@@ -545,7 +555,7 @@ namespace FlareEngine
                 ss.Append(' ');
                 ss.Append(Stats.Name[i]);
                 ss.Append(": ");
-                ss.Append(Utils.FloatToString(SharedGameResources.Pc!.Stats.Get(i), 2));
+                ss.Append(Utils.FloatToString(pc.Stats.Get(i), 2));
                 if (Stats.Percent[i]) ss.Append('%');
                 _statList.Set(statIndex, ss.ToString(), StatTooltip(i));
                 statIndex++;
@@ -553,15 +563,15 @@ namespace FlareEngine
 
             if (_showResists)
             {
-                for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                 {
                     if (_showStat[Stats.Count + EngineSettings.DamageTypesSettings.IndexToResist(i)])
                     {
                         ss.Clear();
                         ss.Append(' ');
-                        ss.Append(SharedResources.Eset!.DamageTypes.Types[i].NameResist);
+                        ss.Append(eset.DamageTypes.Types[i].NameResist);
                         ss.Append(": ");
-                        ss.Append(Utils.FloatToString(SharedGameResources.Pc!.Stats.GetDamageResist(i), SharedResources.Eset!.NumberFormat.CharacterMenu));
+                        ss.Append(Utils.FloatToString(pc.Stats.GetDamageResist(i), eset.NumberFormat.CharacterMenu));
                         ss.Append('%');
                         _statList.Set(statIndex, ss.ToString(), ResistTooltip(i));
                         statIndex++;
@@ -570,15 +580,15 @@ namespace FlareEngine
             }
 
             // insert resource stealing stats after HP/MP steal
-            for (int j = 0; j < SharedResources.Eset!.ResourceStats.Stats.Count; ++j)
+            for (int j = 0; j < eset.ResourceStats.Stats.Count; ++j)
             {
                 if (_showStat[resourceOffsetIndex + (j * EngineSettings.ResourceStatsSettings.StatCount) + EngineSettings.ResourceStatsSettings.StatResistSteal])
                 {
                     ss.Clear();
                     ss.Append(' ');
-                    ss.Append(SharedResources.Eset!.ResourceStats.Stats[j].Text[EngineSettings.ResourceStatsSettings.StatResistSteal]);
+                    ss.Append(eset.ResourceStats.Stats[j].Text[EngineSettings.ResourceStatsSettings.StatResistSteal]);
                     ss.Append(": ");
-                    ss.Append(Utils.FloatToString(SharedGameResources.Pc!.Stats.GetResourceStat(j, EngineSettings.ResourceStatsSettings.StatResistSteal), SharedResources.Eset!.NumberFormat.CharacterMenu));
+                    ss.Append(Utils.FloatToString(pc.Stats.GetResourceStat(j, EngineSettings.ResourceStatsSettings.StatResistSteal), eset.NumberFormat.CharacterMenu));
                     ss.Append('%');
                     _statList.Set(statIndex, ss.ToString(), ResourceStatTooltip(j, EngineSettings.ResourceStatsSettings.StatResistSteal));
                     statIndex++;
@@ -587,7 +597,7 @@ namespace FlareEngine
 
 
             ss.Clear();
-            ss.Append(SharedResources.Msg!.Get("Miscellaneous Stats"));
+            ss.Append(msg.Get("Miscellaneous Stats"));
             _statList.Set(statIndex, ss.ToString(), "");
             _statList.SetRowHighlight(statIndex, true);
             statIndex++;
@@ -603,7 +613,7 @@ namespace FlareEngine
                 ss.Append(' ');
                 ss.Append(Stats.Name[i]);
                 ss.Append(": ");
-                ss.Append(Utils.FloatToString(SharedGameResources.Pc!.Stats.Get(i), 2));
+                ss.Append(Utils.FloatToString(pc.Stats.Get(i), 2));
                 if (Stats.Percent[i]) ss.Append('%');
                 _statList.Set(statIndex, ss.ToString(), StatTooltip(i));
                 statIndex++;
@@ -613,9 +623,9 @@ namespace FlareEngine
             {
                 ss.Clear();
                 ss.Append(' ');
-                ss.Append(SharedResources.Msg!.Get("Movement Speed"));
+                ss.Append(msg.Get("Movement Speed"));
                 ss.Append(": ");
-                ss.Append(SharedGameResources.Pc!.Stats.Effects.Speed);
+                ss.Append(pc.Stats.Effects.Speed);
                 ss.Append('%');
                 _statList.Set(statIndex, ss.ToString(), "");
                 statIndex++;
@@ -625,9 +635,9 @@ namespace FlareEngine
             {
                 ss.Clear();
                 ss.Append(' ');
-                ss.Append(SharedResources.Msg!.Get("Attack Speed"));
+                ss.Append(msg.Get("Attack Speed"));
                 ss.Append(": ");
-                ss.Append(SharedGameResources.Pc!.Stats.Effects.GetAttackSpeed(""));
+                ss.Append(pc.Stats.Effects.GetAttackSpeed(""));
                 ss.Append('%');
                 _statList.Set(statIndex, ss.ToString(), "");
                 statIndex++;
@@ -635,14 +645,14 @@ namespace FlareEngine
 
             // update tool tips
             _cstat[CStatName].Tip.Clear();
-            _cstat[CStatName].Tip.AddText(SharedGameResources.Pc!.Stats.Name);
-            _cstat[CStatName].Tip.AddText(SharedGameResources.Pc!.Stats.GetLongClass());
+            _cstat[CStatName].Tip.AddText(pc.Stats.Name);
+            _cstat[CStatName].Tip.AddText(pc.Stats.GetLongClass());
 
             _cstat[CStatLevel].Tip.Clear();
-            _cstat[CStatLevel].Tip.AddText(SharedResources.Msg!.GetV("XP: %lu", SharedGameResources.Pc!.Stats.Xp));
-            if (SharedGameResources.Pc!.Stats.Level < SharedResources.Eset!.Xp.GetMaxLevel())
+            _cstat[CStatLevel].Tip.AddText(msg.GetV("XP: %lu", pc.Stats.Xp));
+            if (pc.Stats.Level < eset.Xp.GetMaxLevel())
             {
-                _cstat[CStatLevel].Tip.AddText(SharedResources.Msg!.GetV("Next: %lu", SharedResources.Eset!.Xp.GetLevelXP(SharedGameResources.Pc!.Stats.Level + 1)));
+                _cstat[CStatLevel].Tip.AddText(msg.GetV("Next: %lu", eset.Xp.GetLevelXP(pc.Stats.Level + 1)));
             }
 
             for (int j = 2; j < _cstat.Count; ++j)
@@ -651,27 +661,27 @@ namespace FlareEngine
                 ss.Clear();
                 ss.Append(_cstat[j].Label!.GetText());
                 ss.Append(" (");
-                ss.Append(SharedGameResources.Pc!.Stats.Primary[_baseStats[j - 2]]);
-                if (SharedGameResources.Pc!.Stats.PrimaryAdditional[_baseStatsAdd[j - 2]] > 0)
+                ss.Append(pc.Stats.Primary[_baseStats[j - 2]]);
+                if (pc.Stats.PrimaryAdditional[_baseStatsAdd[j - 2]] > 0)
                 {
                     ss.Append('+');
                 }
-                if (SharedGameResources.Pc!.Stats.PrimaryAdditional[_baseStatsAdd[j - 2]] != 0)
+                if (pc.Stats.PrimaryAdditional[_baseStatsAdd[j - 2]] != 0)
                 {
-                    ss.Append(SharedGameResources.Pc!.Stats.PrimaryAdditional[_baseStatsAdd[j - 2]]);
+                    ss.Append(pc.Stats.PrimaryAdditional[_baseStatsAdd[j - 2]]);
                 }
                 ss.Append(')');
                 _cstat[j].Tip.AddText(ss.ToString());
 
                 bool haveBonus = false;
-                int resourceStatOffset = Stats.Count + SharedResources.Eset!.DamageTypes.Count;
+                int resourceStatOffset = Stats.Count + eset.DamageTypes.Count;
 
                 for (int i = 0; i < Stats.Count; ++i)
                 {
                     // insert resource stats (execpt stealing) before accuracy
                     if (i == Stats.Accuracy)
                     {
-                        for (int k = 0; k < SharedResources.Eset!.ResourceStats.Stats.Count; ++k)
+                        for (int k = 0; k < eset.ResourceStats.Stats.Count; ++k)
                         {
                             for (int l = 0; l < EngineSettings.ResourceStatsSettings.StatSteal; ++l)
                             {
@@ -681,10 +691,10 @@ namespace FlareEngine
                                 {
                                     if (!haveBonus)
                                     {
-                                        _cstat[j].Tip.AddText("\n" + SharedResources.Msg!.Get("Related stats:"));
+                                        _cstat[j].Tip.AddText("\n" + msg.Get("Related stats:"));
                                         haveBonus = true;
                                     }
-                                    _cstat[j].Tip.AddText(SharedResources.Eset!.ResourceStats.Stats[k].Text[l]);
+                                    _cstat[j].Tip.AddText(eset.ResourceStats.Stats[k].Text[l]);
                                 }
                             }
                         }
@@ -693,27 +703,27 @@ namespace FlareEngine
                     // damage types are displayed before absorb
                     if (i == Stats.AbsMin)
                     {
-                        for (int k = 0; k < SharedResources.Eset!.DamageTypes.Types.Count; ++k)
+                        for (int k = 0; k < eset.DamageTypes.Types.Count; ++k)
                         {
                             // damage min
                             if (_baseBonus[j - 2]![Stats.Count + EngineSettings.DamageTypesSettings.IndexToMin(k)] > 0 && _showStat[Stats.Count + EngineSettings.DamageTypesSettings.IndexToMin(k)])
                             {
                                 if (!haveBonus)
                                 {
-                                    _cstat[j].Tip.AddText("\n" + SharedResources.Msg!.Get("Related stats:"));
+                                    _cstat[j].Tip.AddText("\n" + msg.Get("Related stats:"));
                                     haveBonus = true;
                                 }
-                                _cstat[j].Tip.AddText(SharedResources.Eset!.DamageTypes.Types[k].NameMin);
+                                _cstat[j].Tip.AddText(eset.DamageTypes.Types[k].NameMin);
                             }
                             // damage max
                             if (_baseBonus[j - 2]![Stats.Count + EngineSettings.DamageTypesSettings.IndexToMax(k)] > 0 && _showStat[Stats.Count + EngineSettings.DamageTypesSettings.IndexToMax(k)])
                             {
                                 if (!haveBonus)
                                 {
-                                    _cstat[j].Tip.AddText("\n" + SharedResources.Msg!.Get("Related stats:"));
+                                    _cstat[j].Tip.AddText("\n" + msg.Get("Related stats:"));
                                     haveBonus = true;
                                 }
-                                _cstat[j].Tip.AddText(SharedResources.Eset!.DamageTypes.Types[k].NameMax);
+                                _cstat[j].Tip.AddText(eset.DamageTypes.Types[k].NameMax);
                             }
                         }
                     }
@@ -723,7 +733,7 @@ namespace FlareEngine
                     {
                         if (!haveBonus)
                         {
-                            _cstat[j].Tip.AddText("\n" + SharedResources.Msg!.Get("Related stats:"));
+                            _cstat[j].Tip.AddText("\n" + msg.Get("Related stats:"));
                             haveBonus = true;
                         }
                         _cstat[j].Tip.AddText(Stats.Name[i]);
@@ -731,7 +741,7 @@ namespace FlareEngine
                 }
 
                 // insert resource stealing stats after MP steal
-                for (int i = 0; i < SharedResources.Eset!.ResourceStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
                 {
                     for (int k = EngineSettings.ResourceStatsSettings.StatSteal; k < EngineSettings.ResourceStatsSettings.StatCount; ++k)
                     {
@@ -741,25 +751,25 @@ namespace FlareEngine
                         {
                             if (!haveBonus)
                             {
-                                _cstat[j].Tip.AddText("\n" + SharedResources.Msg!.Get("Related stats:"));
+                                _cstat[j].Tip.AddText("\n" + msg.Get("Related stats:"));
                                 haveBonus = true;
                             }
-                            _cstat[j].Tip.AddText(SharedResources.Eset!.ResourceStats.Stats[i].Text[k]);
+                            _cstat[j].Tip.AddText(eset.ResourceStats.Stats[i].Text[k]);
                         }
                     }
                 }
 
                 // resistances
-                for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                 {
                     if (_baseBonus[j - 2]![Stats.Count + EngineSettings.DamageTypesSettings.IndexToResist(i)] > 0 && _showStat[Stats.Count + EngineSettings.DamageTypesSettings.IndexToResist(i)])
                     {
                         if (!haveBonus)
                         {
-                            _cstat[j].Tip.AddText("\n" + SharedResources.Msg!.Get("Related stats:"));
+                            _cstat[j].Tip.AddText("\n" + msg.Get("Related stats:"));
                             haveBonus = true;
                         }
-                        _cstat[j].Tip.AddText(SharedResources.Eset!.DamageTypes.Types[i].NameResist);
+                        _cstat[j].Tip.AddText(eset.DamageTypes.Types[i].NameResist);
                     }
                 }
             }
@@ -770,39 +780,44 @@ namespace FlareEngine
         /// </summary>
         private Color BonusColor(int stat)
         {
-            if (stat > 0) return SharedResources.Font!.GetColor(FontEngine.ColorMenuBonus);
-            if (stat < 0) return SharedResources.Font!.GetColor(FontEngine.ColorMenuPenalty);
-            return SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal);
+            var font = SharedResources.Font!;
+            if (stat > 0) return font.GetColor(FontEngine.ColorMenuBonus);
+            if (stat < 0) return font.GetColor(FontEngine.ColorMenuPenalty);
+            return font.GetColor(FontEngine.ColorMenuNormal);
         }
 
         private void TooltipCreateBonusText(int minIndex, int maxIndex, ref string minText, ref string? maxText)
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var pc = SharedGameResources.Pc!;
+
             // per-level bonus
-            float minPerLevel = SharedGameResources.Pc!.Stats.PerLevel[minIndex];
-            float maxPerLevel = SharedGameResources.Pc!.Stats.PerLevel[maxIndex];
+            float minPerLevel = pc.Stats.PerLevel[minIndex];
+            float maxPerLevel = pc.Stats.PerLevel[maxIndex];
 
             if (minPerLevel > 0)
             {
-                minText += SharedResources.Msg!.GetV("Each level grants %s.", Utils.FloatToString(minPerLevel, SharedResources.Eset!.NumberFormat.CharacterMenu));
+                minText += msg.GetV("Each level grants %s.", Utils.FloatToString(minPerLevel, eset.NumberFormat.CharacterMenu));
             }
 
             if (maxText != null && maxPerLevel > 0)
             {
-                maxText += SharedResources.Msg!.GetV("Each level grants %s.", Utils.FloatToString(maxPerLevel, SharedResources.Eset!.NumberFormat.CharacterMenu));
+                maxText += msg.GetV("Each level grants %s.", Utils.FloatToString(maxPerLevel, eset.NumberFormat.CharacterMenu));
             }
 
             // per-primary bonuses
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
-                float minPerPrimary = SharedGameResources.Pc!.Stats.PerPrimary[i][minIndex];
-                float maxPerPrimary = SharedGameResources.Pc!.Stats.PerPrimary[i][maxIndex];
+                float minPerPrimary = pc.Stats.PerPrimary[i][minIndex];
+                float maxPerPrimary = pc.Stats.PerPrimary[i][maxIndex];
 
                 if (minPerPrimary > 0)
                 {
                     if (minText.Length != 0)
                         minText += "\n";
 
-                    minText += SharedResources.Msg!.GetV("Each point of %s grants %s.", SharedResources.Eset!.PrimaryStats.Stats[i].Name, Utils.FloatToString(minPerPrimary, SharedResources.Eset!.NumberFormat.CharacterMenu));
+                    minText += msg.GetV("Each point of %s grants %s.", eset.PrimaryStats.Stats[i].Name, Utils.FloatToString(minPerPrimary, eset.NumberFormat.CharacterMenu));
                 }
 
                 if (maxText != null && maxPerPrimary > 0)
@@ -810,7 +825,7 @@ namespace FlareEngine
                     if (maxText.Length != 0)
                         maxText += "\n";
 
-                    maxText += SharedResources.Msg!.GetV("Each point of %s grants %s.", SharedResources.Eset!.PrimaryStats.Stats[i].Name, Utils.FloatToString(maxPerPrimary, SharedResources.Eset!.NumberFormat.CharacterMenu));
+                    maxText += msg.GetV("Each point of %s grants %s.", eset.PrimaryStats.Stats[i].Name, Utils.FloatToString(maxPerPrimary, eset.NumberFormat.CharacterMenu));
                 }
             }
         }
@@ -831,7 +846,7 @@ namespace FlareEngine
 
             if (stat == Stats.AbsMin)
             {
-                string maxText = "";
+                string? maxText = "";
 
                 int maxIndex = Stats.AbsMax;
 
@@ -844,7 +859,7 @@ namespace FlareEngine
                     text += Stats.Name[minIndex] + ":\n" + minText;
                 }
 
-                if (maxText.Length != 0)
+                if (maxText!.Length != 0)
                 {
                     if (text.Length != 0)
                         text += "\n\n";
@@ -872,11 +887,12 @@ namespace FlareEngine
         /// </summary>
         private string DamageTooltip(int dmgType)
         {
+            var eset = SharedResources.Eset!;
             string text = "";
             string minText = "";
-            string maxText = "";
+            string? maxText = "";
 
-            string description = SharedResources.Eset!.DamageTypes.Types[dmgType].Description;
+            string description = eset.DamageTypes.Types[dmgType].Description;
             if (description.Length != 0)
                 text += description;
 
@@ -889,14 +905,14 @@ namespace FlareEngine
             {
                 if (text.Length != 0)
                     text += "\n\n";
-                text += SharedResources.Eset!.DamageTypes.Types[dmgType].NameMin + ":\n" + minText;
+                text += eset.DamageTypes.Types[dmgType].NameMin + ":\n" + minText;
             }
 
-            if (maxText.Length != 0)
+            if (maxText!.Length != 0)
             {
                 if (text.Length != 0)
                     text += "\n\n";
-                text += SharedResources.Eset!.DamageTypes.Types[dmgType].NameMax + ":\n" + maxText;
+                text += eset.DamageTypes.Types[dmgType].NameMax + ":\n" + maxText;
             }
 
             return text;
@@ -929,14 +945,15 @@ namespace FlareEngine
 
         private string ResourceStatTooltip(int resourceIndex, int statIndex)
         {
+            var eset = SharedResources.Eset!;
             string text = "";
             string bonusText = "";
 
-            string description = SharedResources.Eset!.ResourceStats.Stats[resourceIndex].TextDesc[statIndex];
+            string description = eset.ResourceStats.Stats[resourceIndex].TextDesc[statIndex];
             if (description.Length != 0)
                 text += description;
 
-            int offsetIndex = Stats.Count + SharedResources.Eset!.DamageTypes.Count;
+            int offsetIndex = Stats.Count + eset.DamageTypes.Count;
             int resourceStatIndex = offsetIndex + (resourceIndex * EngineSettings.ResourceStatsSettings.StatCount) + statIndex;
 
             string? maxText = null;
@@ -956,21 +973,25 @@ namespace FlareEngine
         {
             if (!Visible) return;
 
+            var eset = SharedResources.Eset!;
+            var pc = SharedGameResources.Pc!;
+            var snd = SharedResources.Snd!;
+
             Tablist.Logic();
 
             if (_closeButton!.CheckClick())
             {
                 Visible = false;
-                SharedResources.Snd!.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
             }
 
             bool haveSkillPoints = CheckSkillPoints();
 
-            if (SharedGameResources.Pc!.Stats.Hp > 0 && haveSkillPoints)
+            if (pc.Stats.Hp > 0 && haveSkillPoints)
             {
-                for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
                 {
-                    if (SharedGameResources.Pc!.Stats.Primary[i] < SharedGameResources.Pc!.Stats.MaxPointsPerStat && !_cstat[i + 2].Label!.IsHidden())
+                    if (pc.Stats.Primary[i] < pc.Stats.MaxPointsPerStat && !_cstat[i + 2].Label!.IsHidden())
                     {
                         _upgradeButton[i]!.Enabled = true;
                         _upgradeButton[i]!.Tooltip = GetUpgradeButtonTooltip(i);
@@ -984,7 +1005,7 @@ namespace FlareEngine
                     }
                 }
 
-                for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
                 {
                     if (_upgradeButton[i]!.CheckClick())
                         _primaryUp[i] = true;
@@ -993,7 +1014,7 @@ namespace FlareEngine
             else
             {
                 // no skill points to allocate; remove upgrade buttons
-                for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
                 {
                     _upgradeButton[i]!.Enabled = false;
                     Tablist.Remove(_upgradeButton[i]!);
@@ -1008,7 +1029,7 @@ namespace FlareEngine
 
             _statList!.CheckClick();
 
-            if (SharedGameResources.Pc!.Stats.RefreshStats) RefreshStats();
+            if (pc.Stats.RefreshStats) RefreshStats();
         }
         
         public string GetUpgradeButtonTooltip(int primaryIndex)
@@ -1187,15 +1208,18 @@ namespace FlareEngine
         /// </summary>
         public bool CheckUpgrade()
         {
+            var eset = SharedResources.Eset!;
+            var pc = SharedGameResources.Pc!;
+
             // check to see if there are skill points available
-            if (SharedGameResources.Pc!.Stats.Hp > 0 && CheckSkillPoints())
+            if (pc.Stats.Hp > 0 && CheckSkillPoints())
             {
-                for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
                 {
                     if (_primaryUp[i])
                     {
-                        SharedGameResources.Pc!.Stats.Primary[i]++;
-                        SharedGameResources.Pc!.Stats.Recalc(); // equipment applied by MenuManager
+                        pc.Stats.Primary[i]++;
+                        pc.Stats.Recalc(); // equipment applied by MenuManager
                         _primaryUp[i] = false;
                         return true;
                     }
@@ -1207,19 +1231,24 @@ namespace FlareEngine
 
         private bool CheckSkillPoints()
         {
+            var eset = SharedResources.Eset!;
+            var pc = SharedGameResources.Pc!;
+
             int spent = 0;
-            for (int i = 0; i < SharedResources.Eset!.PrimaryStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
             {
-                spent += SharedGameResources.Pc!.Stats.Primary[i] - SharedGameResources.Pc!.Stats.PrimaryStarting[i];
+                spent += pc.Stats.Primary[i] - pc.Stats.PrimaryStarting[i];
             }
 
-            _skillPoints = ((SharedGameResources.Pc!.Stats.Level - 1) * SharedGameResources.Pc!.Stats.StatPointsPerLevel) - spent;
+            _skillPoints = ((pc.Stats.Level - 1) * pc.Stats.StatPointsPerLevel) - spent;
 
-            return (spent < ((SharedGameResources.Pc!.Stats.Level - 1) * SharedGameResources.Pc!.Stats.StatPointsPerLevel) && spent < SharedGameResources.Pc!.Stats.MaxSpendableStatPoints);
+            return (spent < ((pc.Stats.Level - 1) * pc.Stats.StatPointsPerLevel) && spent < pc.Stats.MaxSpendableStatPoints);
         }
 
         private void ParseShowStat(FileParser infile)
         {
+            var eset = SharedResources.Eset!;
+
             string val = infile.Val;
             string statName = Parse.PopFirstString(ref val);
             bool value = Parse.ToBool(Parse.PopFirstString(ref val));
@@ -1235,38 +1264,38 @@ namespace FlareEngine
             }
             offsetIndex += Stats.Count;
 
-            for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+            for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
             {
-                if (statName == SharedResources.Eset!.DamageTypes.Types[i].Min)
+                if (statName == eset.DamageTypes.Types[i].Min)
                 {
                     _showStat[offsetIndex + EngineSettings.DamageTypesSettings.IndexToMin(i)] = value;
                     return;
                 }
-                else if (statName == SharedResources.Eset!.DamageTypes.Types[i].Max)
+                else if (statName == eset.DamageTypes.Types[i].Max)
                 {
                     _showStat[offsetIndex + EngineSettings.DamageTypesSettings.IndexToMax(i)] = value;
                     return;
                 }
-                else if (statName == SharedResources.Eset!.DamageTypes.Types[i].Resist)
+                else if (statName == eset.DamageTypes.Types[i].Resist)
                 {
                     _showStat[offsetIndex + EngineSettings.DamageTypesSettings.IndexToResist(i)] = value;
                     return;
                 }
             }
-            offsetIndex += SharedResources.Eset!.DamageTypes.Count;
+            offsetIndex += eset.DamageTypes.Count;
 
-            for (int i = 0; i < SharedResources.Eset!.ResourceStats.Stats.Count; ++i)
+            for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
             {
                 for (int j = 0; j < EngineSettings.ResourceStatsSettings.StatCount; ++j)
                 {
-                    if (statName == SharedResources.Eset!.ResourceStats.Stats[i].Ids[j])
+                    if (statName == eset.ResourceStats.Stats[i].Ids[j])
                     {
                         _showStat[offsetIndex + (i * EngineSettings.ResourceStatsSettings.StatCount) + j] = value;
                         return;
                     }
                 }
             }
-            offsetIndex += SharedResources.Eset!.ResourceStats.StatCountValue;
+            offsetIndex += eset.ResourceStats.StatCountValue;
 
             if (statName == "speed")
             {

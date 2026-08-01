@@ -108,187 +108,189 @@ namespace FlareEngine
         /// <summary>对应 C++ <c>void Stats::init()</c>。</summary>
         public static void Init()
         {
+            var msg = SharedResources.Msg!;
+
             // @CLASS Stats|Description of the base stats which may be used wherever a stat_id is required.
 
             // @TYPE hp|Hit points
             Key[HpMax] = "hp";
-            Name[HpMax] = SharedResources.Msg!.Get("Max HP");
-            Desc[HpMax] = SharedResources.Msg!.Get("Total amount of HP.");
+            Name[HpMax] = msg.Get("Max HP");
+            Desc[HpMax] = msg.Get("Total amount of HP.");
             Percent[HpMax] = false;
             Category[HpMax] = (short)StatCategory.CategoryCore;
 
             // @TYPE hp_regen|HP restored per minute
             Key[HpRegen] = "hp_regen";
-            Name[HpRegen] = SharedResources.Msg!.Get("HP Regen");
-            Desc[HpRegen] = SharedResources.Msg!.Get("Ticks of HP regen per minute.");
+            Name[HpRegen] = msg.Get("HP Regen");
+            Desc[HpRegen] = msg.Get("Ticks of HP regen per minute.");
             Percent[HpRegen] = false;
             Category[HpRegen] = (short)StatCategory.CategoryCore;
 
             // @TYPE mp|Magic points
             Key[MpMax] = "mp";
-            Name[MpMax] = SharedResources.Msg!.Get("Max MP");
-            Desc[MpMax] = SharedResources.Msg!.Get("Total amount of MP.");
+            Name[MpMax] = msg.Get("Max MP");
+            Desc[MpMax] = msg.Get("Total amount of MP.");
             Percent[MpMax] = false;
             Category[MpMax] = (short)StatCategory.CategoryCore;
 
             // @TYPE mp_regen|MP restored per minute
             Key[MpRegen] = "mp_regen";
-            Name[MpRegen] = SharedResources.Msg!.Get("MP Regen");
-            Desc[MpRegen] = SharedResources.Msg!.Get("Ticks of MP regen per minute.");
+            Name[MpRegen] = msg.Get("MP Regen");
+            Desc[MpRegen] = msg.Get("Ticks of MP regen per minute.");
             Percent[MpRegen] = false;
             Category[MpRegen] = (short)StatCategory.CategoryCore;
 
             // @TYPE accuracy|Accuracy %. Higher values mean less likely to miss.
             Key[Accuracy] = "accuracy";
-            Name[Accuracy] = SharedResources.Msg!.Get("Accuracy");
-            Desc[Accuracy] = SharedResources.Msg!.Get("Accuracy rating. The enemy's Avoidance rating is subtracted from this value to calculate your likeliness to land a direct hit.");
+            Name[Accuracy] = msg.Get("Accuracy");
+            Desc[Accuracy] = msg.Get("Accuracy rating. The enemy's Avoidance rating is subtracted from this value to calculate your likeliness to land a direct hit.");
             Percent[Accuracy] = true;
             Category[Accuracy] = (short)StatCategory.CategoryOffense;
 
             // @TYPE avoidance|Avoidance %. Higher values means more likely to not get hit.
             Key[Avoidance] = "avoidance";
-            Name[Avoidance] = SharedResources.Msg!.Get("Avoidance");
-            Desc[Avoidance] = SharedResources.Msg!.Get("Avoidance rating. This value is subtracted from the enemy's Accuracy rating to calculate their likeliness to land a direct hit.");
+            Name[Avoidance] = msg.Get("Avoidance");
+            Desc[Avoidance] = msg.Get("Avoidance rating. This value is subtracted from the enemy's Accuracy rating to calculate their likeliness to land a direct hit.");
             Percent[Avoidance] = true;
             Category[Avoidance] = (short)StatCategory.CategoryDefense;
 
             // @TYPE absorb_min|Minimum damage absorption
             Key[AbsMin] = "absorb_min";
-            Name[AbsMin] = SharedResources.Msg!.GetV("%s (Min.)", SharedResources.Msg!.Get("Absorb"));
-            Desc[AbsMin] = SharedResources.Msg!.Get("Reduces the amount of damage taken.");
+            Name[AbsMin] = msg.GetV("%s (Min.)", msg.Get("Absorb"));
+            Desc[AbsMin] = msg.Get("Reduces the amount of damage taken.");
             Percent[AbsMin] = false;
             Category[AbsMin] = (short)StatCategory.CategoryDefense;
 
             // @TYPE absorb_max|Maximum damage absorption
             Key[AbsMax] = "absorb_max";
-            Name[AbsMax] = SharedResources.Msg!.GetV("%s (Max.)", SharedResources.Msg!.Get("Absorb"));
-            Desc[AbsMax] = SharedResources.Msg!.Get("Reduces the amount of damage taken.");
+            Name[AbsMax] = msg.GetV("%s (Max.)", msg.Get("Absorb"));
+            Desc[AbsMax] = msg.Get("Reduces the amount of damage taken.");
             Percent[AbsMax] = false;
             Category[AbsMax] = (short)StatCategory.CategoryDefense;
 
             // @TYPE crit|Critical hit chance %
             Key[Crit] = "crit";
-            Name[Crit] = SharedResources.Msg!.Get("Critical Hit Chance");
-            Desc[Crit] = SharedResources.Msg!.Get("Chance for an attack to do extra damage.");
+            Name[Crit] = msg.Get("Critical Hit Chance");
+            Desc[Crit] = msg.Get("Chance for an attack to do extra damage.");
             Percent[Crit] = true;
             Category[Crit] = (short)StatCategory.CategoryOffense;
 
             // @TYPE xp_gain|Percentage boost to the amount of experience points gained per kill.
             Key[XpGain] = "xp_gain";
-            Name[XpGain] = SharedResources.Msg!.Get("Bonus XP");
-            Desc[XpGain] = SharedResources.Msg!.Get("Increases the XP gained per kill.");
+            Name[XpGain] = msg.Get("Bonus XP");
+            Desc[XpGain] = msg.Get("Increases the XP gained per kill.");
             Percent[XpGain] = true;
             Category[XpGain] = (short)StatCategory.CategoryMisc;
 
             // @TYPE currency_find|Percentage boost to the amount of gold dropped per loot event.
             Key[CurrencyFind] = "currency_find";
-            Name[CurrencyFind] = SharedResources.Msg!.GetV("Bonus %s", SharedResources.Eset!.Loot.Currency);
-            Desc[CurrencyFind] = SharedResources.Msg!.GetV("Increases the %s found per drop.", SharedResources.Eset!.Loot.Currency);
+            Name[CurrencyFind] = msg.GetV("Bonus %s", msg.Get("Gold"));
+            Desc[CurrencyFind] = msg.GetV("Increases the %s found per drop.", msg.Get("Gold"));
             Percent[CurrencyFind] = true;
             Category[CurrencyFind] = (short)StatCategory.CategoryMisc;
 
             // @TYPE item_find|Increases the chance of finding items in loot.
             Key[ItemFind] = "item_find";
-            Name[ItemFind] = SharedResources.Msg!.Get("Item Find Chance");
-            Desc[ItemFind] = SharedResources.Msg!.Get("Increases the chance that an enemy will drop an item.");
+            Name[ItemFind] = msg.Get("Item Find Chance");
+            Desc[ItemFind] = msg.Get("Increases the chance that an enemy will drop an item.");
             Percent[ItemFind] = true;
             Category[ItemFind] = (short)StatCategory.CategoryMisc;
 
             // @TYPE stealth|Decrease the distance required to alert enemies by %
             Key[Stealth] = "stealth";
-            Name[Stealth] = SharedResources.Msg!.Get("Stealth");
-            Desc[Stealth] = SharedResources.Msg!.Get("Increases your ability to move undetected.");
+            Name[Stealth] = msg.Get("Stealth");
+            Desc[Stealth] = msg.Get("Increases your ability to move undetected.");
             Percent[Stealth] = true;
             Category[Stealth] = (short)StatCategory.CategoryDefense;
 
             // @TYPE poise|Reduced % chance of entering "hit" animation when damaged
             Key[Poise] = "poise";
-            Name[Poise] = SharedResources.Msg!.Get("Poise");
-            Desc[Poise] = SharedResources.Msg!.Get("Reduces your chance of stumbling when hit.");
+            Name[Poise] = msg.Get("Poise");
+            Desc[Poise] = msg.Get("Reduces your chance of stumbling when hit.");
             Percent[Poise] = true;
             Category[Poise] = (short)StatCategory.CategoryDefense;
 
             // @TYPE reflect_chance|Percentage chance to reflect missiles
             Key[Reflect] = "reflect_chance";
-            Name[Reflect] = SharedResources.Msg!.Get("Missile Reflect Chance");
-            Desc[Reflect] = SharedResources.Msg!.Get("Increases your chance of reflecting missiles back at enemies.");
+            Name[Reflect] = msg.Get("Missile Reflect Chance");
+            Desc[Reflect] = msg.Get("Increases your chance of reflecting missiles back at enemies.");
             Percent[Reflect] = true;
             Category[Reflect] = (short)StatCategory.CategoryDefense;
 
             // @TYPE return_damage|Deals a percentage of the damage taken back to the attacker
             Key[ReturnDamage] = "return_damage";
-            Name[ReturnDamage] = SharedResources.Msg!.Get("Damage Reflection");
-            Desc[ReturnDamage] = SharedResources.Msg!.Get("Deals a percentage of damage taken back to the attacker.");
+            Name[ReturnDamage] = msg.Get("Damage Reflection");
+            Desc[ReturnDamage] = msg.Get("Deals a percentage of damage taken back to the attacker.");
             Percent[ReturnDamage] = true;
             Category[ReturnDamage] = (short)StatCategory.CategoryOffense;
 
             // @TYPE hp_steal|Percentage of HP stolen when damaging a target
             Key[HpSteal] = "hp_steal";
-            Name[HpSteal] = SharedResources.Msg!.Get("HP Steal");
-            Desc[HpSteal] = SharedResources.Msg!.Get("Percentage of HP stolen per hit.");
+            Name[HpSteal] = msg.Get("HP Steal");
+            Desc[HpSteal] = msg.Get("Percentage of HP stolen per hit.");
             Percent[HpSteal] = true;
             Category[HpSteal] = (short)StatCategory.CategoryOffense;
 
             // @TYPE mp_steal|Percentage of MP stolen when damaging a target
             Key[MpSteal] = "mp_steal";
-            Name[MpSteal] = SharedResources.Msg!.Get("MP Steal");
-            Desc[MpSteal] = SharedResources.Msg!.Get("Percentage of MP stolen per hit.");
+            Name[MpSteal] = msg.Get("MP Steal");
+            Desc[MpSteal] = msg.Get("Percentage of MP stolen per hit.");
             Percent[MpSteal] = true;
             Category[MpSteal] = (short)StatCategory.CategoryOffense;
 
             // @TYPE resist_damage_over_time|Percentage chance that damage-over-time effects will be negated
             Key[ResistDamageOverTime] = "resist_damage_over_time";
-            Name[ResistDamageOverTime] = SharedResources.Msg!.Get("Resist Damage-Over-Time");
-            Desc[ResistDamageOverTime] = SharedResources.Msg!.Get("Percentage chance that damage-over-time effects will be negated.");
+            Name[ResistDamageOverTime] = msg.Get("Resist Damage-Over-Time");
+            Desc[ResistDamageOverTime] = msg.Get("Percentage chance that damage-over-time effects will be negated.");
             Percent[ResistDamageOverTime] = true;
             Category[ResistDamageOverTime] = (short)StatCategory.CategoryDefense;
 
             // @TYPE resist_slow|Percentage chance that slow effects will be negated
             Key[ResistSlow] = "resist_slow";
-            Name[ResistSlow] = SharedResources.Msg!.Get("Resist Slow");
-            Desc[ResistSlow] = SharedResources.Msg!.Get("Percentage chance that slow effects will be negated.");
+            Name[ResistSlow] = msg.Get("Resist Slow");
+            Desc[ResistSlow] = msg.Get("Percentage chance that slow effects will be negated.");
             Percent[ResistSlow] = true;
             Category[ResistSlow] = (short)StatCategory.CategoryDefense;
 
             // @TYPE resist_stun|Percentage chance that stun effects will be negated
             Key[ResistStun] = "resist_stun";
-            Name[ResistStun] = SharedResources.Msg!.Get("Resist Stun");
-            Desc[ResistStun] = SharedResources.Msg!.Get("Percentage chance that stun effects will be negated.");
+            Name[ResistStun] = msg.Get("Resist Stun");
+            Desc[ResistStun] = msg.Get("Percentage chance that stun effects will be negated.");
             Percent[ResistStun] = true;
             Category[ResistStun] = (short)StatCategory.CategoryDefense;
 
             // @TYPE resist_knockback|Percentage chance that knockback effects will be negated
             Key[ResistKnockback] = "resist_knockback";
-            Name[ResistKnockback] = SharedResources.Msg!.Get("Resist Knockback");
-            Desc[ResistKnockback] = SharedResources.Msg!.Get("Percentage chance that knockback effects will be negated.");
+            Name[ResistKnockback] = msg.Get("Resist Knockback");
+            Desc[ResistKnockback] = msg.Get("Percentage chance that knockback effects will be negated.");
             Percent[ResistKnockback] = true;
             Category[ResistKnockback] = (short)StatCategory.CategoryDefense;
 
             // @TYPE resist_stat_debuff|Percentage chance that stat debuff effects will be negated
             Key[ResistStatDebuff] = "resist_stat_debuff";
-            Name[ResistStatDebuff] = SharedResources.Msg!.Get("Resist Stat Debuffs");
-            Desc[ResistStatDebuff] = SharedResources.Msg!.Get("Percentage chance that stat debuff effects will be negated.");
+            Name[ResistStatDebuff] = msg.Get("Resist Stat Debuffs");
+            Desc[ResistStatDebuff] = msg.Get("Percentage chance that stat debuff effects will be negated.");
             Percent[ResistStatDebuff] = true;
             Category[ResistStatDebuff] = (short)StatCategory.CategoryDefense;
 
             // @TYPE resist_damage_reflect|Percentage chance that damage reflection will be negated
             Key[ResistDamageReflect] = "resist_damage_reflect";
-            Name[ResistDamageReflect] = SharedResources.Msg!.Get("Resist Damage Reflection");
-            Desc[ResistDamageReflect] = SharedResources.Msg!.Get("Percentage chance that damage reflection will be negated.");
+            Name[ResistDamageReflect] = msg.Get("Resist Damage Reflection");
+            Desc[ResistDamageReflect] = msg.Get("Percentage chance that damage reflection will be negated.");
             Percent[ResistDamageReflect] = true;
             Category[ResistDamageReflect] = (short)StatCategory.CategoryDefense;
 
             // @TYPE resist_hp_steal|Percentage chance that HP steal will be negated
             Key[ResistHpSteal] = "resist_hp_steal";
-            Name[ResistHpSteal] = SharedResources.Msg!.Get("Resist HP Steal");
-            Desc[ResistHpSteal] = SharedResources.Msg!.Get("Percentage chance that HP steal will be negated.");
+            Name[ResistHpSteal] = msg.Get("Resist HP Steal");
+            Desc[ResistHpSteal] = msg.Get("Percentage chance that HP steal will be negated.");
             Percent[ResistHpSteal] = true;
             Category[ResistHpSteal] = (short)StatCategory.CategoryDefense;
 
             // @TYPE resist_mp_steal|Percentage chance that MP steal will be negated
             Key[ResistMpSteal] = "resist_mp_steal";
-            Name[ResistMpSteal] = SharedResources.Msg!.Get("Resist MP Steal");
-            Desc[ResistMpSteal] = SharedResources.Msg!.Get("Percentage chance that MP steal will be negated.");
+            Name[ResistMpSteal] = msg.Get("Resist MP Steal");
+            Desc[ResistMpSteal] = msg.Get("Percentage chance that MP steal will be negated.");
             Percent[ResistMpSteal] = true;
             Category[ResistMpSteal] = (short)StatCategory.CategoryDefense;
         }

@@ -78,8 +78,11 @@ namespace FlareEngine
                 infile.Close();
             }
 
-            _labelLog.SetText(SharedResources.Msg!.Get("Log"));
-            _labelLog.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+
+            _labelLog.SetText(msg.Get("Log"));
+            _labelLog.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             // Initialize the tab control.
             _tabControl = new WidgetTabControl();
@@ -101,8 +104,8 @@ namespace FlareEngine
             }
 
             // Define the header.
-            _tabControl!.SetupTab((uint)TypeQuests, SharedResources.Msg!.Get("Quests"), TablistLog[TypeQuests]);
-            _tabControl.SetupTab((uint)TypeMessages, SharedResources.Msg.Get("Notes"), TablistLog[TypeMessages]);
+            _tabControl!.SetupTab((uint)TypeQuests, msg.Get("Quests"), TablistLog[TypeQuests]);
+            _tabControl.SetupTab((uint)TypeMessages, msg.Get("Notes"), TablistLog[TypeMessages]);
 
             if (_background == null)
                 SetBackground("images/menus/log.png");

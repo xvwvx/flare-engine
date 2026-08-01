@@ -15,7 +15,10 @@ namespace FlareEngine
 
         public MessageEngine()
         {
-            Utils.LogInfo("MessageEngine: Using language '%s'", SharedResources.Settings!.Language);
+            var settings = SharedResources.Settings!;
+            var mods = SharedResources.Mods!;
+
+            Utils.LogInfo("MessageEngine: Using language '%s'", settings.Language);
 
             // check to see if the language setting is available in engine/languages.txt
             using FileParser configFile = new FileParser();
@@ -26,7 +29,7 @@ namespace FlareEngine
             {
                 while (configFile.Next())
                 {
-                    if (configFile.Key == SharedResources.Settings!.Language)
+                    if (configFile.Key == settings.Language)
                     {
                         foundLanguage = true;
                         break;
@@ -40,10 +43,10 @@ namespace FlareEngine
             if (fallbackLanguage == "")
                 fallbackLanguage = "en";
 
-            if (!foundLanguage && SharedResources.Settings!.Language != fallbackLanguage)
+            if (!foundLanguage && settings.Language != fallbackLanguage)
             {
-                Utils.LogError("MessageEngine: Unable to find '%s' in engine/languages.txt. Falling back to '%s'.", SharedResources.Settings!.Language, fallbackLanguage);
-                SharedResources.Settings!.Language = fallbackLanguage;
+                Utils.LogError("MessageEngine: Unable to find '%s' in engine/languages.txt. Falling back to '%s'.", settings.Language, fallbackLanguage);
+                settings.Language = fallbackLanguage;
             }
 
 
@@ -52,9 +55,9 @@ namespace FlareEngine
             // SharedResources.Mods / ModManager 是尚未转换的未来依赖单元；调用形态
             // （List(string,bool) 与 ListFullPaths 常量）沿用 output/FileParser.cs 中
             // 已建立的前向引用约定，与之保持一致。
-            List<string> engineFiles = SharedResources.Mods!.List("languages/engine." + SharedResources.Settings!.Language + ".po", ModManager.ListFullPaths);
-            if (engineFiles.Count == 0 && SharedResources.Settings!.Language != "en")
-                Utils.LogError("MessageEngine: Unable to open basic translation files located in languages/engine.%s.po", SharedResources.Settings!.Language);
+            List<string> engineFiles = mods.List("languages/engine." + settings.Language + ".po", ModManager.ListFullPaths);
+            if (engineFiles.Count == 0 && settings.Language != "en")
+                Utils.LogError("MessageEngine: Unable to open basic translation files located in languages/engine.%s.po", settings.Language);
 
             for (int i = 0; i < engineFiles.Count; ++i)
             {
@@ -69,9 +72,9 @@ namespace FlareEngine
                 }
             }
 
-            List<string> dataFiles = SharedResources.Mods!.List("languages/data." + SharedResources.Settings!.Language + ".po", ModManager.ListFullPaths);
-            if (dataFiles.Count == 0 && SharedResources.Settings!.Language != "en")
-                Utils.LogError("MessageEngine: Unable to open basic translation files located in languages/data.%s.po", SharedResources.Settings!.Language);
+            List<string> dataFiles = mods.List("languages/data." + settings.Language + ".po", ModManager.ListFullPaths);
+            if (dataFiles.Count == 0 && settings.Language != "en")
+                Utils.LogError("MessageEngine: Unable to open basic translation files located in languages/data.%s.po", settings.Language);
 
             for (int i = 0; i < dataFiles.Count; ++i)
             {

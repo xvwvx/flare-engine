@@ -78,8 +78,9 @@ namespace FlareEngine
 
             Align();
 
-            SharedResources.Font!.SetFont("font_regular");
-            _paragraphSpacing = SharedResources.Font.GetLineHeight() / 2;
+            var font = SharedResources.Font!;
+            font.SetFont("font_regular");
+            _paragraphSpacing = font.GetLineHeight() / 2;
         }
 
         /// <summary>
@@ -142,6 +143,8 @@ namespace FlareEngine
         /// </summary>
         public override void Render()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             _clickToDismiss = false;
 
             if (_msgBuffer.Count == 0)
@@ -165,7 +168,7 @@ namespace FlareEngine
                     {
                         dest.Y -= _msgBuffer[i - 1]!.GetGraphicsHeight() + _paragraphSpacing;
                         _msgBuffer[i - 1]!.SetDestFromRect(dest);
-                        SharedResources.RenderDevice!.Render(_msgBuffer[i - 1]!);
+                        renderDevice.Render(_msgBuffer[i - 1]!);
                     }
                     else return; // no more new messages
                 }
@@ -185,7 +188,7 @@ namespace FlareEngine
                     {
                         // dest.Y -= _msgBuffer[i - 1]!.GetGraphicsHeight() + _paragraphSpacing;
                         _msgBuffer[i - 1]!.SetDestFromRect(dest);
-                        SharedResources.RenderDevice!.Render(_msgBuffer[i - 1]!);
+                        renderDevice.Render(_msgBuffer[i - 1]!);
                         dest.Y += msgHeight;
                     }
                     else return; // no more new messages
@@ -199,20 +202,24 @@ namespace FlareEngine
         /// </summary>
         public void Add(string s, int type)
         {
+            var pc = SharedGameResources.Pc!;
+            var font = SharedResources.Font!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             HideOverlay = false;
 
             // Make sure we don't spam the same message repeatedly
             if (_logMsg.Count == 0 || _logMsg[^1] != s || type == MsgUnique)
             {
                 // add new message
-                _logMsg.Add(Utils.SubstituteVarsInString(s, SharedGameResources.Pc));
+                _logMsg.Add(Utils.SubstituteVarsInString(s, pc));
                 _msgAge.Add(CalcDuration(_logMsg[^1]));
 
                 // render the log entry and store it in a buffer
-                SharedResources.Font!.SetFont("font_regular");
-                Int2 size = SharedResources.Font.CalcSizeWrapped(_logMsg[^1], WindowArea.Width - (_paragraphSpacing * 2));
-                Image? graphics = SharedResources.RenderDevice!.CreateImage(size.X, size.Y);
-                SharedResources.Font.RenderShadowed(_logMsg[^1], 0, 0, FontEngine.JustifyLeft, graphics!, WindowArea.Width - (_paragraphSpacing * 2), SharedResources.Font.GetColor(FontEngine.ColorMenuNormal));
+                font.SetFont("font_regular");
+                Int2 size = font.CalcSizeWrapped(_logMsg[^1], WindowArea.Width - (_paragraphSpacing * 2));
+                Image? graphics = renderDevice.CreateImage(size.X, size.Y);
+                font.RenderShadowed(_logMsg[^1], 0, 0, FontEngine.JustifyLeft, graphics!, WindowArea.Width - (_paragraphSpacing * 2), font.GetColor(FontEngine.ColorMenuNormal));
                 _msgBuffer.Add(graphics!.CreateSprite());
                 graphics.Unref();
             }
@@ -261,6 +268,8 @@ namespace FlareEngine
         /// </summary>
         public void RenderOverlay()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+
             if (_msgBuffer.Count == 0 || HideOverlay || !_enableOverlay)
             {
                 _clickToDismiss = false;
@@ -280,7 +289,7 @@ namespace FlareEngine
                     _overlayBg = null;
                 }
 
-                Image? temp = SharedResources.RenderDevice!.CreateImage(WindowArea.Width, msgHeight);
+                Image? temp = renderDevice.CreateImage(WindowArea.Width, msgHeight);
 
                 if (temp != null)
                 {
@@ -303,7 +312,7 @@ namespace FlareEngine
             if (_overlayBg != null)
             {
                 _overlayBg.SetDest(WindowArea.X, startY);
-                SharedResources.RenderDevice!.Render(_overlayBg);
+                renderDevice.Render(_overlayBg);
             }
 
             Rectangle dest = default;
@@ -311,7 +320,7 @@ namespace FlareEngine
             dest.Y = startY + _paragraphSpacing;
 
             _msgBuffer[^1]!.SetDestFromRect(dest);
-            SharedResources.RenderDevice!.Render(_msgBuffer[^1]!);
+            renderDevice.Render(_msgBuffer[^1]!);
         }
 
         /// <summary>
@@ -321,7 +330,8 @@ namespace FlareEngine
         private int CalcDuration(string s)
         {
             // 5 seconds plus an extra second per 10 letters
-            return SharedResources.Settings!.MaxFramesPerSec * 5 + s.Length * (SharedResources.Settings.MaxFramesPerSec / 10);
+            var settings = SharedResources.Settings!;
+            return settings.MaxFramesPerSec * 5 + s.Length * (settings.MaxFramesPerSec / 10);
         }
     }
 }

@@ -489,6 +489,7 @@ namespace FlareEngine
             Settings settings = SharedResources.Settings!;
             EngineSettings eset = SharedResources.Eset!;
             ItemManager items = SharedGameResources.Items!;
+            
             string saveRoot = settings.PathUser + "saves/" + eset.Misc.SavePrefix + "/";
             List<string> saveDirs = new List<string>();
 

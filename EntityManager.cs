@@ -142,6 +142,11 @@ namespace FlareEngine
             MapEnemy me;
             Queue<Entity> allies = new Queue<Entity>();
 
+            var mapr = SharedGameResources.Mapr!;
+            var pc = SharedGameResources.Pc!;
+            var powers = SharedGameResources.Powers!;
+            var enemyg = SharedGameResources.Enemyg!;
+
             // delete existing entities
             for (int i = 0; i < Entities.Count; i++)
             {
@@ -168,9 +173,9 @@ namespace FlareEngine
             Prototypes.Clear();
 
             // load new entities
-            while (SharedGameResources.Mapr!.Enemies.Count > 0)
+            while (mapr.Enemies.Count > 0)
             {
-                me = SharedGameResources.Mapr!.Enemies.Dequeue();
+                me = mapr.Enemies.Dequeue();
 
                 if (me.Type == "")
                 {
@@ -192,9 +197,9 @@ namespace FlareEngine
                 e.Stats.InvincibleRequirements = new List<EventComponent>(me.InvincibleRequirements);
 
                 // Set level
-                if (SharedGameResources.Pc != null)
+                if (pc != null)
                 {
-                    me.SpawnLevel.ApplyToStatBlock(e.Stats, SharedGameResources.Pc!.Stats);
+                    me.SpawnLevel.ApplyToStatBlock(e.Stats, pc.Stats);
                 }
 
                 // apply Effects and set HP to max HP
@@ -202,11 +207,11 @@ namespace FlareEngine
 
                 Entities.Add(e);
 
-                SharedGameResources.Mapr!.Collider.Block(me.Pos.X, me.Pos.Y, !MapCollision.IsAlly);
+                mapr.Collider.Block(me.Pos.X, me.Pos.Y, !MapCollision.IsAlly);
             }
 
             // 飞行类敌人跨越坑洞时如何生成的问题，原始实现中尚未处理，本次迁移保留原样行为。
-            Vector2 spawnPos = SharedGameResources.Mapr!.Collider.GetRandomNeighbor(SharedGameResources.Pc!.Stats.Pos.ToInt2(), 1, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities);
+            Vector2 spawnPos = mapr.Collider.GetRandomNeighbor(pc.Stats.Pos.ToInt2(), 1, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities);
             while (allies.Count > 0)
             {
                 Entity e = allies.Dequeue();
@@ -216,23 +221,23 @@ namespace FlareEngine
                 temp.Dispose();
 
                 e.Stats.Pos = spawnPos;
-                e.Stats.Direction = SharedGameResources.Pc!.Stats.Direction;
+                e.Stats.Direction = pc.Stats.Direction;
 
                 Entities.Add(e);
 
-                SharedGameResources.Mapr!.Collider.Block(e.Stats.Pos.X, e.Stats.Pos.Y, MapCollision.IsAlly);
+                mapr.Collider.Block(e.Stats.Pos.X, e.Stats.Pos.Y, MapCollision.IsAlly);
             }
 
             // load entities that can be spawn by avatar's powers
-            for (int i = 0; i < SharedGameResources.Pc!.Stats.PowersList.Count; i++)
+            for (int i = 0; i < pc.Stats.PowersList.Count; i++)
             {
-                PowerID powerIndex = SharedGameResources.Pc!.Stats.PowersList[i];
-                if (SharedGameResources.Powers!.IsValid(powerIndex))
+                PowerID powerIndex = pc.Stats.PowersList[i];
+                if (powers.IsValid(powerIndex))
                 {
-                    string spawnType = SharedGameResources.Powers!.Powers[powerIndex].SpawnType;
+                    string spawnType = powers.Powers[powerIndex].SpawnType;
                     if (spawnType != "" && spawnType != "untransform")
                     {
-                        List<EnemyLevel> spawnEnemies = SharedGameResources.Enemyg!.GetEnemiesInCategory(spawnType);
+                        List<EnemyLevel> spawnEnemies = enemyg.GetEnemiesInCategory(spawnType);
                         for (int j = 0; j < spawnEnemies.Count; j++)
                         {
                             LoadEntityPrototype(spawnEnemies[j].Type);
@@ -249,10 +254,10 @@ namespace FlareEngine
                     PowerID powerIndex = SharedGameResources.MenuAct!.Hotkeys[i];
                     if (powerIndex != 0)
                     {
-                        string spawnType = SharedGameResources.Powers!.Powers[powerIndex].SpawnType;
+                        string spawnType = powers.Powers[powerIndex].SpawnType;
                         if (spawnType != "" && spawnType != "untransform")
                         {
-                            List<EnemyLevel> spawnEnemies = SharedGameResources.Enemyg!.GetEnemiesInCategory(spawnType);
+                            List<EnemyLevel> spawnEnemies = enemyg.GetEnemiesInCategory(spawnType);
                             for (int j = 0; j < spawnEnemies.Count; j++)
                             {
                                 LoadEntityPrototype(spawnEnemies[j].Type);
@@ -263,13 +268,13 @@ namespace FlareEngine
             }
 
             // load entities that can be spawn by map events
-            for (int i = 0; i < SharedGameResources.Mapr!.Events.Count; i++)
+            for (int i = 0; i < mapr.Events.Count; i++)
             {
-                for (int j = 0; j < SharedGameResources.Mapr!.Events[i].Components.Count; j++)
+                for (int j = 0; j < mapr.Events[i].Components.Count; j++)
                 {
-                    if (SharedGameResources.Mapr!.Events[i].Components[j].Type == EventComponent.Spawn)
+                    if (mapr.Events[i].Components[j].Type == EventComponent.Spawn)
                     {
-                        List<EnemyLevel> spawnEnemies = SharedGameResources.Enemyg!.GetEnemiesInCategory(SharedGameResources.Mapr!.Events[i].Components[j].S);
+                        List<EnemyLevel> spawnEnemies = enemyg.GetEnemiesInCategory(mapr.Events[i].Components[j].S);
                         for (int k = 0; k < spawnEnemies.Count; k++)
                         {
                             LoadEntityPrototype(spawnEnemies[k].Type);
@@ -289,11 +294,16 @@ namespace FlareEngine
         {
             MapEnemy espawn;
 
-            while (SharedGameResources.Powers!.MapEnemies.Count > 0)
-            {
-                espawn = SharedGameResources.Powers!.MapEnemies.Dequeue();
+            var powers = SharedGameResources.Powers!;
+            var mapr = SharedGameResources.Mapr!;
+            var pc = SharedGameResources.Pc!;
+            var enemyg = SharedGameResources.Enemyg!;
 
-                SharedGameResources.Mapr!.Collider.Unblock(espawn.Pos.X, espawn.Pos.Y);
+            while (powers.MapEnemies.Count > 0)
+            {
+                espawn = powers.MapEnemies.Dequeue();
+
+                mapr.Collider.Unblock(espawn.Pos.X, espawn.Pos.Y);
 
                 Entity e = new Entity();
 
@@ -310,7 +320,7 @@ namespace FlareEngine
 
                 e.Stats.Direction = (byte)espawn.Direction;
 
-                EnemyLevel el = SharedGameResources.Enemyg!.GetRandomEnemy(espawn.Type, 0, 0);
+                EnemyLevel el = enemyg.GetRandomEnemy(espawn.Type, 0, 0);
                 e.TypeFilename = el.Type;
 
                 if (el.Type != "")
@@ -332,9 +342,9 @@ namespace FlareEngine
                 e.LoadSounds();
 
                 //Set level
-                if (SharedGameResources.Powers!.IsValid(e.Stats.SummonedPowerIndex))
+                if (powers.IsValid(e.Stats.SummonedPowerIndex))
                 {
-                    SpawnLevel spawnLevel = SharedGameResources.Powers!.Powers[e.Stats.SummonedPowerIndex].SpawnLevel;
+                    SpawnLevel spawnLevel = powers.Powers[e.Stats.SummonedPowerIndex].SpawnLevel;
                     spawnLevel.ApplyToStatBlock(e.Stats, e.Stats.Summoner);
 
                     // apply Effects and set HP to max HP
@@ -346,41 +356,41 @@ namespace FlareEngine
                     e.Stats.Recalc();
                 }
 
-                if (SharedGameResources.Mapr!.Collider.IsValidPosition(espawn.Pos.X, espawn.Pos.Y, e.Stats.MovementType, MapCollision.CollideTypeAllEntities) || !e.Stats.HeroAlly)
+                if (mapr.Collider.IsValidPosition(espawn.Pos.X, espawn.Pos.Y, e.Stats.MovementType, MapCollision.CollideTypeAllEntities) || !e.Stats.HeroAlly)
                 {
                     e.Stats.Pos.X = espawn.Pos.X;
                     e.Stats.Pos.Y = espawn.Pos.Y;
                 }
                 else
                 {
-                    e.Stats.Pos = SharedGameResources.Mapr!.Collider.GetRandomNeighbor(SharedGameResources.Pc!.Stats.Pos.ToInt2(), 1, e.Stats.MovementType, MapCollision.CollideTypeAllEntities);
+                    e.Stats.Pos = mapr.Collider.GetRandomNeighbor(pc.Stats.Pos.ToInt2(), 1, e.Stats.MovementType, MapCollision.CollideTypeAllEntities);
                 }
 
                 // special animation state for spawning entities
                 e.Stats.CurState = StatBlock.EntitySpawn;
 
                 //now apply post effects to the spawned entity
-                SharedGameResources.Powers!.Effect(e.Stats, (espawn.Summoner != null ? espawn.Summoner : e.Stats), e.Stats.SummonedPowerIndex, e.Stats.HeroAlly ? Power.SourceTypeHero : Power.SourceTypeEnemy);
+                powers.Effect(e.Stats, (espawn.Summoner != null ? espawn.Summoner : e.Stats), e.Stats.SummonedPowerIndex, e.Stats.HeroAlly ? Power.SourceTypeHero : Power.SourceTypeEnemy);
 
                 //apply party passives
                 //synchronise tha party passives in the pc stat block with the passives in the allies stat blocks
                 //at the time the summon is spawned, it takes the passives available at that time. if the passives change later, the changes wont affect summons retrospectively. could be exploited with equipment switching
-                for (int i = 0; i < SharedGameResources.Pc!.Stats.PowersPassive.Count; i++)
+                for (int i = 0; i < pc.Stats.PowersPassive.Count; i++)
                 {
-                    PowerID pwr = SharedGameResources.Pc!.Stats.PowersPassive[i];
-                    if (SharedGameResources.Powers!.IsValid(pwr) && SharedGameResources.Powers!.Powers[pwr].Passive && SharedGameResources.Powers!.Powers[pwr].BuffParty && (e.Stats.HeroAlly || e.Stats.EnemyAlly)
-                            && (SharedGameResources.Powers!.Powers[pwr].BuffPartyPowerId == 0 || SharedGameResources.Powers!.Powers[pwr].BuffPartyPowerId == e.Stats.SummonedPowerIndex))
+                    PowerID pwr = pc.Stats.PowersPassive[i];
+                    if (powers.IsValid(pwr) && powers.Powers[pwr].Passive && powers.Powers[pwr].BuffParty && (e.Stats.HeroAlly || e.Stats.EnemyAlly)
+                            && (powers.Powers[pwr].BuffPartyPowerId == 0 || powers.Powers[pwr].BuffPartyPowerId == e.Stats.SummonedPowerIndex))
                     {
 
                         e.Stats.PowersPassive.Add(pwr);
                     }
                 }
 
-                for (int i = 0; i < SharedGameResources.Pc!.Stats.PowersListItems.Count; i++)
+                for (int i = 0; i < pc.Stats.PowersListItems.Count; i++)
                 {
-                    PowerID pwr = SharedGameResources.Pc!.Stats.PowersListItems[i];
-                    if (SharedGameResources.Powers!.IsValid(pwr) && SharedGameResources.Powers!.Powers[pwr].Passive && SharedGameResources.Powers!.Powers[pwr].BuffParty && (e.Stats.HeroAlly || e.Stats.EnemyAlly)
-                            && (SharedGameResources.Powers!.Powers[pwr].BuffPartyPowerId == 0 || SharedGameResources.Powers!.Powers[pwr].BuffPartyPowerId == e.Stats.SummonedPowerIndex))
+                    PowerID pwr = pc.Stats.PowersListItems[i];
+                    if (powers.IsValid(pwr) && powers.Powers[pwr].Passive && powers.Powers[pwr].BuffParty && (e.Stats.HeroAlly || e.Stats.EnemyAlly)
+                            && (powers.Powers[pwr].BuffPartyPowerId == 0 || powers.Powers[pwr].BuffPartyPowerId == e.Stats.SummonedPowerIndex))
                     {
 
                         e.Stats.PowersPassive.Add(pwr);
@@ -389,7 +399,7 @@ namespace FlareEngine
 
                 Entities.Add(e);
 
-                SharedGameResources.Mapr!.Collider.Block(e.Stats.Pos.X, e.Stats.Pos.Y, e.Stats.HeroAlly);
+                mapr.Collider.Block(e.Stats.Pos.X, e.Stats.Pos.Y, e.Stats.HeroAlly);
             }
         }
 
@@ -434,17 +444,19 @@ namespace FlareEngine
                 }
             }
 
-            if (pcInCombat && !SharedGameResources.Pc!.Stats.InCombat)
+            var inpt = SharedResources.Inpt!;
+            var pc = SharedGameResources.Pc!;
+            if (pcInCombat && !pc.Stats.InCombat)
             {
                 // if a supported controller is connected, change the LED to red when in combat
                 Color ledColor = new Color(255, 0, 0, 255);
-                SharedResources.Inpt!.SetJoystickLED(ledColor);
-                SharedGameResources.Pc!.Stats.InCombat = true;
+                inpt.SetJoystickLED(ledColor);
+                pc.Stats.InCombat = true;
             }
-            else if (!pcInCombat && SharedGameResources.Pc!.Stats.InCombat)
+            else if (!pcInCombat && pc.Stats.InCombat)
             {
-                SharedResources.Inpt!.SetJoystickLED(InputState.DefaultControllerLedColor);
-                SharedGameResources.Pc!.Stats.InCombat = false;
+                inpt.SetJoystickLED(InputState.DefaultControllerLedColor);
+                pc.Stats.InCombat = false;
             }
         }
 

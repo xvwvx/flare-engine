@@ -40,14 +40,18 @@ namespace FlareEngine
             _activated = false;
             _soundActivate = 0;
 
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
             Image? graphics = null;
             if (fname != DefaultFile)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(fname, RenderDevice.ErrorNormal);
+                graphics = renderDevice.LoadImage(fname, RenderDevice.ErrorNormal);
             }
             if (graphics == null)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(DefaultFile, RenderDevice.ErrorExit);
+                graphics = renderDevice.LoadImage(DefaultFile, RenderDevice.ErrorExit);
             }
             if (graphics != null)
             {
@@ -58,8 +62,8 @@ namespace FlareEngine
                 graphics.Unref();
             }
 
-            if (SharedResources.Eset!.Widgets.SoundActivate.Length != 0)
-                _soundActivate = SharedResources.Snd!.Load(SharedResources.Eset.Widgets.SoundActivate, "Widget activate");
+            if (eset.Widgets.SoundActivate.Length != 0)
+                _soundActivate = snd.Load(eset.Widgets.SoundActivate, "Widget activate");
         }
 
         /// <summary>
@@ -106,7 +110,9 @@ namespace FlareEngine
             CheckTooltip(mouse);
 
             // main button already in use, new click not allowed
-            InputState inpt = SharedResources.Inpt!;
+            var inpt = SharedResources.Inpt!;
+            var snd = SharedResources.Snd!;
+
             if (inpt.Lock[Input.Main1]) return false;
             if (!inpt.UsingMouse() && inpt.Lock[Input.Accept]) return false;
 
@@ -115,7 +121,7 @@ namespace FlareEngine
                 _activated = false;
                 _pressed = false;
                 SetChecked(!IsChecked);
-                SharedResources.Snd!.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
                 return true;
             }
 
@@ -134,12 +140,15 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+
             if (_cb != null)
             {
                 _cb.LocalFrame = LocalFrame;
                 _cb.SetOffset(LocalOffset);
                 _cb.SetDestFromRect(Pos);
-                SharedResources.RenderDevice!.Render(_cb);
+                renderDevice.Render(_cb);
             }
 
             if (InFocus)
@@ -166,15 +175,17 @@ namespace FlareEngine
                 }
                 if (draw)
                 {
-                    SharedResources.RenderDevice!.DrawRectangleCorners(SharedResources.Eset!.Widgets.SelectionRectCornerSize, topLeft, bottomRight, SharedResources.Eset.Widgets.SelectionRectColor);
+                    renderDevice.DrawRectangleCorners(eset.Widgets.SelectionRectCornerSize, topLeft, bottomRight, eset.Widgets.SelectionRectColor);
                 }
             }
         }
 
         private void CheckTooltip(Int2 mouse)
         {
+            var inpt = SharedResources.Inpt!;
+            var tooltipm = SharedResources.Tooltipm!;
+
             TooltipData tipData = new TooltipData();
-            InputState inpt = SharedResources.Inpt!;
             if (inpt.UsingMouse() && Utils.IsWithinRect(Pos, mouse) && Tooltip != "")
             {
                 tipData.AddText(Tooltip);
@@ -183,7 +194,7 @@ namespace FlareEngine
             if (!tipData.IsEmpty())
             {
                 Int2 newMouse = new Int2(mouse.X + LocalFrame.X - LocalOffset.X, mouse.Y + LocalFrame.Y - LocalOffset.Y);
-                SharedResources.Tooltipm!.Push(tipData, newMouse, TooltipData.StyleFloat);
+                tooltipm.Push(tipData, newMouse, TooltipData.StyleFloat);
             }
         }
     }

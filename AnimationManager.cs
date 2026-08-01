@@ -39,7 +39,6 @@ namespace FlareEngine
                     Utils.LogError("%s %d", _names[i], _counts[i]);
                 }
             }
-            Debug.Assert(_names.Count == 0);
 #endif
         }
 

@@ -147,21 +147,26 @@ namespace FlareEngine
 
         public bool CheckItem(ItemStack istack)
         {
-            if (SharedGameResources.Menu!.Inv!.Inventory[MenuInventory.Carried].Contain(istack.Item, istack.Quantity))
+            var menu = SharedGameResources.Menu!;
+
+            if (menu.Inv!.Inventory[MenuInventory.Carried].Contain(istack.Item, istack.Quantity))
                 return true;
             else
-                return SharedGameResources.Menu.Inv.EquipmentContain(istack.Item, istack.Quantity);
+                return menu.Inv.EquipmentContain(istack.Item, istack.Quantity);
         }
 
         public void RemoveCurrency(int quantity)
         {
-            int maxAmount = Math.Min(quantity, SharedGameResources.Menu!.Inv!.Currency);
+            var eset = SharedResources.Eset!;
+            var menu = SharedGameResources.Menu!;
+
+            int maxAmount = Math.Min(quantity, menu.Inv!.Currency);
 
             if (maxAmount > 0)
             {
-                SharedGameResources.Menu.Inv.RemoveCurrency(maxAmount);
-                SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.GetV("%d %s removed.", maxAmount, SharedResources.Eset!.Loot.Currency), Avatar.MsgUnique);
-                SharedGameResources.Items!.PlaySound(SharedResources.Eset.Misc.CurrencyId);
+                menu.Inv.RemoveCurrency(maxAmount);
+                SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.GetV("%d %s removed.", maxAmount, eset.Loot.Currency), Avatar.MsgUnique);
+                SharedGameResources.Items!.PlaySound(eset.Misc.CurrencyId);
             }
         }
 
@@ -170,24 +175,30 @@ namespace FlareEngine
             if (istack.Empty())
                 return;
 
-            if (istack.Item == SharedResources.Eset!.Misc.CurrencyId)
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+            var items = SharedGameResources.Items!;
+            var menu = SharedGameResources.Menu!;
+            var pc = SharedGameResources.Pc!;
+
+            if (istack.Item == eset.Misc.CurrencyId)
             {
                 RemoveCurrency(istack.Quantity);
                 return;
             }
 
-            int itemCount = SharedGameResources.Menu!.Inv!.Inventory[MenuInventory.Carried].Count(istack.Item) + SharedGameResources.Menu.Inv.Inventory[MenuInventory.Equipment].Count(istack.Item);
+            int itemCount = menu.Inv!.Inventory[MenuInventory.Carried].Count(istack.Item) + menu.Inv.Inventory[MenuInventory.Equipment].Count(istack.Item);
             int maxAmount = Math.Min(itemCount, istack.Quantity);
 
-            if (SharedGameResources.Menu.Inv.Remove(istack.Item, maxAmount))
+            if (menu.Inv.Remove(istack.Item, maxAmount))
             {
                 if (maxAmount > 1)
-                    SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.GetV("%s x%d removed.", SharedGameResources.Items!.GetItemName(istack.Item), maxAmount), Avatar.MsgUnique);
+                    pc.LogMsg(msg.GetV("%s x%d removed.", items.GetItemName(istack.Item), maxAmount), Avatar.MsgUnique);
                 else if (maxAmount == 1)
-                    SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.GetV("%s removed.", SharedGameResources.Items!.GetItemName(istack.Item)), Avatar.MsgUnique);
+                    pc.LogMsg(msg.GetV("%s removed.", items.GetItemName(istack.Item)), Avatar.MsgUnique);
 
                 if (maxAmount > 0)
-                    SharedGameResources.Items!.PlaySound(istack.Item);
+                    items.PlaySound(istack.Item);
             }
         }
 
@@ -195,19 +206,25 @@ namespace FlareEngine
         {
             if (istack.Empty())
                 return;
+            
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+            var items = SharedGameResources.Items!;
+            var menu = SharedGameResources.Menu!;
+            var pc = SharedGameResources.Pc!;
 
-            SharedGameResources.Menu!.Inv!.Add(istack, MenuInventory.Carried, ItemStorage.NoSlot, MenuInventory.AddPlaySound, MenuInventory.AddAutoEquip);
+            menu.Inv!.Add(istack, MenuInventory.Carried, ItemStorage.NoSlot, MenuInventory.AddPlaySound, MenuInventory.AddAutoEquip);
 
-            if (istack.Item == SharedResources.Eset!.Misc.CurrencyId)
+            if (istack.Item == eset.Misc.CurrencyId)
             {
-                SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.GetV("You receive %d %s.", istack.Quantity, SharedResources.Eset.Loot.Currency), Avatar.MsgUnique);
+                pc.LogMsg(msg.GetV("You receive %d %s.", istack.Quantity, eset.Loot.Currency), Avatar.MsgUnique);
             }
             else
             {
                 if (istack.Quantity > 1)
-                    SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.GetV("You receive %s x%d.", SharedGameResources.Items!.GetItemName(istack.Item), istack.Quantity), Avatar.MsgUnique);
+                    pc.LogMsg(msg.GetV("You receive %s x%d.", items.GetItemName(istack.Item), istack.Quantity), Avatar.MsgUnique);
                 else if (istack.Quantity == 1)
-                    SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.GetV("You receive %s.", SharedGameResources.Items!.GetItemName(istack.Item)), Avatar.MsgUnique);
+                    pc.LogMsg(msg.GetV("You receive %s.", items.GetItemName(istack.Item)), Avatar.MsgUnique);
             }
         }
 
@@ -222,23 +239,31 @@ namespace FlareEngine
 
         public void RewardXp(float amount, bool showMessage)
         {
-            if (SharedGameResources.Pc!.BlockXpGain)
+            var pc = SharedGameResources.Pc!;
+            var msg = SharedResources.Msg!;
+
+            if (pc.BlockXpGain)
                 return;
 
-            BonusXp += (amount * (100.0f + (float)SharedGameResources.Pc.Stats.Get(Stats.XpGain))) / 100.0f;
+            BonusXp += (amount * (100.0f + (float)pc.Stats.Get(Stats.XpGain))) / 100.0f;
 
             int wholeXp = (int)BonusXp;
-            SharedGameResources.Pc.Stats.AddXp(wholeXp);
+            pc.Stats.AddXp(wholeXp);
             BonusXp -= (float)wholeXp; // remainder
 
-            SharedGameResources.Pc.Stats.RefreshStats = true;
+            pc.Stats.RefreshStats = true;
 
             if (showMessage)
-                SharedGameResources.Pc.LogMsg(SharedResources.Msg!.GetV("You receive %d XP.", (int)amount), Avatar.MsgUnique);
+                pc.LogMsg(msg.GetV("You receive %d XP.", (int)amount), Avatar.MsgUnique);
         }
 
         public void RestoreHpMp(string s)
         {
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+            var items = SharedGameResources.Items!;
+            var pc = SharedGameResources.Pc!;
+
             string restoreStr = s;
             string restoreMode = Parse.PopFirstString(ref restoreStr);
 
@@ -246,46 +271,46 @@ namespace FlareEngine
             {
                 if (restoreMode == "hp")
                 {
-                    SharedGameResources.Pc!.Stats.Hp = SharedGameResources.Pc.Stats.Get(global::FlareEngine.Stats.HpMax);
-                    SharedGameResources.Pc.LogMsg(SharedResources.Msg!.Get("HP restored."), Avatar.MsgUnique);
+                    pc.Stats.Hp = pc.Stats.Get(global::FlareEngine.Stats.HpMax);
+                    pc.LogMsg(msg.Get("HP restored."), Avatar.MsgUnique);
                 }
                 else if (restoreMode == "mp")
                 {
-                    SharedGameResources.Pc!.Stats.Mp = SharedGameResources.Pc.Stats.Get(global::FlareEngine.Stats.MpMax);
-                    SharedGameResources.Pc.LogMsg(SharedResources.Msg!.Get("MP restored."), Avatar.MsgUnique);
+                    pc.Stats.Mp = pc.Stats.Get(global::FlareEngine.Stats.MpMax);
+                    pc.LogMsg(msg.Get("MP restored."), Avatar.MsgUnique);
                 }
                 else if (restoreMode == "hpmp")
                 {
-                    SharedGameResources.Pc!.Stats.Hp = SharedGameResources.Pc.Stats.Get(global::FlareEngine.Stats.HpMax);
-                    SharedGameResources.Pc!.Stats.Mp = SharedGameResources.Pc.Stats.Get(global::FlareEngine.Stats.MpMax);
-                    SharedGameResources.Pc.LogMsg(SharedResources.Msg!.Get("HP and MP restored."), Avatar.MsgUnique);
+                    pc.Stats.Hp = pc.Stats.Get(global::FlareEngine.Stats.HpMax);
+                    pc.Stats.Mp = pc.Stats.Get(global::FlareEngine.Stats.MpMax);
+                    pc.LogMsg(msg.Get("HP and MP restored."), Avatar.MsgUnique);
                 }
                 else if (restoreMode == "status")
                 {
-                    SharedGameResources.Pc!.Stats.Effects.ClearNegativeEffects(Effect.ResistAll);
-                    SharedGameResources.Pc.LogMsg(SharedResources.Msg!.Get("Negative effects removed."), Avatar.MsgUnique);
+                    pc.Stats.Effects.ClearNegativeEffects(Effect.ResistAll);
+                    pc.LogMsg(msg.Get("Negative effects removed."), Avatar.MsgUnique);
                 }
                 else if (restoreMode == "all")
                 {
-                    SharedGameResources.Pc!.Stats.Hp = SharedGameResources.Pc.Stats.Get(global::FlareEngine.Stats.HpMax);
-                    SharedGameResources.Pc!.Stats.Mp = SharedGameResources.Pc.Stats.Get(global::FlareEngine.Stats.MpMax);
-                    SharedGameResources.Pc!.Stats.Effects.ClearNegativeEffects(Effect.ResistAll);
-                    SharedGameResources.Pc.LogMsg(SharedResources.Msg!.Get("HP and MP restored, negative effects removed"), Avatar.MsgUnique);
+                    pc.Stats.Hp = pc.Stats.Get(global::FlareEngine.Stats.HpMax);
+                    pc.Stats.Mp = pc.Stats.Get(global::FlareEngine.Stats.MpMax);
+                    pc.Stats.Effects.ClearNegativeEffects(Effect.ResistAll);
+                    pc.LogMsg(msg.Get("HP and MP restored, negative effects removed"), Avatar.MsgUnique);
 
-                    for (int i = 0; i < SharedResources.Eset!.ResourceStats.Stats.Count; ++i)
+                    for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
                     {
-                        SharedGameResources.Pc!.Stats.ResourceStats[i] = SharedGameResources.Pc.Stats.GetResourceStat(i, EngineSettings.ResourceStatsSettings.StatBase);
-                        SharedGameResources.Pc.LogMsg(SharedResources.Eset.ResourceStats.Stats[i].TextLogRestore, Avatar.MsgUnique);
+                        pc.Stats.ResourceStats[i] = pc.Stats.GetResourceStat(i, EngineSettings.ResourceStatsSettings.StatBase);
+                        pc.LogMsg(eset.ResourceStats.Stats[i].TextLogRestore, Avatar.MsgUnique);
                     }
                 }
                 else
                 {
-                    for (int i = 0; i < SharedResources.Eset!.ResourceStats.Stats.Count; ++i)
+                    for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
                     {
-                        if (restoreMode == SharedResources.Eset.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatBase])
+                        if (restoreMode == eset.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatBase])
                         {
-                            SharedGameResources.Pc!.Stats.ResourceStats[i] = SharedGameResources.Pc.Stats.GetResourceStat(i, EngineSettings.ResourceStatsSettings.StatBase);
-                            SharedGameResources.Pc.LogMsg(SharedResources.Eset.ResourceStats.Stats[i].TextLogRestore, Avatar.MsgUnique);
+                            pc.Stats.ResourceStats[i] = pc.Stats.GetResourceStat(i, EngineSettings.ResourceStatsSettings.StatBase);
+                            pc.LogMsg(eset.ResourceStats.Stats[i].TextLogRestore, Avatar.MsgUnique);
                         }
                     }
                 }
@@ -296,6 +321,9 @@ namespace FlareEngine
 
         public bool CheckAllRequirements(EventComponent ec)
         {
+            var pc = SharedGameResources.Pc!;
+            var mapr = SharedGameResources.Mapr!;
+
             if (ec.Type == EventComponent.RequiresStatus)
             {
                 if (CheckStatus(ec.Status))
@@ -328,38 +356,38 @@ namespace FlareEngine
             }
             else if (ec.Type == EventComponent.RequiresLevel)
             {
-                if (SharedGameResources.Pc!.Stats.Level >= ec.Data[0].Int)
+                if (pc.Stats.Level >= ec.Data[0].Int)
                     return true;
             }
             else if (ec.Type == EventComponent.RequiresNotLevel)
             {
-                if (SharedGameResources.Pc!.Stats.Level < ec.Data[0].Int)
+                if (pc.Stats.Level < ec.Data[0].Int)
                     return true;
             }
             else if (ec.Type == EventComponent.RequiresClass)
             {
-                if (SharedGameResources.Pc!.Stats.CharacterClass == ec.S)
+                if (pc.Stats.CharacterClass == ec.S)
                     return true;
             }
             else if (ec.Type == EventComponent.RequiresNotClass)
             {
-                if (SharedGameResources.Pc!.Stats.CharacterClass != ec.S)
+                if (pc.Stats.CharacterClass != ec.S)
                     return true;
             }
             else if (ec.Type == EventComponent.RequiresTile)
             {
-                int index = SharedGameResources.Mapr!.Layernames.IndexOf(ec.S);
-                if (index == -1) index = SharedGameResources.Mapr.LayernamesHashed.Count;
-                if (SharedGameResources.Mapr != null && index < SharedGameResources.Mapr.Layers.Count && ec.Data[0].Int >= 0 && ec.Data[0].Int < SharedGameResources.Mapr.W && ec.Data[1].Int >= 0 && ec.Data[1].Int < SharedGameResources.Mapr.H)
-                    if (SharedGameResources.Mapr.Layers[index][ec.Data[0].Int][ec.Data[1].Int] == (ushort)ec.Data[2].Int)
+                int index = mapr.Layernames.IndexOf(ec.S);
+                if (index == -1) index = mapr.LayernamesHashed.Count;
+                if (mapr != null && index < mapr.Layers.Count && ec.Data[0].Int >= 0 && ec.Data[0].Int < mapr.W && ec.Data[1].Int >= 0 && ec.Data[1].Int < mapr.H)
+                    if (mapr.Layers[index][ec.Data[0].Int][ec.Data[1].Int] == (ushort)ec.Data[2].Int)
                         return true;
             }
             else if (ec.Type == EventComponent.RequiresNotTile)
             {
-                int index = SharedGameResources.Mapr!.Layernames.IndexOf(ec.S);
-                if (index == -1) index = SharedGameResources.Mapr.LayernamesHashed.Count;
-                if (SharedGameResources.Mapr != null && index < SharedGameResources.Mapr.Layers.Count && ec.Data[0].Int >= 0 && ec.Data[0].Int < SharedGameResources.Mapr.W && ec.Data[1].Int >= 0 && ec.Data[1].Int < SharedGameResources.Mapr.H)
-                    if (SharedGameResources.Mapr.Layers[index][ec.Data[0].Int][ec.Data[1].Int] != (ushort)ec.Data[2].Int)
+                int index = mapr.Layernames.IndexOf(ec.S);
+                if (index == -1) index = mapr.LayernamesHashed.Count;
+                if (mapr != null && index < mapr.Layers.Count && ec.Data[0].Int >= 0 && ec.Data[0].Int < mapr.W && ec.Data[1].Int >= 0 && ec.Data[1].Int < mapr.H)
+                    if (mapr.Layers[index][ec.Data[0].Int][ec.Data[1].Int] != (ushort)ec.Data[2].Int)
                         return true;
             }
             else

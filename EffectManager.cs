@@ -158,8 +158,9 @@ namespace FlareEngine
             if (!string.IsNullOrEmpty(s))
             {
                 AnimationName = s;
-                SharedResources.Anim!.IncreaseCount(AnimationName);
-                AnimationSet? animationSet = SharedResources.Anim.GetAnimationSet(AnimationName);
+                var anim = SharedResources.Anim!;
+                anim.IncreaseCount(AnimationName);
+                AnimationSet? animationSet = anim.GetAnimationSet(AnimationName);
                 EffectAnimation = animationSet!.GetAnimation("");
             }
         }
@@ -210,6 +211,8 @@ namespace FlareEngine
 
             else
             {
+                var eset = SharedResources.Eset!;
+
                 int offsetIndex = Effect.TypeCount;
 
                 for (int i = 0; i < Stats.Count; ++i)
@@ -221,50 +224,50 @@ namespace FlareEngine
                 }
                 offsetIndex += Stats.Count;
 
-                for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+                for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
                 {
-                    if (typeStr == SharedResources.Eset.DamageTypes.Types[i].Min)
+                    if (typeStr == eset.DamageTypes.Types[i].Min)
                     {
                         return offsetIndex + EngineSettings.DamageTypesSettings.IndexToMin(i);
                     }
-                    else if (typeStr == SharedResources.Eset.DamageTypes.Types[i].Max)
+                    else if (typeStr == eset.DamageTypes.Types[i].Max)
                     {
                         return offsetIndex + EngineSettings.DamageTypesSettings.IndexToMax(i);
                     }
-                    else if (typeStr == SharedResources.Eset.DamageTypes.Types[i].Resist)
+                    else if (typeStr == eset.DamageTypes.Types[i].Resist)
                     {
                         return offsetIndex + EngineSettings.DamageTypesSettings.IndexToResist(i);
                     }
                 }
-                offsetIndex += SharedResources.Eset.DamageTypes.Count;
+                offsetIndex += eset.DamageTypes.Count;
 
-                for (int i = 0; i < SharedResources.Eset.ResourceStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
                 {
                     for (int j = 0; j < EngineSettings.ResourceStatsSettings.StatCount; ++j)
                     {
-                        if (typeStr == SharedResources.Eset.ResourceStats.Stats[i].Ids[j])
+                        if (typeStr == eset.ResourceStats.Stats[i].Ids[j])
                         {
                             return offsetIndex + (i * EngineSettings.ResourceStatsSettings.StatCount) + j;
                         }
                     }
                 }
-                offsetIndex += SharedResources.Eset.ResourceStats.StatCountValue;
+                offsetIndex += eset.ResourceStats.StatCountValue;
 
-                for (int i = 0; i < SharedResources.Eset.ResourceStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
                 {
                     for (int j = 0; j < EngineSettings.ResourceStatsSettings.EffectCount; ++j)
                     {
-                        if (typeStr == SharedResources.Eset.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatCount + j])
+                        if (typeStr == eset.ResourceStats.Stats[i].Ids[EngineSettings.ResourceStatsSettings.StatCount + j])
                         {
                             return offsetIndex + (i * EngineSettings.ResourceStatsSettings.EffectCount) + j;
                         }
                     }
                 }
-                offsetIndex += SharedResources.Eset.ResourceStats.EffectCountValue;
+                offsetIndex += eset.ResourceStats.EffectCountValue;
 
-                for (int i = 0; i < SharedResources.Eset.PrimaryStats.Stats.Count; ++i)
+                for (int i = 0; i < eset.PrimaryStats.Stats.Count; ++i)
                 {
-                    if (typeStr == SharedResources.Eset.PrimaryStats.Stats[i].Id)
+                    if (typeStr == eset.PrimaryStats.Stats[i].Id)
                     {
                         return offsetIndex + i;
                     }
@@ -285,38 +288,44 @@ namespace FlareEngine
 
         public static bool TypeIsDmgMin(int t)
         {
+            var eset = SharedResources.Eset!;
             int offsetIndex = Effect.TypeCount + Stats.Count;
-            return t >= offsetIndex && t < offsetIndex + SharedResources.Eset!.DamageTypes.Count && (t - offsetIndex) % 3 == 0;
+            return t >= offsetIndex && t < offsetIndex + eset.DamageTypes.Count && (t - offsetIndex) % 3 == 0;
         }
 
         public static bool TypeIsDmgMax(int t)
         {
+            var eset = SharedResources.Eset!;
             int offsetIndex = Effect.TypeCount + Stats.Count;
-            return t >= offsetIndex && t < offsetIndex + SharedResources.Eset!.DamageTypes.Count && (t - offsetIndex) % 3 == 1;
+            return t >= offsetIndex && t < offsetIndex + eset.DamageTypes.Count && (t - offsetIndex) % 3 == 1;
         }
 
         public static bool TypeIsResist(int t)
         {
+            var eset = SharedResources.Eset!;
             int offsetIndex = Effect.TypeCount + Stats.Count;
-            return t >= offsetIndex && t < offsetIndex + SharedResources.Eset!.DamageTypes.Count && (t - offsetIndex) % 3 == 2;
+            return t >= offsetIndex && t < offsetIndex + eset.DamageTypes.Count && (t - offsetIndex) % 3 == 2;
         }
 
         public static bool TypeIsResourceStat(int t)
         {
-            int offsetIndex = Effect.TypeCount + Stats.Count + SharedResources.Eset!.DamageTypes.Count;
-            return t >= offsetIndex && t < offsetIndex + SharedResources.Eset.ResourceStats.StatCountValue;
+            var eset = SharedResources.Eset!;
+            int offsetIndex = Effect.TypeCount + Stats.Count + eset.DamageTypes.Count;
+            return t >= offsetIndex && t < offsetIndex + eset.ResourceStats.StatCountValue;
         }
 
         public static bool TypeIsResourceEffect(int t)
         {
-            int offsetIndex = Effect.TypeCount + Stats.Count + (SharedResources.Eset!.DamageTypes.Count + SharedResources.Eset.ResourceStats.StatCountValue);
-            return t >= offsetIndex && t < offsetIndex + SharedResources.Eset.ResourceStats.EffectCountValue;
+            var eset = SharedResources.Eset!;
+            int offsetIndex = Effect.TypeCount + Stats.Count + (eset.DamageTypes.Count + eset.ResourceStats.StatCountValue);
+            return t >= offsetIndex && t < offsetIndex + eset.ResourceStats.EffectCountValue;
         }
 
         public static bool TypeIsPrimary(int t)
         {
-            int offsetIndex = Effect.TypeCount + Stats.Count + (SharedResources.Eset!.DamageTypes.Count + SharedResources.Eset.ResourceStats.StatEffectCountValue);
-            return t >= offsetIndex && t < offsetIndex + SharedResources.Eset.PrimaryStats.Stats.Count;
+            var eset = SharedResources.Eset!;
+            int offsetIndex = Effect.TypeCount + Stats.Count + (eset.DamageTypes.Count + eset.ResourceStats.StatCountValue);
+            return t >= offsetIndex && t < offsetIndex + eset.PrimaryStats.Stats.Count;
         }
 
         public static bool TypeIsEffectResist(int t)
@@ -336,12 +345,13 @@ namespace FlareEngine
 
         public static int GetResourceStatFromType(int t)
         {
-            int offsetIndex = (t - Effect.TypeCount - Stats.Count) - SharedResources.Eset!.DamageTypes.Count;
+            var eset = SharedResources.Eset!;
+            int offsetIndex = (t - Effect.TypeCount - Stats.Count) - eset.DamageTypes.Count;
 
-            if (offsetIndex > SharedResources.Eset.ResourceStats.StatCountValue)
+            if (offsetIndex > eset.ResourceStats.StatCountValue)
             {
                 // effect-only stat (e.g. heal)
-                int effectOffsetIndex = offsetIndex - SharedResources.Eset.ResourceStats.StatCountValue;
+                int effectOffsetIndex = offsetIndex - eset.ResourceStats.StatCountValue;
                 return effectOffsetIndex / EngineSettings.ResourceStatsSettings.EffectCount;
             }
             else
@@ -352,12 +362,13 @@ namespace FlareEngine
 
         public static int GetResourceStatSubIndexFromType(int t)
         {
-            int offsetIndex = (t - Effect.TypeCount - Stats.Count) - SharedResources.Eset!.DamageTypes.Count;
+            var eset = SharedResources.Eset!;
+            int offsetIndex = (t - Effect.TypeCount - Stats.Count) - eset.DamageTypes.Count;
 
-            if (offsetIndex > SharedResources.Eset.ResourceStats.StatCountValue)
+            if (offsetIndex > eset.ResourceStats.StatCountValue)
             {
                 // effect-only stat (e.g. heal)
-                int effectOffsetIndex = offsetIndex - SharedResources.Eset.ResourceStats.StatCountValue;
+                int effectOffsetIndex = offsetIndex - eset.ResourceStats.StatCountValue;
                 return EngineSettings.ResourceStatsSettings.StatCount + (effectOffsetIndex % EngineSettings.ResourceStatsSettings.EffectCount);
             }
             else
@@ -368,7 +379,8 @@ namespace FlareEngine
 
         public static int GetPrimaryFromType(int t)
         {
-            return (t - Effect.TypeCount - Stats.Count) - SharedResources.Eset!.DamageTypes.Count - SharedResources.Eset.ResourceStats.StatEffectCountValue;
+            var eset = SharedResources.Eset!;
+            return (t - Effect.TypeCount - Stats.Count) - eset.DamageTypes.Count - eset.ResourceStats.StatEffectCountValue;
         }
 
         /// <summary>handling of deprecated types（原始注释）。</summary>
@@ -518,17 +530,18 @@ namespace FlareEngine
 
         public EffectManager()
         {
-            ResourceOt = new List<float>(new float[SharedResources.Eset!.ResourceStats.Stats.Count]);
-            ResourceOtPercent = new List<float>(new float[SharedResources.Eset.ResourceStats.Stats.Count]);
-            Bonus = new List<float>(new float[Stats.Count + SharedResources.Eset.DamageTypes.Count + SharedResources.Eset.ResourceStats.StatEffectCountValue]);
+            var eset = SharedResources.Eset!;
+            ResourceOt = new List<float>(new float[eset.ResourceStats.Stats.Count]);
+            ResourceOtPercent = new List<float>(new float[eset.ResourceStats.Stats.Count]);
+            Bonus = new List<float>(new float[Stats.Count + eset.DamageTypes.Count + eset.ResourceStats.StatEffectCountValue]);
             BonusMultiplier = new List<float>(Bonus.Count);
             for (int i = 0; i < Bonus.Count; ++i)
             {
                 BonusMultiplier.Add(1);
             }
-            BonusPrimary = new List<int>(new int[SharedResources.Eset.PrimaryStats.Stats.Count]);
-            TypedDamage = new List<float>(new float[SharedResources.Eset.DamageTypes.Count]);
-            TypedDamagePercent = new List<float>(new float[SharedResources.Eset.DamageTypes.Count]);
+            BonusPrimary = new List<int>(new int[eset.PrimaryStats.Stats.Count]);
+            TypedDamage = new List<float>(new float[eset.DamageTypes.Count]);
+            TypedDamagePercent = new List<float>(new float[eset.DamageTypes.Count]);
             TriggeredOthers = false;
             TriggeredBlock = false;
             TriggeredHit = false;
@@ -598,10 +611,13 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+
             ClearStatus();
 
-            int offsetResourceEffects = Effect.TypeCount + Stats.Count + SharedResources.Eset!.DamageTypes.Count + SharedResources.Eset.ResourceStats.StatCountValue;
-            int offsetPrimaryStats = offsetResourceEffects + SharedResources.Eset.ResourceStats.EffectCountValue;
+            int offsetResourceEffects = Effect.TypeCount + Stats.Count + eset.DamageTypes.Count + eset.ResourceStats.StatCountValue;
+            int offsetPrimaryStats = offsetResourceEffects + eset.ResourceStats.EffectCountValue;
 
             for (int i = 0; i < EffectList.Count; ++i)
             {
@@ -622,7 +638,7 @@ namespace FlareEngine
                     }
                 }
 
-                bool doTimedEffect = ei.EffectTimer.IsWholeSecond() || (ei.EffectTimer.Duration < SharedResources.Settings!.MaxFramesPerSec && ei.EffectTimer.IsBegin());
+                bool doTimedEffect = ei.EffectTimer.IsWholeSecond() || (ei.EffectTimer.Duration < settings.MaxFramesPerSec && ei.EffectTimer.IsBegin());
 
                 // @TYPE damage|Damage per second
                 if (ei.Type == Effect.Damage && doTimedEffect)
@@ -673,9 +689,9 @@ namespace FlareEngine
                     Bonus[Stats.ResistHpSteal] += ei.Magnitude;
                     Bonus[Stats.ResistMpSteal] += ei.Magnitude;
 
-                    for (int j = 0; j < SharedResources.Eset.ResourceStats.Stats.Count; ++j)
+                    for (int j = 0; j < eset.ResourceStats.Stats.Count; ++j)
                     {
-                        int resistStealIndex = Stats.Count + SharedResources.Eset.DamageTypes.Count;
+                        int resistStealIndex = Stats.Count + eset.DamageTypes.Count;
                         resistStealIndex += (j * EngineSettings.ResourceStatsSettings.StatEffectCount) + EngineSettings.ResourceStatsSettings.StatResistSteal;
                         Bonus[resistStealIndex] += ei.Magnitude;
                     }
@@ -690,7 +706,7 @@ namespace FlareEngine
                 // @TYPE fear|Causes enemies to run away
                 else if (ei.Type == Effect.Fear) Fear = true;
                 // @TYPE knockback|Pushes the target away from the source caster. Speed is the given value divided by the framerate cap.
-                else if (ei.Type == Effect.Knockback) KnockbackSpeed = ei.Magnitude / SharedResources.Settings.MaxFramesPerSec;
+                else if (ei.Type == Effect.Knockback) KnockbackSpeed = ei.Magnitude / settings.MaxFramesPerSec;
 
                 // @TYPE ${STAT}|Increases ${STAT}, where ${STAT} is any valid stat_id.
                 else if (ei.Type >= Effect.TypeCount && ei.Type < offsetResourceEffects)
@@ -758,6 +774,11 @@ namespace FlareEngine
 
         public void AddEffect(StatBlock? stats, EffectDef effect, EffectParams @params)
         {
+            var eset = SharedResources.Eset!;
+            var comb = SharedResources.Comb!;
+            var msg = SharedResources.Msg!;
+            var powers = SharedGameResources.Powers!;
+
             RefreshStats = true;
 
             // if we're already immune, don't add negative effects
@@ -765,27 +786,27 @@ namespace FlareEngine
             {
                 if ((effect.Type == Effect.Damage || effect.Type == Effect.DamagePercent) && MathUtils.PercentChanceF(stats.Get(Stats.ResistDamageOverTime)))
                 {
-                    SharedResources.Comb!.AddString(SharedResources.Msg!.Get("Resist"), stats.Pos, CombatText.MsgMiss);
+                    comb.AddString(msg.Get("Resist"), stats.Pos, CombatText.MsgMiss);
                     return;
                 }
                 else if (effect.Type == Effect.Speed && @params.Magnitude < 100 && MathUtils.PercentChanceF(stats.Get(Stats.ResistSlow)))
                 {
-                    SharedResources.Comb!.AddString(SharedResources.Msg!.Get("Resist"), stats.Pos, CombatText.MsgMiss);
+                    comb.AddString(msg.Get("Resist"), stats.Pos, CombatText.MsgMiss);
                     return;
                 }
                 else if (effect.Type == Effect.Stun && MathUtils.PercentChanceF(stats.Get(Stats.ResistStun)))
                 {
-                    SharedResources.Comb!.AddString(SharedResources.Msg!.Get("Resist"), stats.Pos, CombatText.MsgMiss);
+                    comb.AddString(msg.Get("Resist"), stats.Pos, CombatText.MsgMiss);
                     return;
                 }
                 else if (effect.Type == Effect.Knockback && MathUtils.PercentChanceF(stats.Get(Stats.ResistKnockback)))
                 {
-                    SharedResources.Comb!.AddString(SharedResources.Msg!.Get("Resist"), stats.Pos, CombatText.MsgMiss);
+                    comb.AddString(msg.Get("Resist"), stats.Pos, CombatText.MsgMiss);
                     return;
                 }
                 else if (effect.Type > Effect.TypeCount && @params.Magnitude < 0 && MathUtils.PercentChanceF(stats.Get(Stats.ResistStatDebuff)))
                 {
-                    SharedResources.Comb!.AddString(SharedResources.Msg!.Get("Resist"), stats.Pos, CombatText.MsgMiss);
+                    comb.AddString(msg.Get("Resist"), stats.Pos, CombatText.MsgMiss);
                     return;
                 }
             }
@@ -806,7 +827,7 @@ namespace FlareEngine
 
             if (SharedGameResources.Powers!.IsValid(@params.PowerId))
             {
-                Power effectPower = SharedGameResources.Powers.Powers[@params.PowerId];
+                Power effectPower = powers.Powers[@params.PowerId]!;
                 trigger = effectPower.PassiveTrigger;
                 passiveId = effectPower.Passive ? @params.PowerId : 0;
             }
@@ -820,7 +841,7 @@ namespace FlareEngine
                 if (ei.Type == effect.Type && ei.Id == effect.Id)
                 {
                     // 历史注释：完全移除这一处逻辑是否会破坏向后兼容？
-                    if (!SharedResources.Eset!.Misc.PassiveTriggerEffectStacking && trigger > -1 && ei.Trigger == trigger)
+                    if (!eset.Misc.PassiveTriggerEffectStacking && trigger > -1 && ei.Trigger == trigger)
                         return; // trigger effects can only be cast once per trigger
 
                     if (!effect.CanStack)

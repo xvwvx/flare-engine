@@ -48,6 +48,8 @@ namespace FlareEngine
 
         public GameState()
         {
+            var msg = SharedResources.Msg!;
+
             HasMusic = false;
             HasBackground = true;
             HasFrameBackground = false;
@@ -59,7 +61,7 @@ namespace FlareEngine
             RequestedGameState = null;
             ExitRequested = false;
             LoadingTip = new WidgetTooltip();
-            LoadingTipBuf.AddText(SharedResources.Msg!.Get("Loading..."));
+            LoadingTipBuf.AddText(msg.Get("Loading..."));
         }
 
         /// <summary>
@@ -98,7 +100,8 @@ namespace FlareEngine
         /// </summary>
         public virtual void Dispose()
         {
-            SharedResources.RenderDevice!.CleanupQueuedImages();
+            var renderDevice = SharedResources.RenderDevice!;
+            renderDevice.CleanupQueuedImages();
 
             if (LoadingTip != null)
             {
@@ -155,7 +158,8 @@ namespace FlareEngine
             if (LoadingTip == null)
                 return;
 
-            LoadingTip.Render(LoadingTipBuf, new Int2(SharedResources.Settings!.ViewW, SharedResources.Settings.ViewH), TooltipData.StyleFloat);
+            var settings = SharedResources.Settings!;
+            LoadingTip.Render(LoadingTipBuf, new Int2(settings.ViewW, settings.ViewH), TooltipData.StyleFloat);
 
             SharedResources.RenderDevice!.CommitFrame();
         }

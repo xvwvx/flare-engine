@@ -39,6 +39,10 @@ namespace FlareEngine
 
         public WidgetSlider(string fname)
         {
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
             Enabled = true;
             _sl = null;
             _pressed = false;
@@ -51,11 +55,11 @@ namespace FlareEngine
             Image? graphics = null;
             if (fname != DefaultFile)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(fname, RenderDevice.ErrorNormal);
+                graphics = renderDevice.LoadImage(fname, RenderDevice.ErrorNormal);
             }
             if (graphics == null)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(DefaultFile, RenderDevice.ErrorExit);
+                graphics = renderDevice.LoadImage(DefaultFile, RenderDevice.ErrorExit);
             }
             if (graphics != null)
             {
@@ -69,8 +73,8 @@ namespace FlareEngine
 
             ScrollType = ScrollHorizontal;
 
-            if (SharedResources.Eset!.Widgets.SoundActivate.Length != 0)
-                _soundActivate = SharedResources.Snd!.Load(SharedResources.Eset.Widgets.SoundActivate, "Widget activate");
+            if (eset.Widgets.SoundActivate.Length != 0)
+                _soundActivate = snd.Load(eset.Widgets.SoundActivate, "Widget activate");
         }
 
         /// <summary>
@@ -100,11 +104,13 @@ namespace FlareEngine
 
         public bool CheckClickAt(int x, int y)
         {
+            InputState inpt = SharedResources.Inpt!;
+            var snd = SharedResources.Snd!;
+
             EnableTablistNav = Enabled;
 
             if (!Enabled) return false;
             Int2 mouse = new Int2(x, y);
-            InputState inpt = SharedResources.Inpt!;
             //	We are just grabbing the knob
             if (!_pressed && inpt.Pressing[Input.Main1] && !inpt.Lock[Input.Main1])
             {
@@ -112,7 +118,7 @@ namespace FlareEngine
                 {
                     _pressed = true;
                     inpt.Lock[Input.Main1] = true;
-                    SharedResources.Snd!.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
+                    snd.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
                     return true;
                 }
                 return false;
@@ -181,16 +187,20 @@ namespace FlareEngine
             knobRect.Height = PosKnob.Height;
             knobRect.Width = PosKnob.Width;
 
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+            var tooltipm = SharedResources.Tooltipm!;
+
             if (_sl != null)
             {
                 _sl.LocalFrame = LocalFrame;
                 _sl.SetOffset(LocalOffset);
                 _sl.SetClipFromRect(baseRect);
                 _sl.SetDestFromRect(Pos);
-                SharedResources.RenderDevice!.Render(_sl);
+                renderDevice.Render(_sl);
                 _sl.SetClipFromRect(knobRect);
                 _sl.SetDestFromRect(PosKnob);
-                SharedResources.RenderDevice!.Render(_sl);
+                renderDevice.Render(_sl);
             }
 
             if (InFocus)
@@ -217,7 +227,7 @@ namespace FlareEngine
                 }
                 if (draw)
                 {
-                    SharedResources.RenderDevice!.DrawRectangleCorners(SharedResources.Eset!.Widgets.SelectionRectCornerSize, topLeft, bottomRight, SharedResources.Eset.Widgets.SelectionRectColor);
+                    renderDevice.DrawRectangleCorners(eset.Widgets.SelectionRectCornerSize, topLeft, bottomRight, eset.Widgets.SelectionRectColor);
                 }
             }
 
@@ -229,7 +239,7 @@ namespace FlareEngine
                 Int2 newMouse = new Int2();
                 newMouse.X = PosKnob.X + (PosKnob.Width * 2) + LocalFrame.X - LocalOffset.X;
                 newMouse.Y = PosKnob.Y + (PosKnob.Height / 2) + LocalFrame.Y - LocalOffset.Y;
-                SharedResources.Tooltipm!.Push(tipData, newMouse, TooltipData.StyleFloat);
+                tooltipm.Push(tipData, newMouse, TooltipData.StyleFloat);
             }
         }
 

@@ -99,14 +99,18 @@ namespace FlareEngine
             DisableTextTrim = false;
 
             // load ListBox images
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
             Image? graphics = null;
             if (_fileName != DefaultFile)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(_fileName, RenderDevice.ErrorNormal);
+                graphics = renderDevice.LoadImage(_fileName, RenderDevice.ErrorNormal);
             }
             if (graphics == null)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(DefaultFile, RenderDevice.ErrorExit);
+                graphics = renderDevice.LoadImage(DefaultFile, RenderDevice.ErrorExit);
             }
             if (graphics != null)
             {
@@ -118,8 +122,8 @@ namespace FlareEngine
 
             ScrollType = ScrollVertical;
 
-            if (SharedResources.Eset!.Widgets.SoundActivate.Length != 0)
-                _soundActivate = SharedResources.Snd!.Load(SharedResources.Eset.Widgets.SoundActivate, "Widget activate");
+            if (eset.Widgets.SoundActivate.Length != 0)
+                _soundActivate = snd.Load(eset.Widgets.SoundActivate, "Widget activate");
         }
 
         /// <summary>
@@ -158,7 +162,9 @@ namespace FlareEngine
 
             Refresh();
 
-            InputState inpt = SharedResources.Inpt!;
+            var inpt = SharedResources.Inpt!;
+            var snd = SharedResources.Snd!;
+
             if (inpt.UsingMouse())
             {
                 CheckTooltip(mouse);
@@ -224,7 +230,7 @@ namespace FlareEngine
                         {
                             inpt.Lock[Input.Main1] = true;
 
-                            SharedResources.Snd!.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
 
                             // deselect other options if multi-select is disabled
                             if (!MultiSelect)
@@ -275,8 +281,9 @@ namespace FlareEngine
 
             if (!tipData.IsEmpty())
             {
+                var tooltipm = SharedResources.Tooltipm!;
                 Int2 newMouse = new Int2(mouse.X + LocalFrame.X - LocalOffset.X, mouse.Y + LocalFrame.Y - LocalOffset.Y);
-                SharedResources.Tooltipm!.Push(tipData, newMouse, TooltipData.StyleFloat);
+                tooltipm.Push(tipData, newMouse, TooltipData.StyleFloat);
             }
         }
 
@@ -449,6 +456,9 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+
             Rectangle src = new Rectangle();
             src.X = 0;
             src.Width = Pos.Width;
@@ -473,7 +483,7 @@ namespace FlareEngine
                 {
                     _listboxs.SetClipFromRect(src);
                     _listboxs.SetDestFromRect(_rows[i]);
-                    SharedResources.RenderDevice!.Render(_listboxs);
+                    renderDevice.Render(_listboxs);
                 }
 
                 if (i + _cursor < _items.Count)
@@ -511,7 +521,7 @@ namespace FlareEngine
                 }
                 if (draw)
                 {
-                    SharedResources.RenderDevice!.DrawRectangleCorners(SharedResources.Eset!.Widgets.SelectionRectCornerSize, topLeft, bottomRight, SharedResources.Eset.Widgets.SelectionRectColor);
+                    renderDevice.DrawRectangleCorners(eset.Widgets.SelectionRectCornerSize, topLeft, bottomRight, eset.Widgets.SelectionRectColor);
                 }
             }
 
@@ -529,8 +539,11 @@ namespace FlareEngine
         /// </summary>
         public void Refresh()
         {
+            var font = SharedResources.Font!;
+            var eset = SharedResources.Eset!;
+
             int rightMargin = 0;
-            int padding = SharedResources.Font!.GetFontHeight();
+            int padding = font.GetFontHeight();
 
             // Update the scrollbar
             if (_items.Count > _rows.Count)
@@ -545,12 +558,12 @@ namespace FlareEngine
 
                 _scrollbar.Refresh(PosScroll.X, PosScroll.Y, PosScroll.Height, _cursor, _items.Count - _rows.Count);
 
-                rightMargin = PosScroll.Width + SharedResources.Eset!.Widgets.ListboxTextMargin.Y;
+                rightMargin = PosScroll.Width + eset.Widgets.ListboxTextMargin.Y;
             }
             else
             {
                 _hasScrollBar = false;
-                rightMargin = SharedResources.Eset!.Widgets.ListboxTextMargin.Y;
+                rightMargin = eset.Widgets.ListboxTextMargin.Y;
             }
 
             // cache all item text
@@ -560,7 +573,7 @@ namespace FlareEngine
                 if (DisableTextTrim)
                     _items[i].Label.SetText(_items[i].Value);
                 else
-                    _items[i].Label.SetText(SharedResources.Font!.TrimTextToWidth(_items[i].Value, Pos.Width - rightMargin - padding, FontEngine.UseEllipsis, 0));
+                    _items[i].Label.SetText(font.TrimTextToWidth(_items[i].Value, Pos.Width - rightMargin - padding, FontEngine.UseEllipsis, 0));
 
                 _items[i].Label.SetHidden(i < _cursor || i >= _cursor + _rows.Count);
             }
@@ -585,27 +598,27 @@ namespace FlareEngine
 
                 if (i + _cursor < _items.Count)
                 {
-                    _items[i + _cursor].Label.SetPos(_rows[i].X + SharedResources.Eset!.Widgets.ListboxTextMargin.X, _rows[i].Y + (_rows[i].Height / 2));
+                    _items[i + _cursor].Label.SetPos(_rows[i].X + eset.Widgets.ListboxTextMargin.X, _rows[i].Y + (_rows[i].Height / 2));
                     if (CanSelect)
                     {
                         if (_items[i + _cursor].Selected)
                         {
-                            _items[i + _cursor].Label.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal));
+                            _items[i + _cursor].Label.SetColor(font.GetColor(FontEngine.ColorWidgetNormal));
                         }
                         else
                         {
-                            _items[i + _cursor].Label.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled));
+                            _items[i + _cursor].Label.SetColor(font.GetColor(FontEngine.ColorWidgetDisabled));
                         }
                     }
                     else
                     {
                         if (_items[i + _cursor].Highlight)
                         {
-                            _items[i + _cursor].Label.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal));
+                            _items[i + _cursor].Label.SetColor(font.GetColor(FontEngine.ColorWidgetNormal));
                         }
                         else
                         {
-                            _items[i + _cursor].Label.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled));
+                            _items[i + _cursor].Label.SetColor(font.GetColor(FontEngine.ColorWidgetDisabled));
                         }
                     }
                 }

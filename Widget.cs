@@ -107,6 +107,8 @@ namespace FlareEngine
 
         public TabList()
         {
+            var settings = SharedResources.Settings!;
+            
             _current = -1;
             _previous = -1;
             _locked = false;
@@ -120,7 +122,7 @@ namespace FlareEngine
             EnableActivate = true;
             IsInnerTablist = false;
 
-            _scrollTimer.Duration = (uint)(SharedResources.Settings!.MaxFramesPerSec / 4);
+            _scrollTimer.Duration = (uint)(settings.MaxFramesPerSec / 4);
         }
 
         /// <summary>对应 C++ TabList 指针的布尔语义（非空即为真）。</summary>
@@ -411,6 +413,8 @@ namespace FlareEngine
         /// </summary>
         public int GetNextRelativeIndex(int dir)
         {
+            var settings = SharedResources.Settings!;
+
             if (_current == -1 || _current >= _widgets.Count)
                 return -1;
 
@@ -485,11 +489,11 @@ namespace FlareEngine
                         Rectangle iPos = _widgets[i].Pos;
 
                         if (dir == WidgetSelectLeft)
-                            cPos.X = SharedResources.Settings!.ViewW;
+                            cPos.X = settings.ViewW;
                         else if (dir == WidgetSelectRight)
                             cPos.X = 0;
                         else if (dir == WidgetSelectUp)
-                            cPos.Y = SharedResources.Settings!.ViewH;
+                            cPos.Y = settings.ViewH;
                         else if (dir == WidgetSelectDown)
                             cPos.Y = 0;
 

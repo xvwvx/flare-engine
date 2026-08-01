@@ -290,6 +290,8 @@ namespace FlareEngine
         /// </summary>
         public static int ToDuration(string s)
         {
+            var settings = SharedResources.Settings!;
+
             s = s.Trim();
 
             // 寻找数字和字母的分界点
@@ -313,12 +315,12 @@ namespace FlareEngine
             if (val == 0)
                 return val;
             else if (suffix == "s")
-                val *= SharedResources.Settings!.MaxFramesPerSec;
+                val *= settings.MaxFramesPerSec;
             else
             {
                 if (suffix != "ms")
                     Utils.LogError("UtilsParsing: Duration of '%d' does not have a suffix. Assuming 'ms'.", val);
-                val = (int)MathF.Floor((val * SharedResources.Settings!.MaxFramesPerSec / 1000f) + 0.5f);
+                val = (int)MathF.Floor((val * settings.MaxFramesPerSec / 1000f) + 0.5f);
             }
 
             // round back up to 1 if we rounded down to 0 for ms

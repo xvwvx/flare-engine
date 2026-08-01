@@ -54,11 +54,14 @@ namespace FlareEngine
 
         public WidgetLog(int width, int height)
         {
+            var font = SharedResources.Font!;
+            var eset = SharedResources.Eset!;
+
             _scrollBox = new WidgetScrollBox(width, height);
-            _padding = SharedResources.Eset!.Widgets.LogPadding;
+            _padding = eset.Widgets.LogPadding;
             _maxMessages = MaxMessages;
             _updated = false;
-            _nextColor = SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal);
+            _nextColor = font.GetColor(FontEngine.ColorMenuNormal);
             _nextStyle = FontRegular;
             _fontName = "font_regular";
             _fontBoldName = "font_bold";
@@ -91,15 +94,17 @@ namespace FlareEngine
 
         private void SetFont(int style)
         {
+            var font = SharedResources.Font!;
+
             if (style == FontBold)
             {
-                SharedResources.Font!.SetFont(_fontBoldName);
+                font.SetFont(_fontBoldName);
             }
             else
             {
-                SharedResources.Font!.SetFont(_fontName);
+                font.SetFont(_fontName);
             }
-            _lineHeight = SharedResources.Font.GetLineHeight();
+            _lineHeight = font.GetLineHeight();
             _paragraphSpacing = _lineHeight / 2;
         }
 
@@ -120,6 +125,9 @@ namespace FlareEngine
 
         private void Refresh()
         {
+            var font = SharedResources.Font!;
+            var msg = SharedResources.Msg!;
+
             int y;
             int y2;
             y = y2 = _padding;
@@ -130,7 +138,7 @@ namespace FlareEngine
             for (int i = 0; i < _messages.Count; i++)
             {
                 SetFont(_styles[i]);
-                Int2 size = SharedResources.Font!.CalcSizeWrapped(_messages[i], contentWidth);
+                Int2 size = font.CalcSizeWrapped(_messages[i], contentWidth);
                 y += size.Y + _paragraphSpacing;
 
                 if (_separators[i])
@@ -146,8 +154,8 @@ namespace FlareEngine
             if (_scrollBox.Contents == null || _scrollBox.Contents!.GetGraphics() == null)
             {
                 SetMaxMessages(MaxMessages);
-                SetNextColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuPenalty));
-                Add(SharedResources.Msg!.Get("ERROR: Text output too large"), MsgUnique);
+                SetNextColor(font.GetColor(FontEngine.ColorMenuPenalty));
+                Add(msg.Get("ERROR: Text output too large"), MsgUnique);
 
                 y = y2 = _padding;
 
@@ -155,7 +163,7 @@ namespace FlareEngine
                 for (int i = 0; i < _messages.Count; i++)
                 {
                     SetFont(_styles[i]);
-                    Int2 size = SharedResources.Font!.CalcSizeWrapped(_messages[i], contentWidth);
+                    Int2 size = font.CalcSizeWrapped(_messages[i], contentWidth);
                     y += size.Y + _paragraphSpacing;
 
                     if (_separators[i])
@@ -170,15 +178,15 @@ namespace FlareEngine
             for (int i = _messages.Count; i > 0; i--)
             {
                 SetFont(_styles[i - 1]);
-                Int2 size = SharedResources.Font!.CalcSizeWrapped(_messages[i - 1], contentWidth);
+                Int2 size = font.CalcSizeWrapped(_messages[i - 1], contentWidth);
                 Image? renderTarget = _scrollBox.Contents!.GetGraphics();
 
                 if (_separators.Count > 0 && _separators[i - 1])
                 {
-                    renderTarget!.DrawLine(_padding, y2, _padding + contentWidth - 1, y2, SharedResources.Font.GetColor(FontEngine.ColorWidgetDisabled));
+                    renderTarget!.DrawLine(_padding, y2, _padding + contentWidth - 1, y2, font.GetColor(FontEngine.ColorWidgetDisabled));
                     y2 += _paragraphSpacing;
                 }
-                SharedResources.Font.RenderShadowed(_messages[i - 1], _padding, y2, FontEngine.JustifyLeft, renderTarget!, contentWidth, _colors[i - 1]);
+                font.RenderShadowed(_messages[i - 1], _padding, y2, FontEngine.JustifyLeft, renderTarget!, contentWidth, _colors[i - 1]);
                 y2 += size.Y + _paragraphSpacing;
 
             }
@@ -211,7 +219,8 @@ namespace FlareEngine
                 _separators.Add(false);
                 _updated = true;
 
-                _nextColor = SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal);
+                var font = SharedResources.Font!;
+                _nextColor = font.GetColor(FontEngine.ColorMenuNormal);
                 _nextStyle = FontRegular;
             }
         }
@@ -246,7 +255,8 @@ namespace FlareEngine
             _separators.Clear();
             _updated = true;
 
-            _nextColor = SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal);
+            var font = SharedResources.Font!;
+            _nextColor = font.GetColor(FontEngine.ColorMenuNormal);
             _nextStyle = FontRegular;
         }
 

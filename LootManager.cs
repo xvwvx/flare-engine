@@ -71,9 +71,11 @@ namespace FlareEngine
         {
             _sfxLoot = 0;
             _sfxLootChannel = "loot";
-            if (!string.IsNullOrEmpty(SharedResources.Eset!.Loot.SfxLoot))
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+            if (!string.IsNullOrEmpty(eset.Loot.SfxLoot))
             {
-                _sfxLoot = SharedResources.Snd!.Load(SharedResources.Eset.Loot.SfxLoot, "LootManager dropping loot");
+                _sfxLoot = snd.Load(eset.Loot.SfxLoot, "LootManager dropping loot");
             }
 
             LoadGraphics();
@@ -91,12 +93,15 @@ namespace FlareEngine
                 return;
             }
 
-            for (int i = 0; i < SharedGameResources.Items!.Items.Count; ++i)
+            var items = SharedGameResources.Items!;
+            var anim = SharedResources.Anim!;
+
+            for (int i = 0; i < items.Items.Count; ++i)
                 _animations.Add(null);
 
-            for (int i = 1; i < SharedGameResources.Items.Items.Count; ++i)
+            for (int i = 1; i < items.Items.Count; ++i)
             {
-                Item? item = SharedGameResources.Items.Items[i];
+                Item? item = items.Items[i];
 
                 if (item == null || item.LootAnimation.Count == 0)
                     continue;
@@ -105,8 +110,8 @@ namespace FlareEngine
 
                 for (int j = 0; j < item.LootAnimation.Count; ++j)
                 {
-                    SharedResources.Anim!.IncreaseCount(item.LootAnimation[j].Name);
-                    _animations[i]![j] = SharedResources.Anim.GetAnimationSet(item.LootAnimation[j].Name)!.GetAnimation("");
+                    anim.IncreaseCount(item.LootAnimation[j].Name);
+                    _animations[i]![j] = anim.GetAnimationSet(item.LootAnimation[j].Name)!.GetAnimation("");
                 }
             }
         }
@@ -121,19 +126,27 @@ namespace FlareEngine
 
         public void Logic()
         {
-            if (SharedResources.Inpt!.Pressing[Input.LootTooltipMode] && !SharedResources.Inpt.Lock[Input.LootTooltipMode])
-            {
-                SharedResources.Inpt.Lock[Input.LootTooltipMode] = true;
-                SharedResources.Settings!.LootTooltips++;
-                if (SharedResources.Settings.LootTooltips > Settings.LootTipsHideAll)
-                    SharedResources.Settings.LootTooltips = Settings.LootTipsDefault;
+            var msg = SharedResources.Msg!;
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+            
+            var pc = SharedGameResources.Pc!;
+            var mapr = SharedGameResources.Mapr!;
+            var items = SharedGameResources.Items!;
 
-                if (SharedResources.Settings.LootTooltips == Settings.LootTipsHideAll)
-                    SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.Get("Loot tooltip visibility") + ": " + SharedResources.Msg.Get("Hidden"), Avatar.MsgUnique);
-                else if (SharedResources.Settings.LootTooltips == Settings.LootTipsDefault)
-                    SharedGameResources.Pc.LogMsg(SharedResources.Msg.Get("Loot tooltip visibility") + ": " + SharedResources.Msg.Get("Default"), Avatar.MsgUnique);
-                else if (SharedResources.Settings.LootTooltips == Settings.LootTipsShowAll)
-                    SharedGameResources.Pc.LogMsg(SharedResources.Msg.Get("Loot tooltip visibility") + ": " + SharedResources.Msg.Get("Show All"), Avatar.MsgUnique);
+            if (inpt.Pressing[Input.LootTooltipMode] && !inpt.Lock[Input.LootTooltipMode])
+            {
+                inpt.Lock[Input.LootTooltipMode] = true;
+                settings.LootTooltips++;
+                if (settings.LootTooltips > Settings.LootTipsHideAll)
+                    settings.LootTooltips = Settings.LootTipsDefault;
+
+                if (settings.LootTooltips == Settings.LootTipsHideAll)
+                    pc.LogMsg(msg!.Get("Loot tooltip visibility") + ": " + msg.Get("Hidden"), Avatar.MsgUnique);
+                else if (settings.LootTooltips == Settings.LootTipsDefault)
+                    pc.LogMsg(msg.Get("Loot tooltip visibility") + ": " + msg.Get("Default"), Avatar.MsgUnique);
+                else if (settings.LootTooltips == Settings.LootTipsShowAll)
+                    pc.LogMsg(msg.Get("Loot tooltip visibility") + ": " + msg.Get("Show All"), Avatar.MsgUnique);
             }
 
             for (int it = 0; it < _loot.Count; ++it)
@@ -150,7 +163,7 @@ namespace FlareEngine
                 if (_loot[it].OnGround && !_loot[it].SoundPlayed && !_loot[it].Stack.Empty())
                 {
                     Int2 pos = new Int2((int)_loot[it].Pos.X, (int)_loot[it].Pos.Y);
-                    SharedGameResources.Items!.PlaySound(_loot[it].Stack.Item, pos);
+                    items.PlaySound(_loot[it].Stack.Item, pos);
                     _loot[it].SoundPlayed = true;
                 }
             }
@@ -160,7 +173,7 @@ namespace FlareEngine
 
             for (int i = 0; i < _tilesToUnblock.Count; i++)
             {
-                SharedGameResources.Mapr!.Collider.Unblock(_tilesToUnblock[i].X, _tilesToUnblock[i].Y);
+                mapr.Collider.Unblock(_tilesToUnblock[i].X, _tilesToUnblock[i].Y);
             }
             _tilesToUnblock.Clear();
         }
@@ -170,9 +183,18 @@ namespace FlareEngine
         {
             if (!SharedResources.Settings!.ShowHud) return;
 
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var inpt = SharedResources.Inpt!;
+            var settings = SharedResources.Settings!;
+            
+            var pc = SharedGameResources.Pc!;
+            var mapr = SharedGameResources.Mapr!;
+            var items = SharedGameResources.Items!;
+
             Int2 dest;
             bool tooltipBelow = true;
-            Rectangle screenRect = new Rectangle(0, 0, SharedResources.Settings.ViewW, SharedResources.Settings.ViewH);
+            Rectangle screenRect = new Rectangle(0, 0, settings.ViewW, settings.ViewH);
 
             for (int it = 0; it < _loot.Count; )
             {
@@ -180,9 +202,9 @@ namespace FlareEngine
 
                 if (_loot[it].OnGround)
                 {
-                    if (SharedGameResources.Mapr!.Fogofwar > FogOfWar.TypeMinimap)
+                    if (mapr.Fogofwar > FogOfWar.TypeMinimap)
                     {
-                        float delta = Utils.CalcDist(SharedGameResources.Pc!.Stats.Pos, _loot[it].Pos);
+                        float delta = Utils.CalcDist(pc.Stats.Pos, _loot[it].Pos);
                         if (delta > SharedGameResources.Fow!.MaskRadius - 1.0f)
                         {
                             break;
@@ -197,46 +219,46 @@ namespace FlareEngine
                     }
 
                     dest.X = p.X;
-                    dest.Y = p.Y + SharedResources.Eset!.Tileset.TileHHalf;
+                    dest.Y = p.Y + eset.Tileset.TileHHalf;
 
-                    dest.Y -= SharedResources.Eset.Loot.TooltipMargin;
+                    dest.Y -= eset.Loot.TooltipMargin;
 
                     Rectangle hover = new Rectangle();
-                    hover.X = p.X - SharedResources.Eset.Tileset.TileWHalf;
-                    hover.Y = p.Y - SharedResources.Eset.Tileset.TileHHalf;
-                    hover.Width = SharedResources.Eset.Tileset.TileW;
-                    hover.Height = SharedResources.Eset.Tileset.TileH;
+                    hover.X = p.X - eset.Tileset.TileWHalf;
+                    hover.Y = p.Y - eset.Tileset.TileHHalf;
+                    hover.Width = eset.Tileset.TileW;
+                    hover.Height = eset.Tileset.TileH;
 
                     bool forcedVisibility = false;
                     bool defaultVisibility = true;
 
-                    if (SharedResources.Settings.LootTooltips == Settings.LootTipsDefault && SharedResources.Eset.Loot.HideRadius > 0)
+                    if (settings.LootTooltips == Settings.LootTipsDefault && eset.Loot.HideRadius > 0)
                     {
-                        if (Utils.CalcDist(SharedGameResources.Pc!.Stats.Pos, _loot[it].Pos) < SharedResources.Eset.Loot.HideRadius)
+                        if (Utils.CalcDist(pc.Stats.Pos, _loot[it].Pos) < eset.Loot.HideRadius)
                         {
                             defaultVisibility = false;
                         }
                         else
                         {
                             float? savedDistance = null;
-                            Entity? testEnemy = SharedGameResources.Entitym!.GetNearestEntity(_loot[it].Pos, !EntityManager.GetCorpse, ref savedDistance, SharedResources.Eset.Loot.HideRadius);
+                            Entity? testEnemy = SharedGameResources.Entitym!.GetNearestEntity(_loot[it].Pos, !EntityManager.GetCorpse, ref savedDistance, eset.Loot.HideRadius);
                             if (testEnemy != null)
                             {
                                 defaultVisibility = false;
                             }
                         }
                     }
-                    else if (SharedResources.Settings.LootTooltips == Settings.LootTipsHideAll)
+                    else if (settings.LootTooltips == Settings.LootTipsHideAll)
                     {
                         defaultVisibility = false;
                     }
-                    else if (SharedResources.Settings.LootTooltips == Settings.LootTipsShowAll && SharedResources.Inpt!.Pressing[Input.Alt])
+                    else if (settings.LootTooltips == Settings.LootTipsShowAll && inpt!.Pressing[Input.Alt])
                     {
                         defaultVisibility = false;
                     }
 
                     if (!defaultVisibility)
-                        forcedVisibility = Utils.IsWithinRect(hover, SharedResources.Inpt!.Mouse) || (SharedResources.Inpt.Pressing[Input.Alt] && SharedResources.Settings.LootTooltips != Settings.LootTipsShowAll);
+                        forcedVisibility = Utils.IsWithinRect(hover, inpt.Mouse) || (inpt.Pressing[Input.Alt] && settings.LootTooltips != Settings.LootTipsShowAll);
 
                     if (defaultVisibility || forcedVisibility)
                     {
@@ -246,7 +268,7 @@ namespace FlareEngine
                         {
                             if (!_loot[it].Stack.Empty())
                             {
-                                _loot[it].Tip = SharedGameResources.Items!.GetShortTooltip(_loot[it].Stack);
+                                _loot[it].Tip = items.GetShortTooltip(_loot[it].Stack);
                             }
                         }
 
@@ -256,9 +278,9 @@ namespace FlareEngine
                             if (_loot[testIt].TipVisible && Utils.RectsOverlap(_loot[testIt].Wtip!.Bounds, _loot[it].Wtip!.Bounds))
                             {
                                 if (tooltipBelow)
-                                    dest.Y = _loot[testIt].Wtip!.Bounds.Y + _loot[testIt].Wtip!.Bounds.Height + SharedResources.Eset!.Tooltips.Offset;
+                                    dest.Y = _loot[testIt].Wtip!.Bounds.Y + _loot[testIt].Wtip!.Bounds.Height + eset.Tooltips.Offset;
                                 else
-                                    dest.Y = _loot[testIt].Wtip!.Bounds.Y - _loot[testIt].Wtip!.Bounds.Height + SharedResources.Eset!.Tooltips.Offset;
+                                    dest.Y = _loot[testIt].Wtip!.Bounds.Y - _loot[testIt].Wtip!.Bounds.Height + eset.Tooltips.Offset;
 
                                 _loot[it].Wtip!.Bounds.Y = dest.Y;
                             }
@@ -268,7 +290,7 @@ namespace FlareEngine
 
                         _loot[it].Wtip!.Render(_loot[it].Tip, dest, TooltipData.StyleTopLabel);
 
-                        if (SharedResources.Settings.LootTooltips == Settings.LootTipsHideAll && !SharedResources.Inpt!.Pressing[Input.Alt])
+                        if (settings.LootTooltips == Settings.LootTipsHideAll && !inpt.Pressing[Input.Alt])
                             break;
                     }
                 }
@@ -282,6 +304,8 @@ namespace FlareEngine
         /// <summary>处理标记为应掉落战利品的敌人。</summary>
         private void CheckEnemiesForLoot()
         {
+            var eset =  SharedResources.Eset!;
+            
             for (int i = 0; i < _enemiesDroppingLoot.Count; ++i)
             {
                 StatBlock? e = _enemiesDroppingLoot[i];
@@ -312,7 +336,7 @@ namespace FlareEngine
                     }
                     else
                     {
-                        drops = MathUtils.RandBetween(1, SharedResources.Eset!.Loot.DropMax);
+                        drops = MathUtils.RandBetween(1, eset.Loot.DropMax);
                     }
 
                     for (int j = 0; j < drops; ++j)
@@ -329,26 +353,29 @@ namespace FlareEngine
         /// <summary>处理地图事件中名为 "loot" 的组件。</summary>
         private void CheckMapForLoot()
         {
-            for (int i = 0; i < SharedGameResources.Mapr!.Loot.Count; ++i)
+            var eset =  SharedResources.Eset!;
+            var mapr = SharedGameResources.Mapr!;
+
+            for (int i = 0; i < mapr.Loot.Count; ++i)
             {
                 int drops;
-                if (SharedGameResources.Mapr.Loot[i].Second.Y != 0)
+                if (mapr.Loot[i].Second.Y != 0)
                 {
-                    drops = MathUtils.RandBetween(SharedGameResources.Mapr.Loot[i].Second.X, SharedGameResources.Mapr.Loot[i].Second.Y);
+                    drops = MathUtils.RandBetween(mapr.Loot[i].Second.X, mapr.Loot[i].Second.Y);
                 }
                 else
                 {
-                    drops = MathUtils.RandBetween(1, SharedResources.Eset!.Loot.DropMax);
+                    drops = MathUtils.RandBetween(1, eset.Loot.DropMax);
                 }
 
                 while (drops > 0)
                 {
-                    CheckLoot(SharedGameResources.Mapr.Loot[i].First, null, null);
+                    CheckLoot(mapr.Loot[i].First, null, null);
                     drops--;
                 }
             }
 
-            SharedGameResources.Mapr.Loot.Clear();
+            mapr.Loot.Clear();
         }
 
         public void AddEnemyLoot(StatBlock e)
@@ -358,6 +385,9 @@ namespace FlareEngine
 
         public void CheckLoot(List<EventComponent> lootTable, Vector2? pos, List<ItemStack>? itemstackVec)
         {
+            var camp = SharedGameResources.Camp!;
+            var pc = SharedGameResources.Pc!;
+
             Vector2 p;
             EventComponent ec;
             ItemStack newLoot = new ItemStack();
@@ -374,7 +404,7 @@ namespace FlareEngine
 
                 if (ec.Data[LootEcChance].Float == 0)
                 {
-                    if (ec.Status == 0 || (ec.Status > 0 && SharedGameResources.Camp!.CheckStatus(ec.Status)))
+                    if (ec.Status == 0 || (ec.Status > 0 && camp.CheckStatus(ec.Status)))
                     {
                         CheckLootComponent(ec, pos, itemstackVec);
                     }
@@ -382,7 +412,7 @@ namespace FlareEngine
                 }
             }
 
-            float threshold = (float)(SharedGameResources.Pc!.Stats.Get(Stats.ItemFind) + 100);
+            float threshold = (float)(pc.Stats.Get(Stats.ItemFind) + 100);
             for (int i = 0; i < lootTable.Count; i++)
             {
                 ec = lootTable[i];
@@ -394,16 +424,16 @@ namespace FlareEngine
 
                 if (ec.Id != 0)
                 {
-                    realChance = realChance * (SharedGameResources.Pc!.Stats.Get(Stats.ItemFind) + 100.0f) / 100.0f;
+                    realChance = realChance * (pc.Stats.Get(Stats.ItemFind) + 100.0f) / 100.0f;
                 }
 
                 bool levelCheck = true;
                 if (ec.Data[LootEcRequiresLevelMin].Int > 0 && ec.Data[LootEcRequiresLevelMax].Int > 0)
                 {
-                    levelCheck = SharedGameResources.Pc!.Stats.Level >= ec.Data[LootEcRequiresLevelMin].Int && SharedGameResources.Pc.Stats.Level <= ec.Data[LootEcRequiresLevelMax].Int;
+                    levelCheck = pc.Stats.Level >= ec.Data[LootEcRequiresLevelMin].Int && pc.Stats.Level <= ec.Data[LootEcRequiresLevelMax].Int;
                 }
 
-                if (realChance >= chance && levelCheck && (ec.Status == 0 || (ec.Status > 0 && SharedGameResources.Camp!.CheckStatus(ec.Status))))
+                if (realChance >= chance && levelCheck && (ec.Status == 0 || (ec.Status > 0 && camp.CheckStatus(ec.Status))))
                 {
                     if (realChance <= threshold)
                     {
@@ -440,6 +470,9 @@ namespace FlareEngine
             if (stack.Empty() || !SharedGameResources.Items!.IsValid(stack.Item))
                 return;
 
+            var snd = SharedResources.Snd!;
+            var items = SharedGameResources.Items;
+
             Loot ld = new Loot();
             ld.Stack = stack;
             ld.Pos.X = pos.X;
@@ -454,27 +487,27 @@ namespace FlareEngine
                 {
                     _loot[it].Stack.Quantity += ld.Stack.Quantity;
                     _loot[it].Tip.Clear();
-                    SharedResources.Snd!.Play(_sfxLoot, _sfxLootChannel, pos, false);
+                    snd.Play(_sfxLoot, _sfxLootChannel, pos, false);
                     ld.Dispose();
                     return;
                 }
             }
 
-            if (SharedGameResources.Items.Items[stack.Item]!.LootAnimation.Count != 0)
+            if (items.Items[stack.Item]!.LootAnimation.Count != 0)
             {
-                int index = SharedGameResources.Items.Items[stack.Item]!.LootAnimation.Count - 1;
+                int index = items.Items[stack.Item]!.LootAnimation.Count - 1;
 
-                for (int i = 0; i < SharedGameResources.Items.Items[stack.Item]!.LootAnimation.Count; ++i)
+                for (int i = 0; i < items.Items[stack.Item]!.LootAnimation.Count; ++i)
                 {
-                    int low = SharedGameResources.Items.Items[stack.Item]!.LootAnimation[i].Low;
-                    int high = SharedGameResources.Items.Items[stack.Item]!.LootAnimation[i].High;
+                    int low = items.Items[stack.Item]!.LootAnimation[i].Low;
+                    int high = items.Items[stack.Item]!.LootAnimation[i].High;
                     if (stack.Quantity >= low && (stack.Quantity <= high || high == 0))
                     {
                         index = i;
                         break;
                     }
                 }
-                ld.LoadAnimation(SharedGameResources.Items.Items[stack.Item]!.LootAnimation[index].Name);
+                ld.LoadAnimation(items.Items[stack.Item]!.LootAnimation[index].Name);
             }
             else
             {
@@ -482,27 +515,34 @@ namespace FlareEngine
             }
 
             _loot.Add(ld);
-            SharedResources.Snd!.Play(_sfxLoot, _sfxLootChannel, pos, false);
+            snd.Play(_sfxLoot, _sfxLootChannel, pos, false);
         }
 
         /// <summary>点击地图拾取掉落物；需要相机位置将屏幕坐标转换为地图坐标。</summary>
         public ItemStack CheckPickup(Int2 mouse, Vector2 cam, Vector2 heroPos)
         {
+            var curs = SharedResources.Curs!;
+            var inpt = SharedResources.Inpt!;
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+
+            var pc = SharedGameResources.Pc!;
+
             ItemStack lootStack = new ItemStack();
 
-            if (SharedResources.Inpt!.UsingMouse())
+            if (inpt.UsingMouse())
             {
                 Int2 mousePos = mouse;
 
-                bool mouseMoveTarget = SharedGameResources.Pc!.MmTargetObject == Avatar.MmTargetLoot && SharedGameResources.Pc.IsNearMMtarget();
-                if (mouseMoveTarget && (SharedGameResources.Pc.Stats.CurState == StatBlock.EntityStance || SharedGameResources.Pc.Stats.CurState == StatBlock.EntityMove))
+                bool mouseMoveTarget = pc.MmTargetObject == Avatar.MmTargetLoot && pc.IsNearMMtarget();
+                if (mouseMoveTarget && (pc.Stats.CurState == StatBlock.EntityStance || pc.Stats.CurState == StatBlock.EntityMove))
                 {
-                    SharedGameResources.Pc.Stats.CurState = StatBlock.EntityStance;
-                    mousePos = Utils.MapToScreen(SharedGameResources.Pc.MmTargetObjectPos.X, SharedGameResources.Pc.MmTargetObjectPos.Y, cam.X, cam.Y);
+                    pc.Stats.CurState = StatBlock.EntityStance;
+                    mousePos = Utils.MapToScreen(pc.MmTargetObjectPos.X, pc.MmTargetObjectPos.Y, cam.X, cam.Y);
                 }
-                else if (SharedGameResources.Pc.MmTargetObject == Avatar.MmTargetLoot && SharedGameResources.Pc.Stats.CurState == StatBlock.EntityStance)
+                else if (pc.MmTargetObject == Avatar.MmTargetLoot && pc.Stats.CurState == StatBlock.EntityStance)
                 {
-                    SharedGameResources.Pc.Stats.CurState = StatBlock.EntityMove;
+                    pc.Stats.CurState = StatBlock.EntityMove;
                 }
 
                 int itMatch = -1;
@@ -515,10 +555,10 @@ namespace FlareEngine
                         Int2 p = Utils.MapToScreen(_loot[it].Pos.X, _loot[it].Pos.Y, cam.X, cam.Y);
 
                         Rectangle r = new Rectangle();
-                        r.X = p.X - SharedResources.Eset!.Tileset.TileWHalf;
-                        r.Y = p.Y - SharedResources.Eset.Tileset.TileHHalf;
-                        r.Width = SharedResources.Eset.Tileset.TileW;
-                        r.Height = SharedResources.Eset.Tileset.TileH;
+                        r.X = p.X - eset.Tileset.TileWHalf;
+                        r.Y = p.Y - eset.Tileset.TileHHalf;
+                        r.Width = eset.Tileset.TileW;
+                        r.Height = eset.Tileset.TileH;
 
                         if (_loot[it].TipVisible && Utils.IsWithinRect(_loot[it].Wtip!.Bounds, mousePos))
                         {
@@ -533,17 +573,17 @@ namespace FlareEngine
                     }
                 }
 
-                int interactKey = (SharedResources.Settings!.MouseMove && SharedResources.Settings.MouseMoveSwap) ? Input.Main2 : Input.Main1;
+                int interactKey = (settings.MouseMove && settings.MouseMoveSwap) ? Input.Main2 : Input.Main1;
 
                 if (itMatch != -1 && !_loot[itMatch].Stack.Empty())
                 {
-                    if (Utils.CalcDist(heroPos, _loot[itMatch].Pos) < SharedResources.Eset!.Misc.InteractRange)
+                    if (Utils.CalcDist(heroPos, _loot[itMatch].Pos) < eset.Misc.InteractRange)
                     {
-                        SharedResources.Curs!.SetCursor(CursorManager.CursorInteract);
+                        curs.SetCursor(CursorManager.CursorInteract);
 
-                        if (!mouseMoveTarget && SharedResources.Inpt!.Pressing[interactKey] && !SharedResources.Inpt.Lock[interactKey])
+                        if (!mouseMoveTarget && inpt.Pressing[interactKey] && !inpt.Lock[interactKey])
                         {
-                            SharedResources.Inpt.Lock[interactKey] = true;
+                            inpt.Lock[interactKey] = true;
                             lootStack = _loot[itMatch].Stack;
                             _loot[itMatch].Dispose();
                             _loot.RemoveAt(itMatch);
@@ -551,37 +591,37 @@ namespace FlareEngine
                         }
                         else if (mouseMoveTarget)
                         {
-                            SharedGameResources.Pc!.MmTargetObject = Avatar.MmTargetNone;
+                            pc.MmTargetObject = Avatar.MmTargetNone;
                             lootStack = _loot[itMatch].Stack;
                             _loot[itMatch].Dispose();
                             _loot.RemoveAt(itMatch);
                             return lootStack;
                         }
                     }
-                    else if (SharedResources.Settings.MouseMove)
+                    else if (settings.MouseMove)
                     {
-                        SharedResources.Curs!.SetCursor(CursorManager.CursorInteract);
+                        curs.SetCursor(CursorManager.CursorInteract);
 
-                        if (SharedResources.Inpt!.Pressing[interactKey] && !SharedResources.Inpt.Lock[interactKey])
+                        if (inpt.Pressing[interactKey] && !inpt.Lock[interactKey])
                         {
-                            SharedResources.Inpt.Lock[interactKey] = true;
+                            inpt.Lock[interactKey] = true;
 
                             Vector2 targetPos = _loot[itMatch].Pos;
-                            SharedGameResources.Pc!.SetDesiredMMTarget(ref targetPos);
+                            pc.SetDesiredMMTarget(ref targetPos);
 
-                            SharedGameResources.Pc.MmTargetObject = Avatar.MmTargetLoot;
-                            SharedGameResources.Pc.MmTargetObjectPos = _loot[itMatch].Pos;
+                            pc.MmTargetObject = Avatar.MmTargetLoot;
+                            pc.MmTargetObjectPos = _loot[itMatch].Pos;
                         }
                     }
                 }
             }
 
-            if (SharedResources.Inpt!.Pressing[Input.Accept] && !SharedResources.Inpt.Lock[Input.Accept])
+            if (inpt.Pressing[Input.Accept] && !inpt.Lock[Input.Accept])
             {
                 lootStack = CheckNearestPickup(heroPos);
                 if (!lootStack.Empty())
                 {
-                    SharedResources.Inpt.Lock[Input.Accept] = true;
+                    inpt.Lock[Input.Accept] = true;
                 }
             }
 
@@ -591,22 +631,26 @@ namespace FlareEngine
         /// <summary>若引擎启用了自动拾取，则尝试拾取（目前仅检查货币）。</summary>
         public ItemStack CheckAutoPickup(Vector2 heroPos)
         {
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var items = SharedGameResources.Items!;
+
             ItemStack lootStack = new ItemStack();
 
-            if (SharedResources.Settings!.AutoLoot == 0)
+            if (settings.AutoLoot == 0)
                 return lootStack;
 
             for (int it = _loot.Count; it != 0; )
             {
                 --it;
-                if (!_loot[it].DroppedByHero && Utils.CalcDist(heroPos, _loot[it].Pos) < SharedResources.Eset!.Loot.AutopickupRange && !_loot[it].IsFlying())
+                if (!_loot[it].DroppedByHero && Utils.CalcDist(heroPos, _loot[it].Pos) < eset.Loot.AutopickupRange && !_loot[it].IsFlying())
                 {
                     bool doPickup = false;
-                    if (_loot[it].Stack.Item == SharedResources.Eset!.Misc.CurrencyId && SharedResources.Eset.Loot.AutopickupCurrency)
+                    if (_loot[it].Stack.Item == eset.Misc.CurrencyId && eset.Loot.AutopickupCurrency)
                     {
                         doPickup = true;
                     }
-                    else if (SharedResources.Settings.AutoLoot == 1 && SharedGameResources.Items!.CheckAutoPickup(_loot[it].Stack.Item))
+                    else if (settings.AutoLoot == 1 && items.CheckAutoPickup(_loot[it].Stack.Item))
                     {
                         doPickup = true;
                     }
@@ -625,6 +669,8 @@ namespace FlareEngine
 
         public ItemStack CheckNearestPickup(Vector2 heroPos)
         {
+            var eset = SharedResources.Eset!;
+
             ItemStack lootStack = new ItemStack();
 
             float bestDistance = float.MaxValue;
@@ -636,7 +682,7 @@ namespace FlareEngine
                 --it;
 
                 float distance = Utils.CalcDist(heroPos, _loot[it].Pos);
-                if (distance < SharedResources.Eset!.Misc.InteractRange && distance < bestDistance)
+                if (distance < eset.Misc.InteractRange && distance < bestDistance)
                 {
                     bestDistance = distance;
                     nearest = it;
@@ -656,12 +702,14 @@ namespace FlareEngine
 
         public void AddRenders(List<Renderable> ren, List<Renderable> renDead)
         {
+            var mapr = SharedGameResources.Mapr!;
+
             for (int it = 0; it < _loot.Count; ++it)
             {
-                if (SharedGameResources.Mapr != null && SharedGameResources.Mapr.Collider.IsOutsideMap(_loot[it].Pos.X, _loot[it].Pos.Y))
+                if (mapr != null && mapr.Collider.IsOutsideMap(_loot[it].Pos.X, _loot[it].Pos.Y))
                     continue;
 
-                if (SharedGameResources.Mapr!.Fogofwar > FogOfWar.TypeMinimap)
+                if (mapr.Fogofwar > FogOfWar.TypeMinimap)
                 {
                     float delta = Utils.CalcDist(SharedGameResources.Pc!.Stats.Pos, _loot[it].Pos);
                     if (delta > SharedGameResources.Fow!.MaskRadius - 1.0f)
@@ -688,6 +736,9 @@ namespace FlareEngine
         {
             if (e == null) return;
 
+            var eset = SharedResources.Eset!;
+            var items = SharedGameResources.Items!;
+
             string chance;
             bool firstIsFilename = false;
             int lootEcType = e.Data[LootEcType].Int;
@@ -695,7 +746,7 @@ namespace FlareEngine
             e.S = Parse.PopFirstString(ref val);
 
             if (e.S == "currency")
-                e.Id = SharedResources.Eset!.Misc.CurrencyId;
+                e.Id = eset.Misc.CurrencyId;
             else if (Parse.ToInt(e.S, -1) != -1)
                 e.Id = SharedGameResources.Items!.VerifyID(Parse.ToItemID(e.S), null, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
             else if (ecList != null)
@@ -719,8 +770,8 @@ namespace FlareEngine
                 e.Data[LootEcQuantityMin].Int = Math.Max(Parse.PopFirstInt(ref val), 1);
                 e.Data[LootEcQuantityMax].Int = Math.Max(Parse.PopFirstInt(ref val), e.Data[LootEcQuantityMin].Int);
 
-                if (SharedGameResources.Items!.IsValid(e.Id))
-                    e.Data[LootEcMaxDrops].Int = SharedGameResources.Items.Items[e.Id]!.LootDropsMax;
+                if (items.IsValid(e.Id))
+                    e.Data[LootEcMaxDrops].Int = items.Items[e.Id]!.LootDropsMax;
             }
 
             if (ecList != null)
@@ -735,9 +786,9 @@ namespace FlareEngine
 
                     ec.S = repeatVal;
                     if (ec.S == "currency")
-                        ec.Id = SharedResources.Eset!.Misc.CurrencyId;
+                        ec.Id = eset.Misc.CurrencyId;
                     else if (Parse.ToInt(ec.S, -1) != -1)
-                        ec.Id = SharedGameResources.Items!.VerifyID(Parse.ToItemID(ec.S), null, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                        ec.Id = items.VerifyID(Parse.ToItemID(ec.S), null, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
                     else
                     {
                         ec.Data[LootEcType].Int = LootEcTypeTable;
@@ -757,8 +808,8 @@ namespace FlareEngine
                     ec.Data[LootEcQuantityMin].Int = Math.Max(Parse.PopFirstInt(ref val), 1);
                     ec.Data[LootEcQuantityMax].Int = Math.Max(Parse.PopFirstInt(ref val), ec.Data[LootEcQuantityMin].Int);
 
-                    if (SharedGameResources.Items!.IsValid(ec.Id))
-                        ec.Data[LootEcMaxDrops].Int = SharedGameResources.Items.Items[ec.Id]!.LootDropsMax;
+                    if (items.IsValid(ec.Id))
+                        ec.Data[LootEcMaxDrops].Int = items.Items[ec.Id]!.LootDropsMax;
 
                     repeatVal = Parse.PopFirstString(ref val);
                 }
@@ -767,7 +818,12 @@ namespace FlareEngine
 
         private void LoadLootTables()
         {
-            List<string> filenames = SharedResources.Mods!.List("loot", !ModManager.ListFullPaths);
+            var mods = SharedResources.Mods!;
+            var eset = SharedResources.Eset!;
+            var items = SharedGameResources.Items!;
+            var camp = SharedGameResources.Camp!;
+
+            List<string> filenames = mods.List("loot", !ModManager.ListFullPaths);
 
             for (int i = 0; i < filenames.Count; i++)
             {
@@ -799,7 +855,7 @@ namespace FlareEngine
                             ec = ecList[ecList.Count - 1];
                             ec.Data[LootEcType].Int = LootEcTypeTableRow;
                             string statusLootVal = infile.Val;
-                            ec.Status = SharedGameResources.Camp!.RegisterStatus(Parse.PopFirstString(ref statusLootVal));
+                            ec.Status = camp.RegisterStatus(Parse.PopFirstString(ref statusLootVal));
                             ParseLoot(ref statusLootVal, ec, ecList);
                         }
                     }
@@ -822,18 +878,18 @@ namespace FlareEngine
                             ec.S = infile.Val;
 
                             if (ec.S == "currency")
-                                ec.Id = SharedResources.Eset!.Misc.CurrencyId;
+                                ec.Id = eset.Misc.CurrencyId;
                             else if (Parse.ToInt(ec.S, -1) != -1)
-                                ec.Id = SharedGameResources.Items!.VerifyID(Parse.ToItemID(ec.S), null, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
+                                ec.Id = items.VerifyID(Parse.ToItemID(ec.S), null, !ItemManager.VerifyAllowZero, !ItemManager.VerifyAllocate);
                             else
                             {
                                 skipToNext = true;
                                 infile.Error("LootManager: Invalid item id for loot.");
                             }
 
-                            if (!skipToNext && SharedGameResources.Items!.IsValid(ec.Id))
+                            if (!skipToNext && items.IsValid(ec.Id))
                             {
-                                ec.Data[LootEcMaxDrops].Int = SharedGameResources.Items.Items[ec.Id]!.LootDropsMax;
+                                ec.Data[LootEcMaxDrops].Int = items.Items[ec.Id]!.LootDropsMax;
                             }
                         }
                         else if (infile.Key == "chance")
@@ -852,7 +908,7 @@ namespace FlareEngine
                         else if (infile.Key == "requires_status")
                         {
                             string requiresStatusVal = infile.Val;
-                            ec.Status = SharedGameResources.Camp!.RegisterStatus(Parse.PopFirstString(ref requiresStatusVal));
+                            ec.Status = camp.RegisterStatus(Parse.PopFirstString(ref requiresStatusVal));
                         }
                         else if (infile.Key == "requires_level")
                         {
@@ -891,6 +947,10 @@ namespace FlareEngine
 
         private void CheckLootComponent(EventComponent ec, Vector2? pos, List<ItemStack>? itemstackVec)
         {
+            var eset = SharedResources.Eset!;
+            var pc = SharedGameResources.Pc!;
+            var mapr = SharedGameResources.Mapr!;
+
             Vector2 p;
             ItemStack newLoot = new ItemStack();
             Int2 src;
@@ -907,35 +967,35 @@ namespace FlareEngine
             p.X = (float)src.X + 0.5f;
             p.Y = (float)src.Y + 0.5f;
 
-            if (!SharedGameResources.Mapr!.Collider.IsValidPosition(p.X, p.Y, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities))
+            if (!mapr.Collider.IsValidPosition(p.X, p.Y, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities))
             {
-                p = SharedGameResources.Mapr.Collider.GetRandomNeighbor(src, SharedResources.Eset!.Loot.DropRadius, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities);
+                p = mapr.Collider.GetRandomNeighbor(src, eset.Loot.DropRadius, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities);
 
-                if (!SharedGameResources.Mapr.Collider.IsValidPosition(p.X, p.Y, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities))
+                if (!mapr.Collider.IsValidPosition(p.X, p.Y, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities))
                 {
-                    p = SharedGameResources.Pc!.Stats.Pos;
+                    p = pc.Stats.Pos;
                 }
                 else
                 {
                     if (src.X == (int)p.X && src.Y == (int)p.Y)
-                        p = SharedGameResources.Pc!.Stats.Pos;
+                        p = pc.Stats.Pos;
 
-                    SharedGameResources.Mapr.Collider.Block(p.X, p.Y, !MapCollision.IsAlly);
+                    mapr.Collider.Block(p.X, p.Y, !MapCollision.IsAlly);
                     _tilesToUnblock.Add(p.ToInt2());
                 }
             }
 
             List<ItemStack> exStacks = new List<ItemStack>();
 
-            int quantityMin = ec.Data[LootEcQuantityMin].Int + ((SharedGameResources.Pc!.Stats.Level - 1) * ec.Data[LootEcQuantityPerLevelMin].Int);
-            int quantityMax = ec.Data[LootEcQuantityMax].Int + ((SharedGameResources.Pc!.Stats.Level - 1) * ec.Data[LootEcQuantityPerLevelMax].Int);
+            int quantityMin = ec.Data[LootEcQuantityMin].Int + ((pc.Stats.Level - 1) * ec.Data[LootEcQuantityPerLevelMin].Int);
+            int quantityMax = ec.Data[LootEcQuantityMax].Int + ((pc.Stats.Level - 1) * ec.Data[LootEcQuantityPerLevelMax].Int);
 
             newLoot.Quantity = MathUtils.RandBetween(quantityMin, quantityMax);
 
-            if (ec.Id == 0 || ec.Id == SharedResources.Eset!.Misc.CurrencyId)
+            if (ec.Id == 0 || ec.Id == eset.Misc.CurrencyId)
             {
-                newLoot.Item = SharedResources.Eset!.Misc.CurrencyId;
-                newLoot.Quantity = (int)((float)newLoot.Quantity * (100 + SharedGameResources.Pc!.Stats.Get(Stats.CurrencyFind)) / 100);
+                newLoot.Item = eset.Misc.CurrencyId;
+                newLoot.Quantity = (int)((float)newLoot.Quantity * (100 + pc.Stats.Get(Stats.CurrencyFind)) / 100);
                 exStacks.Add(newLoot);
             }
             else
@@ -965,6 +1025,9 @@ namespace FlareEngine
         /// <summary>对应 C++ 析构函数 <c>~LootManager()</c>。</summary>
         public void Dispose()
         {
+            var snd = SharedResources.Snd!;
+            var anim = SharedResources.Anim!;
+
             Utils.LogInfo("Cleaning up: LootManager");
 
             for (int i = 0; i < _animations.Count; ++i)
@@ -976,7 +1039,7 @@ namespace FlareEngine
                 {
                     for (int j = 0; j < SharedGameResources.Items.Items[i]!.LootAnimation.Count; ++j)
                     {
-                        SharedResources.Anim!.DecreaseCount(SharedGameResources.Items.Items[i]!.LootAnimation[j].Name);
+                        anim.DecreaseCount(SharedGameResources.Items.Items[i]!.LootAnimation[j].Name);
                         if (_animations[i]![j] != null)
                             _animations[i]![j]!.Dispose();
                     }
@@ -988,9 +1051,9 @@ namespace FlareEngine
                 _loot[i].Dispose();
             _loot.Clear();
 
-            SharedResources.Anim!.CleanUp();
+            anim.CleanUp();
 
-            SharedResources.Snd!.Unload(_sfxLoot);
+            snd.Unload(_sfxLoot);
 
             GC.SuppressFinalize(this);
         }

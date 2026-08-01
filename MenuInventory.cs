@@ -525,6 +525,9 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+
             if (!Visible) return;
 
             base.Render();
@@ -546,7 +549,7 @@ namespace FlareEngine
 
             if (!_labelCurrency.IsHidden())
             {
-                _labelCurrency.SetText(SharedResources.Msg!.GetV("%d %s", Currency, SharedResources.Eset!.Loot.Currency));
+                _labelCurrency.SetText(msg.GetV("%d %s", Currency, eset.Loot.Currency));
                 _labelCurrency.Render();
             }
 
@@ -1188,6 +1191,7 @@ namespace FlareEngine
             Avatar pc = SharedGameResources.Pc!;
             MessageEngine msg = SharedResources.Msg!;
             InputState inpt = SharedResources.Inpt!;
+            EngineSettings eset = SharedResources.Eset!;
 
             if (!items.IsValid(stack.Item))
                 return false;
@@ -1211,7 +1215,7 @@ namespace FlareEngine
                     valueEach = item.GetSellPrice(stack.CanBuyback);
 
                 count = valueEach * stack.Quantity;
-                canAfford = (Inventory[Carried].Count(SharedResources.Eset!.Misc.CurrencyId) >= count);
+                canAfford = (Inventory[Carried].Count(eset.Misc.CurrencyId) >= count);
             }
 
             if (canAfford)
@@ -1237,7 +1241,7 @@ namespace FlareEngine
                 else
                 {
                     RemoveCurrency(count);
-                    items.PlaySound(SharedResources.Eset!.Misc.CurrencyId);
+                    items.PlaySound(eset.Misc.CurrencyId);
                 }
 
                 return true;
@@ -1247,7 +1251,7 @@ namespace FlareEngine
                 if (tab == ItemManager.VendorCraft)
                     pc.LogMsg(msg.Get("You do not have the required items to craft."), Avatar.MsgNormal);
                 else
-                    pc.LogMsg(msg.GetV("Not enough %s.", SharedResources.Eset!.Loot.Currency), Avatar.MsgNormal);
+                    pc.LogMsg(msg.GetV("Not enough %s.", eset.Loot.Currency), Avatar.MsgNormal);
 
                 DropStack.Enqueue(stack);
                 return false;
@@ -1259,13 +1263,14 @@ namespace FlareEngine
             ItemManager items = SharedGameResources.Items!;
             Avatar pc = SharedGameResources.Pc!;
             MessageEngine msg = SharedResources.Msg!;
+            EngineSettings eset = SharedResources.Eset!;
 
             if (stack.Empty() || !items.IsValid(stack.Item))
             {
                 return false;
             }
 
-            if (stack.Item == SharedResources.Eset!.Misc.CurrencyId) return false;
+            if (stack.Item == eset.Misc.CurrencyId) return false;
 
             if (items.Items[(int)stack.Item]!.GetPrice(ItemManager.UseVendorRatio) == 0)
             {
@@ -1284,7 +1289,7 @@ namespace FlareEngine
             int valueEach = items.Items[(int)stack.Item]!.GetSellPrice(ItemManager.DefaultSellPrice);
             int value = valueEach * stack.Quantity;
             AddCurrency(value);
-            items.PlaySound(SharedResources.Eset!.Misc.CurrencyId);
+            items.PlaySound(eset.Misc.CurrencyId);
             DragPrevSrc = -1;
             return true;
         }
@@ -1307,6 +1312,7 @@ namespace FlareEngine
             Avatar pc = SharedGameResources.Pc!;
             PowerManager powers = SharedGameResources.Powers!;
             MenuManager menu = SharedGameResources.Menu!;
+            EngineSettings eset = SharedResources.Eset!;
 
             if (items.Items.Count == 0)
                 return;
@@ -1322,7 +1328,7 @@ namespace FlareEngine
                 activeSets.Clear();
                 activeSetQuantities.Clear();
 
-                for (int j = 0; j < SharedResources.Eset!.PrimaryStats.Stats.Count; ++j)
+                for (int j = 0; j < eset.PrimaryStats.Stats.Count; ++j)
                 {
                     pc.Stats.PrimaryAdditional[j] = 0;
                 }
@@ -1339,7 +1345,7 @@ namespace FlareEngine
                         int bonusCounter = 0;
                         while (bonusCounter < item.Bonus.Count)
                         {
-                            for (int j = 0; j < SharedResources.Eset.PrimaryStats.Stats.Count; ++j)
+                            for (int j = 0; j < eset.PrimaryStats.Stats.Count; ++j)
                             {
                                 if (item.Bonus[bonusCounter].Type == BonusData.PrimaryStat && item.Bonus[bonusCounter].Index == j)
                                     pc.Stats.PrimaryAdditional[j] += (int)item.Bonus[bonusCounter].Value.Get();
@@ -1380,7 +1386,7 @@ namespace FlareEngine
                         if (itemSet.Bonus[bonusCounter].Requirement != activeSetQuantities[k])
                             continue;
 
-                        for (int j = 0; j < SharedResources.Eset.PrimaryStats.Stats.Count; ++j)
+                        for (int j = 0; j < eset.PrimaryStats.Stats.Count; ++j)
                         {
                             if (itemSet.Bonus[bonusCounter].Type == BonusData.PrimaryStat && itemSet.Bonus[bonusCounter].Index == j)
                                 pc.Stats.PrimaryAdditional[j] += (int)itemSet.Bonus[bonusCounter].Value.Get();
@@ -1479,11 +1485,12 @@ namespace FlareEngine
             ItemManager items = SharedGameResources.Items!;
             Avatar pc = SharedGameResources.Pc!;
             PowerManager powers = SharedGameResources.Powers!;
+            EngineSettings eset = SharedResources.Eset!;
 
             if (items.Items.Count == 0)
                 return;
 
-            for (int i = 0; i < SharedResources.Eset!.DamageTypes.Types.Count; ++i)
+            for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
             {
                 pc.Stats.ItemBaseDmg[i].Min = pc.Stats.ItemBaseDmg[i].Max = 0;
             }
@@ -1499,7 +1506,7 @@ namespace FlareEngine
 
                     Item item = items.Items[(int)itemId]!;
 
-                    for (int j = 0; j < SharedResources.Eset.DamageTypes.Types.Count; ++j)
+                    for (int j = 0; j < eset.DamageTypes.Types.Count; ++j)
                     {
                         pc.Stats.ItemBaseDmg[j].Min += item.BaseDmg[j].Min.Get();
                         pc.Stats.ItemBaseDmg[j].Max += item.BaseDmg[j].Max.Get();
@@ -1555,6 +1562,7 @@ namespace FlareEngine
         {
             Avatar pc = SharedGameResources.Pc!;
             MenuManager menu = SharedGameResources.Menu!;
+            EngineSettings eset = SharedResources.Eset!;
 
             EffectDef ed = new EffectDef();
 
@@ -1572,19 +1580,19 @@ namespace FlareEngine
             }
             else if (bdata.Type == BonusData.DamageMin)
             {
-                ed.Id = SharedResources.Eset!.DamageTypes.Types[bdata.Index].Min;
+                ed.Id = eset.DamageTypes.Types[bdata.Index].Min;
             }
             else if (bdata.Type == BonusData.DamageMax)
             {
-                ed.Id = SharedResources.Eset!.DamageTypes.Types[bdata.Index].Max;
+                ed.Id = eset.DamageTypes.Types[bdata.Index].Max;
             }
             else if (bdata.Type == BonusData.ResistElement)
             {
-                ed.Id = SharedResources.Eset!.DamageTypes.Types[bdata.Index].Resist;
+                ed.Id = eset.DamageTypes.Types[bdata.Index].Resist;
             }
             else if (bdata.Type == BonusData.PrimaryStat)
             {
-                ed.Id = SharedResources.Eset!.PrimaryStats.Stats[bdata.Index].Id;
+                ed.Id = eset.PrimaryStats.Stats[bdata.Index].Id;
             }
             else if (bdata.PowerId > 0)
             {
@@ -1593,7 +1601,7 @@ namespace FlareEngine
             }
             else if (bdata.Type == BonusData.ResourceStat)
             {
-                ed.Id = SharedResources.Eset!.ResourceStats.Stats[bdata.Index].Ids[bdata.SubIndex];
+                ed.Id = eset.ResourceStats.Stats[bdata.Index].Ids[bdata.SubIndex];
             }
 
             ed.Type = Effect.GetTypeFromString(ed.Id);

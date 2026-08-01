@@ -1,5 +1,5 @@
 // 对应 C++ 源：HazardManager.h + HazardManager.cpp
-// 注意：System, System.Collections.Generic, System.Linq, System.Threading.Tasks 已全局导入，此处省略�?
+// 注意：System, System.Collections.Generic, System.Linq, System.Threading.Tasks 已全局导入，此处省略�?
 using Stride.Core.Mathematics;
 
 namespace FlareEngine
@@ -7,15 +7,15 @@ namespace FlareEngine
     /// <summary>
     /// HazardManager
     ///
-    /// 持有当前场上所�?Hazard（正在生效的攻击、法术等）的集合，并处理它们的群体逻辑
-    /// （生命周期到期、撞墙特效、连锁法术、命中判定、驱散等）�?
+    /// 持有当前场上所�?Hazard（正在生效的攻击、法术等）的集合，并处理它们的群体逻辑
+    /// （生命周期到期、撞墙特效、连锁法术、命中判定、驱散等）�?
     ///
-    /// C++ 原始版本�?<c>std::vector&lt;Hazard*&gt;</c> 中的每个元素使用 <c>new</c>/<c>delete</c>
-    /// 手动管理生命周期（单一所有者：HazardManager 创建/持有/销毁自己集合中�?Hazard）�?
-    /// C# 版本沿用本项目既有约定（�?output/CombatText.cs、output/AnimationManager.cs 等）�?
-    /// 假定 <c>Hazard</c> 未来转换时实�?<see cref="IDisposable"/>，在每个原始 <c>delete h[i];</c>
-    /// 调用点改为显式调�?<c>H[i].Dispose()</c>�?c>HazardManager</c> 自身也实�?
-    /// <see cref="IDisposable"/>，对应原始析构函数，释放顺序与原始代码逐行一致�?
+    /// C++ 原始版本�?<c>std::vector&lt;Hazard*&gt;</c> 中的每个元素使用 <c>new</c>/<c>delete</c>
+    /// 手动管理生命周期（单一所有者：HazardManager 创建/持有/销毁自己集合中�?Hazard）�?
+    /// C# 版本沿用本项目既有约定（�?output/CombatText.cs、output/AnimationManager.cs 等）�?
+    /// 假定 <c>Hazard</c> 未来转换时实�?<see cref="IDisposable"/>，在每个原始 <c>delete h[i];</c>
+    /// 调用点改为显式调�?<c>H[i].Dispose()</c>�?c>HazardManager</c> 自身也实�?
+    /// <see cref="IDisposable"/>，对应原始析构函数，释放顺序与原始代码逐行一致�?
     /// </summary>
     public class HazardManager : IDisposable
     {
@@ -28,10 +28,10 @@ namespace FlareEngine
         }
 
         /// <summary>
-        /// 对应 C++ �?<c>~HazardManager()</c>。先记录清理日志，再按原�?for 循环顺序
-        /// （从头到尾）释放 <see cref="H"/> 中的每个 Hazard，最后清�?<see cref="LastEnemy"/>
+        /// 对应 C++ �?<c>~HazardManager()</c>。先记录清理日志，再按原�?for 循环顺序
+        /// （从头到尾）释放 <see cref="H"/> 中的每个 Hazard，最后清�?<see cref="LastEnemy"/>
         /// 引用（原始代码中 <c>h.clear();</c> 在析构函数中被注释掉，因此这里同样不调用
-        /// <c>H.Clear()</c>，仅保留同样的注释以说明这一点）�?
+        /// <c>H.Clear()</c>，仅保留同样的注释以说明这一点）�?
         /// </summary>
         public void Dispose()
         {
@@ -47,6 +47,10 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var powers = SharedGameResources.Powers!;
+            var eventm = SharedGameResources.Eventm!;
+            var entitym = SharedGameResources.Entitym!;
+            var pc = SharedGameResources.Pc!;
 
             // remove all hazards with lifespan 0.  Most hazards still display their last frame.
             for (int i = H.Count; i > 0; i--)
@@ -58,11 +62,11 @@ namespace FlareEngine
                         ChainPower chainPower = H[i - 1].HazardPower!.ChainPowers[j];
                         if (chainPower.Type == ChainPower.TypeExpire && MathUtils.PercentChanceF(chainPower.Chance))
                         {
-                            SharedGameResources.Powers!.Activate(chainPower.Id, H[i - 1].SrcStats, H[i - 1].Pos, H[i - 1].Pos);
+                            powers.Activate(chainPower.Id, H[i - 1].SrcStats, H[i - 1].Pos, H[i - 1].Pos);
 
-                            if (SharedGameResources.Powers!.Powers[chainPower.Id].Directional)
+                            if (powers.Powers[chainPower.Id].Directional)
                             {
-                                SharedGameResources.Powers!.Hazards.Last().Direction = H[i - 1].Direction;
+                                powers.Hazards.Last().Direction = H[i - 1].Direction;
                             }
                         }
                     }
@@ -96,7 +100,7 @@ namespace FlareEngine
                 {
                     if (hazard.HazardPower!.ScriptTrigger == Power.ScriptTriggerWall)
                     {
-                        SharedGameResources.Eventm!.ExecuteScript(hazard.HazardPower!.Script, hazard.Pos.X, hazard.Pos.Y);
+                        eventm.ExecuteScript(hazard.HazardPower!.Script, hazard.Pos.X, hazard.Pos.Y);
                     }
 
                     for (int j = 0; j < hazard.HazardPower!.ChainPowers.Count; ++j)
@@ -104,11 +108,11 @@ namespace FlareEngine
                         ChainPower chainPower = hazard.HazardPower!.ChainPowers[j];
                         if (chainPower.Type == ChainPower.TypeWall && MathUtils.PercentChanceF(chainPower.Chance))
                         {
-                            SharedGameResources.Powers!.Activate(chainPower.Id, hazard.SrcStats, hazard.Pos, hazard.Pos);
+                            powers.Activate(chainPower.Id, hazard.SrcStats, hazard.Pos, hazard.Pos);
 
-                            if (SharedGameResources.Powers!.Powers[chainPower.Id].Directional)
+                            if (powers.Powers[chainPower.Id].Directional)
                             {
-                                SharedGameResources.Powers!.Hazards.Last().Direction = hazard.Direction;
+                                powers.Hazards.Last().Direction = hazard.Direction;
                             }
                         }
                     }
@@ -122,9 +126,9 @@ namespace FlareEngine
                 {
 
                     // process hazards that can hurt enemies & allies
-                    for (int eIndex = 0; eIndex < SharedGameResources.Entitym!.Entities.Count; eIndex++)
+                    for (int eIndex = 0; eIndex < entitym.Entities.Count; eIndex++)
                     {
-                        Entity e = SharedGameResources.Entitym!.Entities[eIndex];
+                        Entity e = entitym.Entities[eIndex];
 
                         // hero/ally powers can only hit allies if target_party is true
                         if ((hazard.SourceType == Power.SourceTypeHero || hazard.SourceType == Power.SourceTypeAlly) && e.Stats.HeroAlly && !hazard.HazardPower!.TargetParty)
@@ -161,15 +165,15 @@ namespace FlareEngine
                     // process hazards that can hurt the hero
                     if (hazard.SourceType != Power.SourceTypeHero && hazard.SourceType != Power.SourceTypeAlly)
                     { //enemy or neutral sources
-                        if (SharedGameResources.Pc!.Stats.Hp > 0 && hazard.Active)
+                        if (pc.Stats.Hp > 0 && hazard.Active)
                         {
-                            if (Utils.IsWithinRadius(hazard.Pos, hazard.HazardPower!.Radius, SharedGameResources.Pc!.Stats.Pos))
+                            if (Utils.IsWithinRadius(hazard.Pos, hazard.HazardPower!.Radius, pc.Stats.Pos))
                             {
-                                if (!hazard.HasEntity(SharedGameResources.Pc!))
+                                if (!hazard.HasEntity(pc))
                                 {
                                     // hit!
-                                    hazard.AddEntity(SharedGameResources.Pc!);
-                                    HitEntity(hIndex, SharedGameResources.Pc!.TakeHit(hazard));
+                                    hazard.AddEntity(pc);
+                                    HitEntity(hIndex, pc.TakeHit(hazard));
                                 }
                             }
                         }
@@ -206,12 +210,13 @@ namespace FlareEngine
         /// </summary>
         public void CheckNewHazards()
         {
+            var powers = SharedGameResources.Powers!;
 
             // check PowerManager for hazards
-            while (SharedGameResources.Powers!.Hazards.Count > 0)
+            while (powers.Hazards.Count > 0)
             {
-                Hazard newHaz = SharedGameResources.Powers!.Hazards.Peek();
-                SharedGameResources.Powers!.Hazards.Dequeue();
+                Hazard newHaz = powers.Hazards.Peek();
+                powers.Hazards.Dequeue();
 
                 H.Add(newHaz);
             }
@@ -248,6 +253,9 @@ namespace FlareEngine
 
         private void HitEntity(int index, bool hit)
         {
+            var snd = SharedResources.Snd!;
+            var eventm = SharedGameResources.Eventm!;
+
             if (!hit) return;
 
             if (!H[index].HazardPower!.Multitarget)
@@ -257,13 +265,13 @@ namespace FlareEngine
             }
             if (H[index].HazardPower!.SfxHitEnable && !H[index].SfxHitPlayed)
             {
-                SharedResources.Snd!.Play(H[index].HazardPower!.SfxHit, SoundManager.DefaultChannel, H[index].Pos, !SoundManager.Loop);
+                snd.Play(H[index].HazardPower!.SfxHit, SoundManager.DefaultChannel, H[index].Pos, !SoundManager.Loop);
                 H[index].SfxHitPlayed = true;
             }
 
             if (H[index].HazardPower!.ScriptTrigger == Power.ScriptTriggerHit)
             {
-                SharedGameResources.Eventm!.ExecuteScript(H[index].HazardPower!.Script, H[index].Pos.X, H[index].Pos.Y);
+                eventm.ExecuteScript(H[index].HazardPower!.Script, H[index].Pos.X, H[index].Pos.Y);
             }
         }
     }

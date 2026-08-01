@@ -196,7 +196,7 @@ namespace FlareEngine
         {
         }
 
-        public abstract Image Resize(int width, int height);
+        public abstract Image? Resize(int width, int height);
 
         public Sprite CreateSprite()
         {
@@ -338,16 +338,17 @@ namespace FlareEngine
 
         public int CreateContext()
         {
+            var settings = SharedResources.Settings!;
             int status = CreateContextInternal();
 
             if (status == -1)
             {
                 Utils.LogError("RenderDevice: createContext() failed, trying previous settings.");
                 // try previous setting first
-                SharedResources.Settings!.Fullscreen = Fullscreen;
-                SharedResources.Settings!.Hwsurface = Hwsurface;
-                SharedResources.Settings!.Vsync = Vsync;
-                SharedResources.Settings!.TextureFilter = TextureFilter;
+                settings.Fullscreen = Fullscreen;
+                settings.Hwsurface = Hwsurface;
+                settings.Vsync = Vsync;
+                settings.TextureFilter = TextureFilter;
 
                 status = CreateContextInternal();
             }
@@ -356,10 +357,10 @@ namespace FlareEngine
             {
                 Utils.LogError("RenderDevice: createContext() failed, disabling all options.");
                 // last resort, try turning everything off
-                SharedResources.Settings!.Fullscreen = false;
-                SharedResources.Settings!.Hwsurface = false;
-                SharedResources.Settings!.Vsync = false;
-                SharedResources.Settings!.TextureFilter = false;
+                settings.Fullscreen = false;
+                settings.Hwsurface = false;
+                settings.Vsync = false;
+                settings.TextureFilter = false;
 
                 status = CreateContextInternal();
             }
@@ -635,64 +636,67 @@ namespace FlareEngine
 
         protected void WindowResizeInternal()
         {
-            ushort oldViewW = SharedResources.Settings!.ViewW;
-            ushort oldViewH = SharedResources.Settings!.ViewH;
-            ushort oldScreenW = SharedResources.Settings!.ScreenW;
-            ushort oldScreenH = SharedResources.Settings!.ScreenH;
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
 
-            GetWindowSize(out SharedResources.Settings!.ScreenW, out SharedResources.Settings!.ScreenH);
+            ushort oldViewW = settings.ViewW;
+            ushort oldViewH = settings.ViewH;
+            ushort oldScreenW = settings.ScreenW;
+            ushort oldScreenH = settings.ScreenH;
+
+            GetWindowSize(out settings.ScreenW, out settings.ScreenH);
 
             ushort tempScreenH;
-            if (SharedResources.Settings!.DpiScaling && Ddpi > 0 && SharedResources.Eset!.Resolutions.VirtualDpi > 0)
+            if (settings.DpiScaling && Ddpi > 0 && eset.Resolutions.VirtualDpi > 0)
             {
-                tempScreenH = (ushort)((float)SharedResources.Settings!.ScreenH * (SharedResources.Eset!.Resolutions.VirtualDpi / Ddpi));
+                tempScreenH = (ushort)((float)settings.ScreenH * (eset.Resolutions.VirtualDpi / Ddpi));
             }
             else
             {
-                tempScreenH = SharedResources.Settings!.ScreenH;
+                tempScreenH = settings.ScreenH;
             }
-            SharedResources.Settings!.ViewH = tempScreenH;
+            settings.ViewH = tempScreenH;
 
             // scale virtual height when outside of VIRTUAL_HEIGHTS range
-            ushort minRenderSize = SharedResources.Settings!.MinRenderSize;
-            ushort maxRenderSize = SharedResources.Settings!.MaxRenderSize;
+            ushort minRenderSize = settings.MinRenderSize;
+            ushort maxRenderSize = settings.MaxRenderSize;
 
-            if (maxRenderSize == 0 && SharedResources.Eset!.Resolutions.VirtualHeights.Count != 0)
-                maxRenderSize = SharedResources.Eset!.Resolutions.VirtualHeights[^1];
+            if (maxRenderSize == 0 && eset.Resolutions.VirtualHeights.Count != 0)
+                maxRenderSize = eset.Resolutions.VirtualHeights[^1];
 
-            if (minRenderSize > 0 && minRenderSize > SharedResources.Settings!.ViewH)
-                SharedResources.Settings!.ViewH = minRenderSize;
+            if (minRenderSize > 0 && minRenderSize > settings.ViewH)
+                settings.ViewH = minRenderSize;
 
-            if (SharedResources.Eset!.Resolutions.VirtualHeights.Count != 0)
+            if (eset.Resolutions.VirtualHeights.Count != 0)
             {
-                if (minRenderSize < SharedResources.Eset!.Resolutions.VirtualHeights[0] && tempScreenH < SharedResources.Eset!.Resolutions.VirtualHeights[0])
-                    SharedResources.Settings!.ViewH = SharedResources.Eset!.Resolutions.VirtualHeights[0];
+                if (minRenderSize < eset.Resolutions.VirtualHeights[0] && tempScreenH < eset.Resolutions.VirtualHeights[0])
+                    settings.ViewH = eset.Resolutions.VirtualHeights[0];
                 else if (tempScreenH >= maxRenderSize)
-                    SharedResources.Settings!.ViewH = maxRenderSize;
+                    settings.ViewH = maxRenderSize;
             }
 
-            SharedResources.Settings!.ViewHHalf = (ushort)(SharedResources.Settings!.ViewH / 2);
+            settings.ViewHHalf = (ushort)(settings.ViewH / 2);
 
-            SharedResources.Settings!.ViewScaling = (float)SharedResources.Settings!.ViewH / (float)SharedResources.Settings!.ScreenH;
-            SharedResources.Settings!.ViewW = (ushort)((float)SharedResources.Settings!.ScreenW * SharedResources.Settings!.ViewScaling);
+            settings.ViewScaling = (float)settings.ViewH / (float)settings.ScreenH;
+            settings.ViewW = (ushort)((float)settings.ScreenW * settings.ViewScaling);
 
             // letterbox if too tall
-            ushort minScreenW = (ushort)Math.Max(SharedResources.Eset!.Resolutions.MinScreenW, SharedResources.Eset!.Resolutions.FrameW);
-            if (SharedResources.Settings!.ViewW < minScreenW)
+            ushort minScreenW = (ushort)Math.Max(eset.Resolutions.MinScreenW, eset.Resolutions.FrameW);
+            if (settings.ViewW < minScreenW)
             {
-                SharedResources.Settings!.ViewW = minScreenW;
-                SharedResources.Settings!.ViewScaling = (float)SharedResources.Settings!.ViewW / (float)SharedResources.Settings!.ScreenW;
+                settings.ViewW = minScreenW;
+                settings.ViewScaling = (float)settings.ViewW / (float)settings.ScreenW;
             }
 
-            SharedResources.Settings!.ViewWHalf = (ushort)(SharedResources.Settings!.ViewW / 2);
+            settings.ViewWHalf = (ushort)(settings.ViewW / 2);
 
-            if (SharedResources.Settings!.ViewW != oldViewW || SharedResources.Settings!.ViewH != oldViewH)
+            if (settings.ViewW != oldViewW || settings.ViewH != oldViewH)
             {
-                Utils.LogInfo("RenderDevice: Internal render size is %dx%d", SharedResources.Settings!.ViewW, SharedResources.Settings!.ViewH);
+                Utils.LogInfo("RenderDevice: Internal render size is %dx%d", settings.ViewW, settings.ViewH);
             }
-            if (SharedResources.Settings!.ScreenW != oldScreenW || SharedResources.Settings!.ScreenH != oldScreenH)
+            if (settings.ScreenW != oldScreenW || settings.ScreenH != oldScreenH)
             {
-                Utils.LogInfo("RenderDevice: Window size changed to %dx%d", SharedResources.Settings!.ScreenW, SharedResources.Settings!.ScreenH);
+                Utils.LogInfo("RenderDevice: Window size changed to %dx%d", settings.ScreenW, settings.ScreenH);
             }
         }
 

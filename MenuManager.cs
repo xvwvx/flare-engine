@@ -101,6 +101,10 @@ namespace FlareEngine
 
         public MenuManager()
         {
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var msg = SharedResources.Msg!;
+
             _keyLock = false;
             _mouseDragging = false;
             _keyboardDragging = false;
@@ -163,8 +167,8 @@ namespace FlareEngine
             ActionPicker = new MenuConfirm();
             RegionTitle = new MenuRegionTitle();
 
-            ResourceStatbars.Capacity = SharedResources.Eset!.ResourceStats.Stats.Count;
-            while (ResourceStatbars.Count < SharedResources.Eset!.ResourceStats.Stats.Count)
+            ResourceStatbars.Capacity = eset.ResourceStats.Stats.Count;
+            while (ResourceStatbars.Count < eset.ResourceStats.Stats.Count)
                 ResourceStatbars.Add(null!);
             for (int i = 0; i < ResourceStatbars.Count; ++i)
             {
@@ -197,7 +201,7 @@ namespace FlareEngine
             Menus.Add(ActionPicker);
             Menus.Add(Exit);
 
-            if (SharedResources.Settings!.DevMode)
+            if (settings.DevMode)
             {
                 Devconsole = new MenuDevConsole();
             }
@@ -208,12 +212,12 @@ namespace FlareEngine
 
             CloseAll(); // make sure all togglable Menus start closed
 
-            SharedResources.Settings!.ShowHud = true;
+            settings.ShowHud = true;
 
             _dragIcon!.Enabled = false;
             _dragIcon!.ShowDisabledOverlay = false;
 
-            ActionPicker!.SetTitle(SharedResources.Msg!.Get("Choose an action:"));
+            ActionPicker!.SetTitle(msg.Get("Choose an action:"));
 
             // enabled menu buttons on actionbar
             Act!.SetupMenuButtons(Chr, Inv, Pow, Questlog);
@@ -244,13 +248,15 @@ namespace FlareEngine
         }
         
         private void SetDragIconItem(ItemStack stack) {
-            if (stack.Empty() || !SharedGameResources.Items!.IsValid(stack.Item)) {
+            var items = SharedGameResources.Items!;
+
+            if (stack.Empty() || !items.IsValid(stack.Item)) {
                 _dragIcon!.SetIcon(WidgetSlot.NoIcon, WidgetSlot.NoOverlay);
                 _dragIcon!.SetAmount(0, 0);
             }
             else {
-                _dragIcon!.SetIcon(SharedGameResources.Items!.Items[(int)stack.Item]!.Icon, SharedGameResources.Items!.GetItemIconOverlay(stack.Item));
-                _dragIcon!.SetAmount(stack.Quantity, SharedGameResources.Items!.Items[(int)stack.Item]!.MaxQuantity);
+                _dragIcon!.SetIcon(items.Items[(int)stack.Item]!.Icon, items.GetItemIconOverlay(stack.Item));
+                _dragIcon!.SetAmount(stack.Quantity, items.Items[(int)stack.Item]!.MaxQuantity);
             }
         }
         
@@ -353,9 +359,17 @@ namespace FlareEngine
         }
         
         public void Logic() {
+            var inpt = SharedResources.Inpt!;
+            var snd = SharedResources.Snd!;
+            var pc = SharedGameResources.Pc!;
+            var settings = SharedResources.Settings!;
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+            var items = SharedGameResources.Items!;
+
             ItemStack stack;
         
-            Subtitles!.Logic(SharedResources.Snd!.GetLastPlayedSID());
+            Subtitles!.Logic(snd.GetLastPlayedSID());
         
             // refresh statbar values from player statblock
             Hp!.Update();
@@ -366,11 +380,11 @@ namespace FlareEngine
             }
         
             // close Talker/Vendor menu if player is attacked
-            if (SharedGameResources.Pc!.Stats.AbortNpcInteract && SharedResources.Eset!.Misc.CombatAbortsNpcInteract) {
+            if (pc.Stats.AbortNpcInteract && eset.Misc.CombatAbortsNpcInteract) {
                 Talker!.SetNPC(null);
                 Vendor!.SetNPC(null);
             }
-            SharedGameResources.Pc!.Stats.AbortNpcInteract = false;
+            pc.Stats.AbortNpcInteract = false;
         
             if (Act!.Tablist.GetCurrent() != -1) {
                 // books/npcs can be activated by powers in the actionbar, so we need to defocus the bar if one of those is opened
@@ -408,7 +422,7 @@ namespace FlareEngine
         
                     NumPicker!.ConfirmClicked = false;
                     NumPicker!.Visible = false;
-                    if (SharedResources.Inpt!.UsingMouse()) {
+                    if (inpt.UsingMouse()) {
                         _stickyDragging = true;
                     }
                     NumPicker!.Tablist.Defocus();
@@ -448,7 +462,7 @@ namespace FlareEngine
                             else if (action == ActionPickerInventoryStash)
                                 _dragPostAction = DragPostActionStash;
                             else if (action == ActionPickerInventoryActionbar) {
-                                if (SharedResources.Inpt!.Mode != InputState.ModeTouchscreen) {
+                                if (inpt.Mode != InputState.ModeTouchscreen) {
                                     // move the cursor to the actionbar
                                     Act!.Tablist.Unlock();
                                     Act!.Tablist.GetNext(!TabList.GetInner, TabList.WidgetSelectAuto);
@@ -515,7 +529,7 @@ namespace FlareEngine
                                 ActionPickerStartDrag();
                                 _dragSrc = DragSrcPowers;
         
-                                if (SharedResources.Inpt!.Mode != InputState.ModeTouchscreen) {
+                                if (inpt.Mode != InputState.ModeTouchscreen) {
                                     // move the cursor to the actionbar
                                     Act!.Tablist.Unlock();
                                     Act!.Tablist.GetNext(!TabList.GetInner, TabList.WidgetSelectAuto);
@@ -567,7 +581,7 @@ namespace FlareEngine
                 // NumPicker will only start dragging the item stack, so we need to complete the selected action here
         
                 // when using a touchscreen, MenuItemStorage.Click() will highlight the selected slot. We can clear the highlight here
-                if (_dragPostAction != DragPostActionNone && SharedResources.Inpt!.Mode == InputState.ModeTouchscreen) {
+                if (_dragPostAction != DragPostActionNone && inpt.Mode == InputState.ModeTouchscreen) {
                     DefocusLeft();
                     DefocusRight();
                 }
@@ -575,17 +589,17 @@ namespace FlareEngine
                 if (_dragPostAction == DragPostActionDrop) {
                     if (_dragSrc == DragSrcInventory) {
                         // quest items cannot be dropped
-                        bool itemIsValid = SharedGameResources.Items!.IsValid(_dragStack.Item);
-                        if (!itemIsValid || (itemIsValid && !SharedGameResources.Items!.Items[(int)_dragStack.Item]!.QuestItem)) {
+                        bool itemIsValid = items.IsValid(_dragStack.Item);
+                        if (!itemIsValid || (itemIsValid && !items.Items[(int)_dragStack.Item]!.QuestItem)) {
                             DropStack.Enqueue(_dragStack.Clone());
                         }
                         else {
-                            SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.Get("This item can not be dropped."), Avatar.MsgNormal);
-                            SharedGameResources.Items!.PlaySound(_dragStack.Item);
+                            pc.LogMsg(msg.Get("This item can not be dropped."), Avatar.MsgNormal);
+                            items.PlaySound(_dragStack.Item);
         
                             Inv!.ItemReturn(_dragStack);
                         }
-                        if (SharedResources.Inpt!.Mode == InputState.ModeTouchscreen)
+                        if (inpt.Mode == InputState.ModeTouchscreen)
                             Inv!.DefocusTabLists();
                     }
                     else if (_dragSrc == DragSrcStash) {
@@ -638,29 +652,29 @@ namespace FlareEngine
                 _dragPostAction = DragPostActionNone;
             }
         
-            if (!SharedResources.Inpt!.UsingMouse())
+            if (!inpt.UsingMouse())
                 HandleKeyboardNavigation();
         
             // Check if the mouse is within any of the visible windows. Excludes the minimap and the Exit/Pause menu
-            bool isWithinMenus = ((Book!.Visible && Utils.IsWithinRect(Book!.WindowArea, SharedResources.Inpt!.Mouse)) ||
-            (Chr!.Visible && Utils.IsWithinRect(Chr!.WindowArea, SharedResources.Inpt!.Mouse)) ||
-            (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, SharedResources.Inpt!.Mouse)) ||
-            (Vendor!.Visible && Utils.IsWithinRect(Vendor!.WindowArea, SharedResources.Inpt!.Mouse)) ||
-            (Pow!.Visible && Utils.IsWithinRect(Pow!.WindowArea, SharedResources.Inpt!.Mouse)) ||
-            (Questlog!.Visible && Utils.IsWithinRect(Questlog!.WindowArea, SharedResources.Inpt!.Mouse)) ||
-            (Talker!.Visible && Utils.IsWithinRect(Talker!.WindowArea, SharedResources.Inpt!.Mouse)) ||
-            (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea, SharedResources.Inpt!.Mouse)) ||
-            (SharedResources.Settings!.DevMode && Devconsole!.Visible && Utils.IsWithinRect(Devconsole!.WindowArea, SharedResources.Inpt!.Mouse)));
+            bool isWithinMenus = ((Book!.Visible && Utils.IsWithinRect(Book!.WindowArea, inpt.Mouse)) ||
+            (Chr!.Visible && Utils.IsWithinRect(Chr!.WindowArea, inpt.Mouse)) ||
+            (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, inpt.Mouse)) ||
+            (Vendor!.Visible && Utils.IsWithinRect(Vendor!.WindowArea, inpt.Mouse)) ||
+            (Pow!.Visible && Utils.IsWithinRect(Pow!.WindowArea, inpt.Mouse)) ||
+            (Questlog!.Visible && Utils.IsWithinRect(Questlog!.WindowArea, inpt.Mouse)) ||
+            (Talker!.Visible && Utils.IsWithinRect(Talker!.WindowArea, inpt.Mouse)) ||
+            (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea, inpt.Mouse)) ||
+            (settings.DevMode && Devconsole!.Visible && Utils.IsWithinRect(Devconsole!.WindowArea, inpt.Mouse)));
         
             // Stop attacking if the cursor is inside an interactable menu
-            if ((SharedGameResources.Pc!.UsingMain1 || SharedGameResources.Pc!.UsingMain2) && isWithinMenus) {
-                SharedResources.Inpt!.Pressing[Input.Main1] = false;
-                SharedResources.Inpt!.Pressing[Input.Main2] = false;
+            if ((pc.UsingMain1 || pc.UsingMain2) && isWithinMenus) {
+                inpt.Pressing[Input.Main1] = false;
+                inpt.Pressing[Input.Main2] = false;
             }
         
             Stash!.TabControlLocked = (_mouseDragging || _keyboardDragging);
         
-            if (SharedResources.Settings!.DevMode) {
+            if (settings.DevMode) {
                 Devconsole!.Logic();
             }
         
@@ -689,17 +703,17 @@ namespace FlareEngine
         
             TouchControls!.Logic();
         
-            if (Chr!.CheckUpgrade() || SharedGameResources.Pc!.Stats.LevelUp) {
+            if (Chr!.CheckUpgrade() || pc.Stats.LevelUp) {
                 // apply equipment and max Hp/Mp
                 Inv!.ApplyEquipment();
-                SharedGameResources.Pc!.Stats.Hp = SharedGameResources.Pc!.Stats.Get(global::FlareEngine.Stats.HpMax);
-                SharedGameResources.Pc!.Stats.Mp = SharedGameResources.Pc!.Stats.Get(global::FlareEngine.Stats.MpMax);
-                SharedGameResources.Pc!.Stats.LevelUp = false;
+                pc.Stats.Hp = pc.Stats.Get(global::FlareEngine.Stats.HpMax);
+                pc.Stats.Mp = pc.Stats.Get(global::FlareEngine.Stats.MpMax);
+                pc.Stats.LevelUp = false;
             }
         
             // only allow the Vendor window to be open if the inventory is open
             if (Vendor!.Visible && !(Inv!.Visible)) {
-                SharedResources.Snd!.Play(Vendor!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(Vendor!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                 CloseAll();
             }
         
@@ -714,65 +728,65 @@ namespace FlareEngine
                 Inv!.InvCtrl = MenuInventory.CtrlNone;
             }
         
-            if (!SharedResources.Inpt!.Pressing[Input.Inventory] && !SharedResources.Inpt!.Pressing[Input.Powers] && !SharedResources.Inpt!.Pressing[Input.Character] && !SharedResources.Inpt!.Pressing[Input.Log])
+            if (!inpt.Pressing[Input.Inventory] && !inpt.Pressing[Input.Powers] && !inpt.Pressing[Input.Character] && !inpt.Pressing[Input.Log])
                 _keyLock = false;
         
-            if (SharedResources.Settings!.DevMode && Devconsole!.InputFocus())
+            if (settings.DevMode && Devconsole!.InputFocus())
                 _keyLock = true;
         
             // stop dragging with cancel key
-            if (!_keyLock && SharedResources.Inpt!.Pressing[Input.Cancel] && !SharedResources.Inpt!.Lock[Input.Cancel] && !SharedGameResources.Pc!.Stats.Corpse) {
+            if (!_keyLock && inpt.Pressing[Input.Cancel] && !inpt.Lock[Input.Cancel] && !pc.Stats.Corpse) {
                 if (_keyboardDragging || _mouseDragging) {
-                    SharedResources.Inpt!.Lock[Input.Cancel] = true;
+                    inpt.Lock[Input.Cancel] = true;
                     ResetDrag();
                 }
             }
         
             // Exit menu toggle
             if (!_keyLock && !_mouseDragging && !_keyboardDragging) {
-                if (SharedResources.Inpt!.Pressing[Input.Cancel] && !SharedResources.Inpt!.Lock[Input.Cancel]) {
+                if (inpt.Pressing[Input.Cancel] && !inpt.Lock[Input.Cancel]) {
                     _keyLock = true;
                     if (Act!.TwostepSlot != -1) {
-                        SharedResources.Inpt!.Lock[Input.Cancel] = true;
+                        inpt.Lock[Input.Cancel] = true;
                         Act!.TwostepSlot = -1;
                     }
-                    else if (SharedResources.Settings!.DevMode && Devconsole!.Visible) {
-                        SharedResources.Inpt!.Lock[Input.Cancel] = true;
+                    else if (settings.DevMode && Devconsole!.Visible) {
+                        inpt.Lock[Input.Cancel] = true;
                         Devconsole!.CloseWindow();
                     }
                     else if (MenusOpen) {
-                        SharedResources.Inpt!.Lock[Input.Cancel] = true;
+                        inpt.Lock[Input.Cancel] = true;
         
                         // play *one* close sound effect
                         if (Chr!.Visible) {
-                            SharedResources.Snd!.Play(Chr!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Chr!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                         }
                         else if (Questlog!.Visible) {
-                            SharedResources.Snd!.Play(Questlog!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Questlog!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                         }
                         else {
                             if (Inv!.Visible) {
-                                SharedResources.Snd!.Play(Inv!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                                snd.Play(Inv!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             }
                             else if (Pow!.Visible) {
-                                SharedResources.Snd!.Play(Pow!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                                snd.Play(Pow!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             }
                         }
                         CloseAll();
                     }
-                    else if (!GameOver!.Visible && (SharedResources.Inpt!.Mode != InputState.ModeJoystick || Exit!.Visible)) {
+                    else if (!GameOver!.Visible && (inpt.Mode != InputState.ModeJoystick || Exit!.Visible)) {
                         // CANCEL (which is usually mapped to keyboard Escape) can open the Pause menu if there are no other actions
                         // we make an exception for opening the Pause menu with joysticks, which usually have CANCEL mapped to a face button with a separate mapping for PAUSE (i.e. "Start")
                         // closing the menu can always be _done with either mapping
-                        SharedResources.Inpt!.Lock[Input.Cancel] = true;
+                        inpt.Lock[Input.Cancel] = true;
                         Act!.DefocusTabLists();
                         Exit!.HandleCancel();
                     }
                 }
         
                 // handle opening the Pause menu with the dedicated binding
-                if (SharedResources.Inpt!.Pressing[Input.Pause] && !SharedResources.Inpt!.Lock[Input.Pause] && !SharedResources.Inpt!.Lock[Input.Cancel]) {
-                    SharedResources.Inpt!.Lock[Input.Pause] = true;
+                if (inpt.Pressing[Input.Pause] && !inpt.Lock[Input.Pause] && !inpt.Lock[Input.Cancel]) {
+                    inpt.Lock[Input.Pause] = true;
         
                     // perform all "cancel" actions
                     ResetDrag();
@@ -798,7 +812,7 @@ namespace FlareEngine
                     _done = true;
                 }
                 // if dpi scaling is changed, we need to realign the Menus
-                if (SharedResources.Inpt!.WindowResized) {
+                if (inpt.WindowResized) {
                     AlignAll();
                 }
             }
@@ -809,7 +823,7 @@ namespace FlareEngine
                 }
             }
             else {
-                if (!SharedResources.Settings!.DevMode || !Devconsole!.Visible) {
+                if (!settings.DevMode || !Devconsole!.Visible) {
                     bool clickingCharacter = false;
                     bool clickingInventory = false;
                     bool clickingPowers = false;
@@ -819,10 +833,10 @@ namespace FlareEngine
                     Act!.CheckMenu(ref clickingCharacter, ref clickingInventory, ref clickingPowers, ref clickingLog);
         
                     // inventory menu toggle
-                    if (Inv!.Enabled && ((SharedResources.Inpt!.Pressing[Input.Inventory] && !_keyLock && !_mouseDragging && !_keyboardDragging) || clickingInventory)) {
+                    if (Inv!.Enabled && ((inpt.Pressing[Input.Inventory] && !_keyLock && !_mouseDragging && !_keyboardDragging) || clickingInventory)) {
                         _keyLock = true;
                         if (Inv!.Visible) {
-                            SharedResources.Snd!.Play(Inv!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Inv!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             CloseRight();
                         }
                         else {
@@ -830,16 +844,16 @@ namespace FlareEngine
                             DefocusLeft();
                             Act!.RequiresAttention[MenuActionBar.MenuInventory] = false;
                             Inv!.Visible = true;
-                            SharedResources.Snd!.Play(Inv!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Inv!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                         }
         
                     }
         
                     // powers menu toggle
-                    if (Pow!.Enabled && (((SharedResources.Inpt!.Pressing[Input.Powers] && !_keyLock && !_mouseDragging && !_keyboardDragging) || clickingPowers) && !SharedGameResources.Pc!.Stats.Transformed)) {
+                    if (Pow!.Enabled && (((inpt.Pressing[Input.Powers] && !_keyLock && !_mouseDragging && !_keyboardDragging) || clickingPowers) && !pc.Stats.Transformed)) {
                         _keyLock = true;
                         if (Pow!.Visible) {
-                            SharedResources.Snd!.Play(Pow!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Pow!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             CloseRight();
                         }
                         else {
@@ -847,15 +861,15 @@ namespace FlareEngine
                             DefocusLeft();
                             Act!.RequiresAttention[MenuActionBar.MenuPowers] = false;
                             Pow!.Visible = true;
-                            SharedResources.Snd!.Play(Pow!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Pow!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                         }
                     }
         
                     // character menu toggleggle
-                    if (Chr!.Enabled && ((SharedResources.Inpt!.Pressing[Input.Character] && !_keyLock && !_mouseDragging && !_keyboardDragging) || clickingCharacter)) {
+                    if (Chr!.Enabled && ((inpt.Pressing[Input.Character] && !_keyLock && !_mouseDragging && !_keyboardDragging) || clickingCharacter)) {
                         _keyLock = true;
                         if (Chr!.Visible) {
-                            SharedResources.Snd!.Play(Chr!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Chr!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             CloseLeft();
                         }
                         else {
@@ -863,17 +877,17 @@ namespace FlareEngine
                             DefocusRight();
                             Act!.RequiresAttention[MenuActionBar.MenuCharacter] = false;
                             Chr!.Visible = true;
-                            SharedResources.Snd!.Play(Chr!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Chr!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             // Make sure the stat list isn't scrolled when we open the character menu
-                            SharedResources.Inpt!.ResetScroll();
+                            inpt.ResetScroll();
                         }
                     }
         
                     // log menu toggle
-                    if (Questlog!.Enabled && ((SharedResources.Inpt!.Pressing[Input.Log] && !_keyLock && !_mouseDragging && !_keyboardDragging) || clickingLog)) {
+                    if (Questlog!.Enabled && ((inpt.Pressing[Input.Log] && !_keyLock && !_mouseDragging && !_keyboardDragging) || clickingLog)) {
                         _keyLock = true;
                         if (Questlog!.Visible) {
-                            SharedResources.Snd!.Play(Questlog!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Questlog!.SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             CloseLeft();
                         }
                         else {
@@ -881,23 +895,23 @@ namespace FlareEngine
                             DefocusRight();
                             Act!.RequiresAttention[MenuActionBar.MenuLog] = false;
                             Questlog!.Visible = true;
-                            SharedResources.Snd!.Play(Questlog!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Questlog!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             // Make sure the log isn't scrolled when we open the log menu
-                            SharedResources.Inpt!.ResetScroll();
+                            inpt.ResetScroll();
                         }
                     }
         
-                    if (SharedResources.Inpt!.Pressing[Input.CycleMenus] && !SharedResources.Inpt!.Lock[Input.CycleMenus] && !_mouseDragging && !_keyboardDragging) {
-                        SharedResources.Inpt!.Lock[Input.CycleMenus] = true;
+                    if (inpt.Pressing[Input.CycleMenus] && !inpt.Lock[Input.CycleMenus] && !_mouseDragging && !_keyboardDragging) {
+                        inpt.Lock[Input.CycleMenus] = true;
         
                         if (Chr!.Enabled && !Chr!.Visible && Inv!.Enabled && !Inv!.Visible && !Pow!.Visible && !Questlog!.Visible) {
                             CloseLeft();
                             DefocusRight();
                             Act!.RequiresAttention[MenuActionBar.MenuCharacter] = false;
                             Chr!.Visible = true;
-                            SharedResources.Snd!.Play(Chr!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Chr!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             // Make sure the stat list isn't scrolled when we open the character menu
-                            SharedResources.Inpt!.ResetScroll();
+                            inpt.ResetScroll();
         
                             CloseRight();
                             DefocusLeft();
@@ -910,9 +924,9 @@ namespace FlareEngine
                             DefocusRight();
                             Act!.RequiresAttention[MenuActionBar.MenuLog] = false;
                             Questlog!.Visible = true;
-                            SharedResources.Snd!.Play(Questlog!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                            snd.Play(Questlog!.SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                             // Make sure the log isn't scrolled when we open the log menu
-                            SharedResources.Inpt!.ResetScroll();
+                            inpt.ResetScroll();
         
                             CloseRight();
                             DefocusLeft();
@@ -927,8 +941,8 @@ namespace FlareEngine
                 }
         
                 //developer console
-                if (SharedResources.Settings!.DevMode && SharedResources.Inpt!.Pressing[Input.DeveloperMenu] && !SharedResources.Inpt!.Lock[Input.DeveloperMenu] && !_mouseDragging && !_keyboardDragging) {
-                    SharedResources.Inpt!.Lock[Input.DeveloperMenu] = true;
+                if (settings.DevMode && inpt.Pressing[Input.DeveloperMenu] && !inpt.Lock[Input.DeveloperMenu] && !_mouseDragging && !_keyboardDragging) {
+                    inpt.Lock[Input.DeveloperMenu] = true;
                     if (Devconsole!.Visible) {
                         CloseAll();
                         _keyLock = false;
@@ -940,123 +954,123 @@ namespace FlareEngine
                 }
             }
         
-            bool consoleOpen = SharedResources.Settings!.DevMode && Devconsole!.Visible;
+            bool consoleOpen = settings.DevMode && Devconsole!.Visible;
             MenusOpen = (Inv!.Visible || Pow!.Visible || Chr!.Visible || Questlog!.Visible || Vendor!.Visible || Talker!.Visible || Book!.Visible || consoleOpen);
-            Pause = (SharedResources.Eset!.Misc.MenusPause && MenusOpen) || Exit!.Visible || consoleOpen || Book!.Visible;
+            Pause = (eset.Misc.MenusPause && MenusOpen) || Exit!.Visible || consoleOpen || Book!.Visible;
         
-            TouchControls!.Visible = !MenusOpen && !Exit!.Visible && SharedResources.Inpt!.UsingTouchscreen();
+            TouchControls!.Visible = !MenusOpen && !Exit!.Visible && inpt.UsingTouchscreen();
         
-            if (SharedGameResources.Pc!.Stats.Alive && !SharedResources.Inpt!.UsingMouse()) {
+            if (pc.Stats.Alive && !inpt.UsingMouse()) {
                 if (MenusOpen) {
-                    if (SharedResources.Inpt!.Pressing[Input.Main1]) SharedResources.Inpt!.Lock[Input.Main1] = true;
-                    if (SharedResources.Inpt!.Pressing[Input.Main2]) SharedResources.Inpt!.Lock[Input.Main2] = true;
+                    if (inpt.Pressing[Input.Main1]) inpt.Lock[Input.Main1] = true;
+                    if (inpt.Pressing[Input.Main2]) inpt.Lock[Input.Main2] = true;
                 }
         
                 DragAndDropWithKeyboard();
             }
-            else if (SharedGameResources.Pc!.Stats.Alive) {
+            else if (pc.Stats.Alive) {
                 // handle right-click
-                if (!_mouseDragging && SharedResources.Inpt!.Pressing[Input.Main2]) {
+                if (!_mouseDragging && inpt.Pressing[Input.Main2]) {
                     // Exit menu
-                    if (Exit!.Visible && Utils.IsWithinRect(Exit!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main2] = true;
-                        SharedResources.Inpt!.Pressing[Input.Main2] = false;
+                    if (Exit!.Visible && Utils.IsWithinRect(Exit!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main2] = true;
+                        inpt.Pressing[Input.Main2] = false;
                     }
         
                     // Book menu
-                    else if (Book!.Visible && Utils.IsWithinRect(Book!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main2] = true;
-                        SharedResources.Inpt!.Pressing[Input.Main2] = false;
+                    else if (Book!.Visible && Utils.IsWithinRect(Book!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main2] = true;
+                        inpt.Pressing[Input.Main2] = false;
                     }
         
                     // inventory
-                    else if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        if (!SharedResources.Inpt!.Lock[Input.Main2] && Utils.IsWithinRect(Inv!.CarriedArea, SharedResources.Inpt!.Mouse)) {
+                    else if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, inpt.Mouse)) {
+                        if (!inpt.Lock[Input.Main2] && Utils.IsWithinRect(Inv!.CarriedArea, inpt.Mouse)) {
                             // activate inventory item
-                            Inv!.Activate(SharedResources.Inpt!.Mouse);
+                            Inv!.Activate(inpt.Mouse);
                         }
-                        SharedResources.Inpt!.Lock[Input.Main2] = true;
-                        SharedResources.Inpt!.Pressing[Input.Main2] = false;
+                        inpt.Lock[Input.Main2] = true;
+                        inpt.Pressing[Input.Main2] = false;
                     }
         
                     // other Menus
-                    else if (Talker!.Visible && Utils.IsWithinRect(Talker!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main2] = true;
-                        SharedResources.Inpt!.Pressing[Input.Main2] = false;
+                    else if (Talker!.Visible && Utils.IsWithinRect(Talker!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main2] = true;
+                        inpt.Pressing[Input.Main2] = false;
                     }
-                    else if (Pow!.Visible && Utils.IsWithinRect(Pow!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main2] = true;
-                        SharedResources.Inpt!.Pressing[Input.Main2] = false;
+                    else if (Pow!.Visible && Utils.IsWithinRect(Pow!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main2] = true;
+                        inpt.Pressing[Input.Main2] = false;
                     }
-                    else if (Chr!.Visible && Utils.IsWithinRect(Chr!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main2] = true;
-                        SharedResources.Inpt!.Pressing[Input.Main2] = false;
+                    else if (Chr!.Visible && Utils.IsWithinRect(Chr!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main2] = true;
+                        inpt.Pressing[Input.Main2] = false;
                     }
-                    else if (Questlog!.Visible && Utils.IsWithinRect(Questlog!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main2] = true;
-                        SharedResources.Inpt!.Pressing[Input.Main2] = false;
+                    else if (Questlog!.Visible && Utils.IsWithinRect(Questlog!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main2] = true;
+                        inpt.Pressing[Input.Main2] = false;
                     }
-                    else if (Vendor!.Visible && Utils.IsWithinRect(Vendor!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main2] = true;
-                        SharedResources.Inpt!.Pressing[Input.Main2] = false;
+                    else if (Vendor!.Visible && Utils.IsWithinRect(Vendor!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main2] = true;
+                        inpt.Pressing[Input.Main2] = false;
                     }
-                    else if (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main2] = true;
-                        SharedResources.Inpt!.Pressing[Input.Main2] = false;
+                    else if (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main2] = true;
+                        inpt.Pressing[Input.Main2] = false;
                     }
                 }
         
                 // handle left-click for Book menu first
-                if (!_mouseDragging && SharedResources.Inpt!.Pressing[Input.Main1] && !SharedResources.Inpt!.Lock[Input.Main1]) {
-                    if (Book!.Visible && Utils.IsWithinRect(Book!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main1] = true;
+                if (!_mouseDragging && inpt.Pressing[Input.Main1] && !inpt.Lock[Input.Main1]) {
+                    if (Book!.Visible && Utils.IsWithinRect(Book!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main1] = true;
                     }
                 }
         
                 // handle left-click
-                if (!_mouseDragging && SharedResources.Inpt!.Pressing[Input.Main1] && !SharedResources.Inpt!.Lock[Input.Main1]) {
+                if (!_mouseDragging && inpt.Pressing[Input.Main1] && !inpt.Lock[Input.Main1]) {
                     ResetDrag();
         
                     for (int i=0; i<Menus.Count; ++i) {
                         if (Menus[i] == Act)
                             continue;
-                        if (!Menus[i]!.Visible || !Utils.IsWithinRect(Menus[i]!.WindowArea, SharedResources.Inpt!.Mouse)) {
+                        if (!Menus[i]!.Visible || !Utils.IsWithinRect(Menus[i]!.WindowArea, inpt.Mouse)) {
                             Menus[i]!.DefocusTabLists();
                         }
                     }
         
                     // Exit menu
-                    if (Exit!.Visible && Utils.IsWithinRect(Exit!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main1] = true;
+                    if (Exit!.Visible && Utils.IsWithinRect(Exit!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main1] = true;
                     }
         
         
-                    if (Chr!.Visible && Utils.IsWithinRect(Chr!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main1] = true;
+                    if (Chr!.Visible && Utils.IsWithinRect(Chr!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main1] = true;
                     }
         
-                    if (Vendor!.Visible && Utils.IsWithinRect(Vendor!.WindowArea,SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main1] = true;
-                        if (SharedResources.Inpt!.Pressing[Input.Ctrl] && Vendor!.GetTab() != ItemManager.VendorCraft) {
+                    if (Vendor!.Visible && Utils.IsWithinRect(Vendor!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main1] = true;
+                        if (inpt.Pressing[Input.Ctrl] && Vendor!.GetTab() != ItemManager.VendorCraft) {
                             // buy item from a Vendor
-                            stack = Vendor!.Click(SharedResources.Inpt!.Mouse);
+                            stack = Vendor!.Click(inpt.Mouse);
                             if (!Inv!.Buy(stack, Vendor!.GetTab(), !MenuInventory.IsDragging)) {
                                 Vendor!.ItemReturn(Inv!.DropStack.Peek());
                                 Inv!.DropStack.Dequeue();
                             }
                         }
                         else {
-                            if (SharedResources.Inpt!.TouchLocked) {
-                                ShowActionPicker(Vendor, SharedResources.Inpt!.Mouse);
+                            if (inpt.TouchLocked) {
+                                ShowActionPicker(Vendor, inpt.Mouse);
                             }
                             else {
                                 // start dragging a Vendor item
-                                _dragStack = Vendor!.Click(SharedResources.Inpt!.Mouse);
+                                _dragStack = Vendor!.Click(inpt.Mouse);
                                 if (!_dragStack.Empty()) {
                                     _mouseDragging = true;
                                     _dragSrc = DragSrcVendor;
                                 }
-                                if ((_dragStack.Quantity > 1 && SharedResources.Inpt!.Pressing[Input.Shift]) || Vendor!.GetTab() == ItemManager.VendorCraft) {
+                                if ((_dragStack.Quantity > 1 && inpt.Pressing[Input.Shift]) || Vendor!.GetTab() == ItemManager.VendorCraft) {
                                     int maxQuantity = Inv!.GetMaxPurchasable(_dragStack, Vendor!.GetTab());
                                     if (Vendor!.GetTab() != ItemManager.VendorCraft)
                                         maxQuantity = Math.Min(maxQuantity, _dragStack.Quantity);
@@ -1074,11 +1088,11 @@ namespace FlareEngine
                         }
                     }
         
-                    if (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea,SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main1] = true;
-                        if (SharedResources.Inpt!.Pressing[Input.Ctrl]) {
+                    if (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main1] = true;
+                        if (inpt.Pressing[Input.Ctrl]) {
                             // take an item from the Stash
-                            stack = Stash!.Click(SharedResources.Inpt!.Mouse);
+                            stack = Stash!.Click(inpt.Mouse);
                             if (!Inv!.Add(stack, MenuInventory.Carried, ItemStorage.NoSlot, MenuInventory.AddPlaySound, MenuInventory.AddAutoEquip)) {
                                 Stash!.ItemReturn(Inv!.DropStack.Peek());
                                 Inv!.DropStack.Dequeue();
@@ -1086,17 +1100,17 @@ namespace FlareEngine
                             Stash!.Tabs[Stash!.GetTab()].Updated = true;
                         }
                         else {
-                            if (SharedResources.Inpt!.TouchLocked) {
-                                ShowActionPicker(Stash, SharedResources.Inpt!.Mouse);
+                            if (inpt.TouchLocked) {
+                                ShowActionPicker(Stash, inpt.Mouse);
                             }
                             else {
                                 // start dragging a Stash item
-                                _dragStack = Stash!.Click(SharedResources.Inpt!.Mouse);
+                                _dragStack = Stash!.Click(inpt.Mouse);
                                 if (!_dragStack.Empty()) {
                                     _mouseDragging = true;
                                     _dragSrc = DragSrcStash;
                                 }
-                                if (_dragStack.Quantity > 1 && SharedResources.Inpt!.Pressing[Input.Shift]) {
+                                if (_dragStack.Quantity > 1 && inpt.Pressing[Input.Shift]) {
                                     NumPicker!.SetValueBounds(1, _dragStack.Quantity);
                                     NumPicker!.Visible = true;
                                 }
@@ -1104,15 +1118,15 @@ namespace FlareEngine
                         }
                     }
         
-                    if (Questlog!.Visible && Utils.IsWithinRect(Questlog!.WindowArea,SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main1] = true;
+                    if (Questlog!.Visible && Utils.IsWithinRect(Questlog!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main1] = true;
                     }
         
                     // pick up an inventory item
-                    if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea,SharedResources.Inpt!.Mouse)) {
-                        if (SharedResources.Inpt!.Pressing[Input.Ctrl]) {
-                            SharedResources.Inpt!.Lock[Input.Main1] = true;
-                            stack = Inv!.Click(SharedResources.Inpt!.Mouse);
+                    if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, inpt.Mouse)) {
+                        if (inpt.Pressing[Input.Ctrl]) {
+                            inpt.Lock[Input.Main1] = true;
+                            stack = Inv!.Click(inpt.Mouse);
                             if (Stash!.Visible) {
                                 if (!Stash!.Add(stack, MenuStash.NoSlot, MenuStash.AddPlaySound)) {
                                     Inv!.ItemReturn(Stash!.DropStack.Peek());
@@ -1121,7 +1135,7 @@ namespace FlareEngine
                             }
                             else {
                                 // The Vendor could have a limited amount of currency in the future. It will be tested here.
-                                if ((SharedResources.Eset!.Misc.SellWithoutVendor || (Vendor!.Visible && Vendor!.SellEnabled)) && Inv!.Sell(stack)) {
+                                if ((eset.Misc.SellWithoutVendor || (Vendor!.Visible && Vendor!.SellEnabled)) && Inv!.Sell(stack)) {
                                     if (Vendor!.Visible) {
                                         Vendor!.SetTab(ItemManager.VendorSell);
                                         Vendor!.Add(stack);
@@ -1133,18 +1147,18 @@ namespace FlareEngine
                             }
                         }
                         else {
-                            SharedResources.Inpt!.Lock[Input.Main1] = true;
+                            inpt.Lock[Input.Main1] = true;
         
-                            if (SharedResources.Inpt!.TouchLocked) {
-                                ShowActionPicker(Inv, SharedResources.Inpt!.Mouse);
+                            if (inpt.TouchLocked) {
+                                ShowActionPicker(Inv, inpt.Mouse);
                             }
                             else {
-                                _dragStack = Inv!.Click(SharedResources.Inpt!.Mouse);
+                                _dragStack = Inv!.Click(inpt.Mouse);
                                 if (!_dragStack.Empty()) {
                                     _mouseDragging = true;
                                     _dragSrc = DragSrcInventory;
                                 }
-                                if (_dragStack.Quantity > 1 && SharedResources.Inpt!.Pressing[Input.Shift]) {
+                                if (_dragStack.Quantity > 1 && inpt.Pressing[Input.Shift]) {
                                     NumPicker!.SetValueBounds(1, _dragStack.Quantity);
                                     NumPicker!.Visible = true;
                                 }
@@ -1152,15 +1166,15 @@ namespace FlareEngine
                         }
                     }
                     // pick up a power
-                    if (Pow!.Visible && Utils.IsWithinRect(Pow!.WindowArea,SharedResources.Inpt!.Mouse)) {
-                        SharedResources.Inpt!.Lock[Input.Main1] = true;
+                    if (Pow!.Visible && Utils.IsWithinRect(Pow!.WindowArea, inpt.Mouse)) {
+                        inpt.Lock[Input.Main1] = true;
         
-                        if (SharedResources.Inpt!.TouchLocked) {
-                            ShowActionPicker(Pow, SharedResources.Inpt!.Mouse);
+                        if (inpt.TouchLocked) {
+                            ShowActionPicker(Pow, inpt.Mouse);
                         }
                         else {
                             // check for unlock/dragging
-                            MenuPowersClick powClick = Pow!.Click(SharedResources.Inpt!.Mouse);
+                            MenuPowersClick powClick = Pow!.Click(inpt.Mouse);
                             _dragPower = powClick.Drag;
                             if (_dragPower > 0) {
                                 _mouseDragging = true;
@@ -1173,25 +1187,25 @@ namespace FlareEngine
                         }
                     }
                     // action bar
-                    if (!Exit!.Visible && (Act!.IsWithinSlots(SharedResources.Inpt!.Mouse) || Act!.IsWithinMenus(SharedResources.Inpt!.Mouse)) && !SharedGameResources.Pc!.UsingMain1 && !SharedGameResources.Pc!.UsingMain2) {
-                        SharedResources.Inpt!.Lock[Input.Main1] = true;
+                    if (!Exit!.Visible && (Act!.IsWithinSlots(inpt.Mouse) || Act!.IsWithinMenus(inpt.Mouse)) && !pc.UsingMain1 && !pc.UsingMain2) {
+                        inpt.Lock[Input.Main1] = true;
         
                         // ctrl-click action bar to clear that slot
-                        if (SharedResources.Inpt!.Pressing[Input.Ctrl]) {
-                            Act!.Remove(SharedResources.Inpt!.Mouse);
+                        if (inpt.Pressing[Input.Ctrl]) {
+                            Act!.Remove(inpt.Mouse);
                         }
                         // allow drag-to-rearrange action bar
-                        else if (!Act!.IsWithinMenus(SharedResources.Inpt!.Mouse)) {
-                            if (SharedResources.Inpt!.TouchLocked) {
-                                WidgetSlot? actSlot = Act!.GetSlotFromPosition(SharedResources.Inpt!.Mouse);
+                        else if (!Act!.IsWithinMenus(inpt.Mouse)) {
+                            if (inpt.TouchLocked) {
+                                WidgetSlot? actSlot = Act!.GetSlotFromPosition(inpt.Mouse);
                                 if (actSlot != null) {
                                     Act!.Tablist.SetCurrent(actSlot);
                                     _keydragPos = new Int2(actSlot.Pos.X, actSlot.Pos.Y);
                                 }
-                                ShowActionPicker(Act, SharedResources.Inpt!.Mouse);
+                                ShowActionPicker(Act, inpt.Mouse);
                             }
                             else {
-                                _dragPower = Act!.CheckDrag(SharedResources.Inpt!.Mouse);
+                                _dragPower = Act!.CheckDrag(inpt.Mouse);
                                 if (_dragPower > 0) {
                                     _mouseDragging = true;
                                     _dragSrc = DragSrcActionbar;
@@ -1212,23 +1226,23 @@ namespace FlareEngine
                 }
         
                 // handle dropping
-                if (_mouseDragging && ((_stickyDragging && SharedResources.Inpt!.Pressing[Input.Main1] && !SharedResources.Inpt!.Lock[Input.Main1]) || (!_stickyDragging && !SharedResources.Inpt!.Pressing[Input.Main1]))) {
+                if (_mouseDragging && ((_stickyDragging && inpt.Pressing[Input.Main1] && !inpt.Lock[Input.Main1]) || (!_stickyDragging && !inpt.Pressing[Input.Main1]))) {
                     if (_stickyDragging) {
-                        SharedResources.Inpt!.Lock[Input.Main1] = true;
+                        inpt.Lock[Input.Main1] = true;
                         _stickyDragging = false;
                     }
         
                     // putting a power on the Action Bar
                     if (_dragSrc == DragSrcPowers) {
-                        if (Act!.IsWithinSlots(SharedResources.Inpt!.Mouse)) {
-                            Act!.Drop(SharedResources.Inpt!.Mouse, _dragPower, !MenuActionBar.Reorder);
+                        if (Act!.IsWithinSlots(inpt.Mouse)) {
+                            Act!.Drop(inpt.Mouse, _dragPower, !MenuActionBar.Reorder);
                         }
                     }
         
                     // rearranging the action bar
                     else if (_dragSrc == DragSrcActionbar) {
-                        if (Act!.IsWithinSlots(SharedResources.Inpt!.Mouse)) {
-                            Act!.Drop(SharedResources.Inpt!.Mouse, _dragPower, MenuActionBar.Reorder);
+                        if (Act!.IsWithinSlots(inpt.Mouse)) {
+                            Act!.Drop(inpt.Mouse, _dragPower, MenuActionBar.Reorder);
                             // for locked slots forbid power dropping
                         }
                         else if (Act!.Locked[Act!.DragPrevSlot]) {
@@ -1240,20 +1254,20 @@ namespace FlareEngine
                     // rearranging inventory or dropping items
                     else if (_dragSrc == DragSrcInventory) {
         
-                        if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                            Inv!.Drop(SharedResources.Inpt!.Mouse, _dragStack);
+                        if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, inpt.Mouse)) {
+                            Inv!.Drop(inpt.Mouse, _dragStack);
                         }
-                        else if (Act!.IsWithinSlots(SharedResources.Inpt!.Mouse)) {
+                        else if (Act!.IsWithinSlots(inpt.Mouse)) {
                             // The action bar is not storage!
                             Inv!.ItemReturn(_dragStack);
                             Inv!.ApplyEquipment();
         
                             // put an item with a power on the action bar
-                            if (SharedGameResources.Items!.IsValid(_dragStack.Item) && SharedGameResources.Items!.Items[(int)_dragStack.Item]!.Power != 0) {
-                                Act!.Drop(SharedResources.Inpt!.Mouse, SharedGameResources.Items!.Items[(int)_dragStack.Item]!.Power, !MenuActionBar.Reorder);
+                            if (items.IsValid(_dragStack.Item) && items.Items[(int)_dragStack.Item]!.Power != 0) {
+                                Act!.Drop(inpt.Mouse, items.Items[(int)_dragStack.Item]!.Power, !MenuActionBar.Reorder);
                             }
                         }
-                        else if (Vendor!.Visible && Utils.IsWithinRect(Vendor!.WindowArea, SharedResources.Inpt!.Mouse)) {
+                        else if (Vendor!.Visible && Utils.IsWithinRect(Vendor!.WindowArea, inpt.Mouse)) {
                             if (Vendor!.SellEnabled && Inv!.Sell( _dragStack)) {
                                 Vendor!.SetTab(ItemManager.VendorSell);
                                 Vendor!.Add( _dragStack);
@@ -1262,11 +1276,11 @@ namespace FlareEngine
                                 Inv!.ItemReturn(_dragStack);
                             }
                         }
-                        else if (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea, SharedResources.Inpt!.Mouse)) {
+                        else if (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea, inpt.Mouse)) {
                             for (int i = 0; i < Stash!.Tabs.Count; ++i) {
                                 Stash!.Tabs[i].Stock.DragPrevSlot = -1;
                             }
-                            if (!Stash!.Drop(SharedResources.Inpt!.Mouse, _dragStack)) {
+                            if (!Stash!.Drop(inpt.Mouse, _dragStack)) {
                                 Inv!.ItemReturn(Stash!.DropStack.Peek());
                                 Stash!.DropStack.Dequeue();
                             }
@@ -1275,13 +1289,13 @@ namespace FlareEngine
                             // if dragging and the source was inventory, drop item to the floor
         
                             // quest items cannot be dropped
-                            bool itemIsValid = SharedGameResources.Items!.IsValid(_dragStack.Item);
-                            if (!itemIsValid || (itemIsValid && !SharedGameResources.Items!.Items[(int)_dragStack.Item]!.QuestItem)) {
+                            bool itemIsValid = items.IsValid(_dragStack.Item);
+                            if (!itemIsValid || (itemIsValid && !items.Items[(int)_dragStack.Item]!.QuestItem)) {
                                 DropStack.Enqueue(_dragStack.Clone());
                             }
                             else {
-                                SharedGameResources.Pc!.LogMsg(SharedResources.Msg!.Get("This item can not be dropped."), Avatar.MsgNormal);
-                                SharedGameResources.Items!.PlaySound(_dragStack.Item);
+                                pc.LogMsg(msg.Get("This item can not be dropped."), Avatar.MsgNormal);
+                                items.PlaySound(_dragStack.Item);
         
                                 Inv!.ItemReturn(_dragStack);
                             }
@@ -1292,14 +1306,14 @@ namespace FlareEngine
                     else if (_dragSrc == DragSrcVendor) {
         
                         // dropping an item from Vendor (we only allow to drop into the carried area)
-                        if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, SharedResources.Inpt!.Mouse)) {
+                        if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, inpt.Mouse)) {
                             if (!Inv!.Buy(_dragStack, Vendor!.GetTab(), MenuInventory.IsDragging)) {
                                 Vendor!.ItemReturn(Inv!.DropStack.Peek());
                                 Inv!.DropStack.Dequeue();
                             }
                         }
                         else {
-                            SharedGameResources.Items!.PlaySound(_dragStack.Item);
+                            items.PlaySound(_dragStack.Item);
                             Vendor!.ItemReturn(_dragStack);
                         }
                     }
@@ -1307,15 +1321,15 @@ namespace FlareEngine
                     else if (_dragSrc == DragSrcStash) {
         
                         // dropping an item from Stash (we only allow to drop into the carried area)
-                        if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                            if (!Inv!.Drop(SharedResources.Inpt!.Mouse, _dragStack)) {
+                        if (Inv!.Visible && Utils.IsWithinRect(Inv!.WindowArea, inpt.Mouse)) {
+                            if (!Inv!.Drop(inpt.Mouse, _dragStack)) {
                                 Stash!.ItemReturn(Inv!.DropStack.Peek());
                                 Inv!.DropStack.Dequeue();
                             }
                             Stash!.Tabs[Stash!.GetTab()].Updated = true;
                         }
-                        else if (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea, SharedResources.Inpt!.Mouse)) {
-                            if (!Stash!.Drop(SharedResources.Inpt!.Mouse,_dragStack)) {
+                        else if (Stash!.Visible && Utils.IsWithinRect(Stash!.WindowArea, inpt.Mouse)) {
+                            if (!Stash!.Drop(inpt.Mouse,_dragStack)) {
                                 DropStack.Enqueue(Stash!.DropStack.Peek());
                                 Stash!.DropStack.Dequeue();
                             }
@@ -1339,7 +1353,7 @@ namespace FlareEngine
             }
         
             // return items that are currently begin dragged when returning to title screen or exiting game
-            if (_done || SharedResources.Inpt!.Done) {
+            if (_done || inpt.Done) {
                 ResetDrag();
             }
         
@@ -1354,7 +1368,7 @@ namespace FlareEngine
             }
         
             // auto-select tablists when using keyboard/gamepad
-            if (!SharedResources.Inpt!.UsingMouse()) {
+            if (!inpt.UsingMouse()) {
                 if (GameOver!.Visible && !GameOver!.Tablist.IsLocked() && GameOver!.Tablist.GetCurrent() == -1) {
                     GameOver!.Tablist.GetNext(!TabList.GetInner, TabList.WidgetSelectAuto);
                 }
@@ -1396,6 +1410,8 @@ namespace FlareEngine
         }
         
         private void DragAndDropWithKeyboard() {
+            var items = SharedGameResources.Items!;
+
             // inventory menu
         
             if (Inv!.Visible && Inv!.GetCurrentTabList() && _dragSrc != DragSrcActionbar) {
@@ -1525,8 +1541,8 @@ namespace FlareEngine
                             Act!.Drop(destSlot, _dragPower, !MenuActionBar.Reorder);
                         }
                         else if (_dragSrc == DragSrcInventory) {
-                            if (SharedGameResources.Items!.IsValid(_dragStack.Item) && SharedGameResources.Items!.Items[(int)_dragStack.Item]!.Power != 0) {
-                                Act!.Drop(destSlot, SharedGameResources.Items!.Items[(int)_dragStack.Item]!.Power, !MenuActionBar.Reorder);
+                            if (items.IsValid(_dragStack.Item) && items.Items[(int)_dragStack.Item]!.Power != 0) {
+                                Act!.Drop(destSlot, items.Items[(int)_dragStack.Item]!.Power, !MenuActionBar.Reorder);
                             }
                         }
                         ResetDrag();
@@ -1582,14 +1598,19 @@ namespace FlareEngine
         }
         
         public void Render() {
-            if (!SharedResources.Settings!.ShowHud) {
+            var settings = SharedResources.Settings!;
+            var inpt = SharedResources.Inpt!;
+            var powers = SharedGameResources.Powers!;
+            var eset = SharedResources.Eset!;
+
+            if (!settings.ShowHud) {
                 // if the hud is disabled, only show a few necessary Menus
         
                 // Exit menu
                 Exit!.Render();
         
                 // dev console
-                if (SharedResources.Settings!.DevMode)
+                if (settings.DevMode)
                     Devconsole!.Render();
         
                 return;
@@ -1635,22 +1656,22 @@ namespace FlareEngine
             TouchControls!.Render();
         
             if (!NumPicker!.Visible && !ActionPicker!.Visible && !_mouseDragging && !_stickyDragging) {
-                if (!SharedResources.Inpt!.UsingMouse() || SharedResources.Inpt!.UsingTouchscreen())
+                if (!inpt.UsingMouse() || inpt.UsingTouchscreen())
                     HandleKeyboardTooltips();
                 else {
                     // Find tooltips depending on mouse position
                     if (!Book!.Visible) {
-                        PushMatchingItemsOf(SharedResources.Inpt!.Mouse);
+                        PushMatchingItemsOf(inpt.Mouse);
         
-                        Chr!.RenderTooltips(SharedResources.Inpt!.Mouse);
-                        Vendor!.RenderTooltips(SharedResources.Inpt!.Mouse);
-                        Stash!.RenderTooltips(SharedResources.Inpt!.Mouse);
-                        Pow!.RenderTooltips(SharedResources.Inpt!.Mouse);
-                        Inv!.RenderTooltips(SharedResources.Inpt!.Mouse);
+                        Chr!.RenderTooltips(inpt.Mouse);
+                        Vendor!.RenderTooltips(inpt.Mouse);
+                        Stash!.RenderTooltips(inpt.Mouse);
+                        Pow!.RenderTooltips(inpt.Mouse);
+                        Inv!.RenderTooltips(inpt.Mouse);
                     }
                     if (!Exit!.Visible) {
-                        Effects!.RenderTooltips(SharedResources.Inpt!.Mouse);
-                        Act!.RenderTooltips(SharedResources.Inpt!.Mouse);
+                        Effects!.RenderTooltips(inpt.Mouse);
+                        Act!.RenderTooltips(inpt.Mouse);
                     }
                 }
             }
@@ -1660,24 +1681,24 @@ namespace FlareEngine
                 if (_dragSrc == DragSrcInventory || _dragSrc == DragSrcVendor || _dragSrc == DragSrcStash)
                     SetDragIconItem(_dragStack);
                 else if (_dragSrc == DragSrcPowers || _dragSrc == DragSrcActionbar)
-                    SetDragIcon(SharedGameResources.Powers!.Powers[_dragPower].Icon, -1);
+                    SetDragIcon(powers.Powers[_dragPower].Icon, -1);
         
-                if (SharedResources.Inpt!.UsingTouchscreen() && _stickyDragging)
-                    RenderIcon(_keydragPos.X - SharedResources.Eset!.Resolutions.IconSize/2, _keydragPos.Y - SharedResources.Eset!.Resolutions.IconSize/2);
+                if (inpt.UsingTouchscreen() && _stickyDragging)
+                    RenderIcon(_keydragPos.X - eset.Resolutions.IconSize/2, _keydragPos.Y - eset.Resolutions.IconSize/2);
                 else
-                    RenderIcon(SharedResources.Inpt!.Mouse.X - SharedResources.Eset!.Resolutions.IconSize/2, SharedResources.Inpt!.Mouse.Y - SharedResources.Eset!.Resolutions.IconSize/2);
+                    RenderIcon(inpt.Mouse.X - eset.Resolutions.IconSize/2, inpt.Mouse.Y - eset.Resolutions.IconSize/2);
             }
             else if (_keyboardDragging && !NumPicker!.Visible) {
                 if (_dragSrc == DragSrcInventory || _dragSrc == DragSrcVendor || _dragSrc == DragSrcStash)
                     SetDragIconItem(_dragStack);
                 else if (_dragSrc == DragSrcPowers || _dragSrc == DragSrcActionbar)
-                    SetDragIcon(SharedGameResources.Powers!.Powers[_dragPower].Icon, -1);
+                    SetDragIcon(powers.Powers[_dragPower].Icon, -1);
         
-                RenderIcon(_keydragPos.X - SharedResources.Eset!.Resolutions.IconSize/2, _keydragPos.Y - SharedResources.Eset!.Resolutions.IconSize/2);
+                RenderIcon(_keydragPos.X - eset.Resolutions.IconSize/2, _keydragPos.Y - eset.Resolutions.IconSize/2);
             }
         
             // render the dev console above everything else
-            if (SharedResources.Settings!.DevMode) {
+            if (settings.DevMode) {
                 Devconsole!.Render();
             }
         }
@@ -1685,6 +1706,8 @@ namespace FlareEngine
         private void HandleKeyboardTooltips() {
             if (Book!.Visible)
                 return;
+
+            var eset = SharedResources.Eset!;
         
             if (Vendor!.Visible) {
                 TabList? curTablist = Vendor!.GetCurrentTabList();
@@ -1695,8 +1718,8 @@ namespace FlareEngine
                     _keydragPos.Y = Vendor!.Stock[Vendor!.GetTab()].Slots[slotIndex].Pos.Y;
         
                     Int2 tooltipPos = _keydragPos;
-                    tooltipPos.X += SharedResources.Eset!.Resolutions.IconSize / 2;
-                    tooltipPos.Y += SharedResources.Eset!.Resolutions.IconSize / 2;
+                    tooltipPos.X += eset.Resolutions.IconSize / 2;
+                    tooltipPos.Y += eset.Resolutions.IconSize / 2;
         
                     PushMatchingItemsOf(tooltipPos);
                     Vendor!.RenderTooltips(tooltipPos);
@@ -1713,8 +1736,8 @@ namespace FlareEngine
                     _keydragPos.Y = Stash!.Tabs[tab].Stock.Slots[slotIndex].Pos.Y;
         
                     Int2 tooltipPos = _keydragPos;
-                    tooltipPos.X += SharedResources.Eset!.Resolutions.IconSize / 2;
-                    tooltipPos.Y += SharedResources.Eset!.Resolutions.IconSize / 2;
+                    tooltipPos.X += eset.Resolutions.IconSize / 2;
+                    tooltipPos.Y += eset.Resolutions.IconSize / 2;
         
                     PushMatchingItemsOf(tooltipPos);
                     Stash!.RenderTooltips(tooltipPos);
@@ -1728,8 +1751,8 @@ namespace FlareEngine
                 _keydragPos.Y = Pow!.Slots[slotIndex].Pos.Y;
         
                 Int2 tooltipPos = _keydragPos;
-                tooltipPos.X += SharedResources.Eset!.Resolutions.IconSize / 2;
-                tooltipPos.Y += SharedResources.Eset!.Resolutions.IconSize / 2;
+                tooltipPos.X += eset.Resolutions.IconSize / 2;
+                tooltipPos.Y += eset.Resolutions.IconSize / 2;
         
                 Pow!.RenderTooltips(tooltipPos);
             }
@@ -1752,8 +1775,8 @@ namespace FlareEngine
                 }
         
                 Int2 tooltipPos = _keydragPos;
-                tooltipPos.X += SharedResources.Eset!.Resolutions.IconSize / 2;
-                tooltipPos.Y += SharedResources.Eset!.Resolutions.IconSize / 2;
+                tooltipPos.X += eset.Resolutions.IconSize / 2;
+                tooltipPos.Y += eset.Resolutions.IconSize / 2;
         
                 PushMatchingItemsOf(tooltipPos);
                 Inv!.RenderTooltips(tooltipPos);
@@ -1842,7 +1865,15 @@ namespace FlareEngine
         }
         
         private void PushMatchingItemsOf(Int2 hovPos) {
-            if (!SharedResources.Settings!.ItemCompareTips)
+            var settings = SharedResources.Settings!;
+            var items = SharedGameResources.Items!;
+            var eset = SharedResources.Eset!;
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+            var tooltipm = SharedResources.Tooltipm!;
+            var pc = SharedGameResources.Pc!;
+
+            if (!settings.ItemCompareTips)
                 return;
         
             int area = -1;
@@ -1872,7 +1903,7 @@ namespace FlareEngine
             }
 
             // we assume that a non-empty item type means that there is a primary tooltip
-            if (!haveHovStack || !SharedGameResources.Items!.IsValid(hovStack.Item) || SharedGameResources.Items!.GetItemType(SharedGameResources.Items!.Items[(int)hovStack.Item]!.Type).Name.Length == 0)
+            if (!haveHovStack || !items.IsValid(hovStack.Item) || items.GetItemType(items.Items[(int)hovStack.Item]!.Type).Name.Length == 0)
                 return;
 
             {
@@ -1880,33 +1911,33 @@ namespace FlareEngine
                 List<ItemID> matchingIds = new List<ItemID>();
         
                 for (int i = 0; i < Inv!.EquippedArea.Count; i++) {
-                    if (Inv!.IsEquipSlotActive(i) && !Inv!.Inventory[MenuInventory.Equipment].Storage[i].Empty() && Inv!.SlotType[i] == SharedGameResources.Items!.Items[(int)hovStack.Item]!.Type) {
+                    if (Inv!.IsEquipSlotActive(i) && !Inv!.Inventory[MenuInventory.Equipment].Storage[i].Empty() && Inv!.SlotType[i] == items.Items[(int)hovStack.Item]!.Type) {
                         matchingIds.Add(Inv!.Inventory[MenuInventory.Equipment].Storage[i].Item);
                     }
                 }
         
-                if (matchingIds.Count + 1 > SharedResources.Eset!.Tooltips.VisibleMax) {
+                if (matchingIds.Count + 1 > eset.Tooltips.VisibleMax) {
                     TooltipData match = new TooltipData();
-                    match.AddColoredText(SharedResources.Msg!.Get("Equipped") + ": " + SharedGameResources.Items!.GetItemType(SharedGameResources.Items!.Items[(int)hovStack.Item]!.Type).Name, SharedResources.Font!.GetColor(FontEngine.ColorItemFlavor));
+                    match.AddColoredText(msg.Get("Equipped") + ": " + items.GetItemType(items.Items[(int)hovStack.Item]!.Type).Name, font.GetColor(FontEngine.ColorItemFlavor));
                     for (int i = 0; i < matchingIds.Count; ++i) {
-                        match.AddText(SharedGameResources.Items!.GetItemName(matchingIds[i]));
+                        match.AddText(items.GetItemName(matchingIds[i]));
                     }
         
-                    SharedResources.Tooltipm!.Push(match, hovPos, TooltipData.StyleFloat, tipIndex);
+                    tooltipm.Push(match, hovPos, TooltipData.StyleFloat, tipIndex);
                 }
                 else {
                     //get equipped items of the same type
                     for (int i = 0; i < Inv!.EquippedArea.Count; i++) {
-                        if (tipIndex >= SharedResources.Eset!.Tooltips.VisibleMax)
+                        if (tipIndex >= eset.Tooltips.VisibleMax)
                             break; // can't show any more tooltips
         
-                        if (Inv!.IsEquipSlotActive(i) && !Inv!.Inventory[MenuInventory.Equipment].Storage[i].Empty() && Inv!.SlotType[i] == SharedGameResources.Items!.Items[(int)hovStack.Item]!.Type) {
+                        if (Inv!.IsEquipSlotActive(i) && !Inv!.Inventory[MenuInventory.Equipment].Storage[i].Empty() && Inv!.SlotType[i] == items.Items[(int)hovStack.Item]!.Type) {
                             Int2 matchPos = new Int2(Inv!.EquippedArea[i].X, Inv!.EquippedArea[i].Y);
         
-                            TooltipData match = Inv!.Inventory[MenuInventory.Equipment].CheckTooltip(matchPos, SharedGameResources.Pc!.Stats, ItemManager.PlayerInv, !ItemManager.TooltipInputHint);
-                            match.AddColoredText(SharedResources.Msg!.Get("Equipped"), SharedResources.Font!.GetColor(FontEngine.ColorItemFlavor));
+                            TooltipData match = Inv!.Inventory[MenuInventory.Equipment].CheckTooltip(matchPos, pc.Stats, ItemManager.PlayerInv, !ItemManager.TooltipInputHint);
+                            match.AddColoredText(msg.Get("Equipped"), font.GetColor(FontEngine.ColorItemFlavor));
         
-                            SharedResources.Tooltipm!.Push(match, hovPos, TooltipData.StyleFloat, tipIndex);
+                            tooltipm.Push(match, hovPos, TooltipData.StyleFloat, tipIndex);
                             tipIndex++;
                         }
                     }
@@ -1941,6 +1972,10 @@ namespace FlareEngine
         }
         
         private void ShowActionPicker(Menu? srcMenu, Int2 target) {
+            var inpt = SharedResources.Inpt!;
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+
             ActionPicker!.ActionList!.Clear();
             _actionPickerMap.Clear();
         
@@ -1952,15 +1987,15 @@ namespace FlareEngine
                     _actionSrc = ActionSrcActionbar;
                     _actionPickerTarget = target;
         
-                    if (SharedResources.Inpt!.Mode == InputState.ModeTouchscreen) {
-                        ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Use"), "");
+                    if (inpt.Mode == InputState.ModeTouchscreen) {
+                        ActionPicker!.ActionList!.Append(msg.Get("Use"), "");
                         _actionPickerMap[_actionPickerMap.Count] = ActionPickerActionbarUse;
                     }
         
-                    ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Move"), "");
+                    ActionPicker!.ActionList!.Append(msg.Get("Move"), "");
                     _actionPickerMap[_actionPickerMap.Count] = ActionPickerActionbarSelect;
         
-                    ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Clear"), "");
+                    ActionPicker!.ActionList!.Append(msg.Get("Clear"), "");
                     _actionPickerMap[_actionPickerMap.Count] = ActionPickerActionbarClear;
                 }
             }
@@ -1972,12 +2007,12 @@ namespace FlareEngine
                     _actionPickerTarget = target;
                 }
         
-                if (powClick.Drag > 0 && (SharedResources.Inpt!.UsingMouse() || Act!.EnableGamepadNav)) {
-                    ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Equip"), "");
+                if (powClick.Drag > 0 && (inpt.UsingMouse() || Act!.EnableGamepadNav)) {
+                    ActionPicker!.ActionList!.Append(msg.Get("Equip"), "");
                     _actionPickerMap[0] = ActionPickerPowersSelect;
                 }
                 if (powClick.Unlock > 0) {
-                    ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Upgrade"), "");
+                    ActionPicker!.ActionList!.Append(msg.Get("Upgrade"), "");
                     _actionPickerMap[_actionPickerMap.Count] = ActionPickerPowersUpgrade;
                 }
             }
@@ -1992,38 +2027,38 @@ namespace FlareEngine
                     _actionPickerTarget = target;
         
                     if (Vendor!.Visible) {
-                        ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Sell"), "");
+                        ActionPicker!.ActionList!.Append(msg.Get("Sell"), "");
                         _actionPickerMap[_actionPickerMap.Count] = ActionPickerInventorySell;
                     }
                     else if (Stash!.Visible) {
-                        ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Transfer"), "");
+                        ActionPicker!.ActionList!.Append(msg.Get("Transfer"), "");
                         _actionPickerMap[_actionPickerMap.Count] = ActionPickerInventoryStash;
                     }
         
-                    ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Move"), "");
+                    ActionPicker!.ActionList!.Append(msg.Get("Move"), "");
                     _actionPickerMap[_actionPickerMap.Count] = ActionPickerInventorySelect;
         
                     if (Inv!.CanUseItem(target)) {
-                        ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Use"), "");
+                        ActionPicker!.ActionList!.Append(msg.Get("Use"), "");
                         _actionPickerMap[_actionPickerMap.Count] = ActionPickerInventoryActivate;
                     }
                     else if (Inv!.CanEquipItem(target)) {
-                        ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Equip"), "");
+                        ActionPicker!.ActionList!.Append(msg.Get("Equip"), "");
                         _actionPickerMap[_actionPickerMap.Count] = ActionPickerInventoryActivate;
                     }
         
-                    if (!SharedResources.Inpt!.UsingMouse() && Act!.EnableGamepadNav) {
+                    if (!inpt.UsingMouse() && Act!.EnableGamepadNav) {
                         if (Inv!.CanPlaceItemOnActionbar(target)) {
-                            ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Add to bar"), "");
+                            ActionPicker!.ActionList!.Append(msg.Get("Add to bar"), "");
                             _actionPickerMap[_actionPickerMap.Count] = ActionPickerInventoryActionbar;
                         }
                     }
         
-                    ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Drop"), "");
+                    ActionPicker!.ActionList!.Append(msg.Get("Drop"), "");
                     _actionPickerMap[_actionPickerMap.Count] = ActionPickerInventoryDrop;
         
-                    if (!Vendor!.Visible && SharedResources.Eset!.Misc.SellWithoutVendor) {
-                        ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Sell"), "");
+                    if (!Vendor!.Visible && eset.Misc.SellWithoutVendor) {
+                        ActionPicker!.ActionList!.Append(msg.Get("Sell"), "");
                         _actionPickerMap[_actionPickerMap.Count] = ActionPickerInventorySell;
                     }
                 }
@@ -2038,10 +2073,10 @@ namespace FlareEngine
                     _actionSrc = ActionSrcStash;
                     _actionPickerTarget = target;
         
-                    ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Move"), "");
+                    ActionPicker!.ActionList!.Append(msg.Get("Move"), "");
                     _actionPickerMap[_actionPickerMap.Count] = ActionPickerStashSelect;
         
-                    ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Transfer"), "");
+                    ActionPicker!.ActionList!.Append(msg.Get("Transfer"), "");
                     _actionPickerMap[_actionPickerMap.Count] = ActionPickerStashTransfer;
                 }
             }
@@ -2055,7 +2090,7 @@ namespace FlareEngine
                     _actionSrc = ActionSrcVendor;
                     _actionPickerTarget = target;
         
-                    ActionPicker!.ActionList!.Append(SharedResources.Msg!.Get("Buy"), "");
+                    ActionPicker!.ActionList!.Append(msg.Get("Buy"), "");
                     _actionPickerMap[_actionPickerMap.Count] = ActionPickerVendorBuy;
                 }
             }

@@ -75,6 +75,11 @@ namespace FlareEngine
 
         public MenuMiniMap()
         {
+            var font = SharedResources.Font!;
+            var eset = SharedResources.Eset!;
+            var renderDevice = SharedResources.RenderDevice!;
+            var msg = SharedResources.Msg!;
+
             _colorWall = new Color(128, 128, 128, 255);
             _colorObst = new Color(64, 64, 64, 255);
             _colorHero = new Color(255, 255, 255, 255);
@@ -175,17 +180,17 @@ namespace FlareEngine
 
             _visibleRadius = (float)Math.Max(_pos.Width, _pos.Height) * 0.7071f;
 
-            _label!.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            _label!.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             // load compass image
             Image? gfx = null;
-            if (SharedResources.Eset!.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetIsometric)
+            if (eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetIsometric)
             {
-                gfx = SharedResources.RenderDevice!.LoadImage("images/menus/compass_iso.png", RenderDevice.ErrorNormal);
+                gfx = renderDevice.LoadImage("images/menus/compass_iso.png", RenderDevice.ErrorNormal);
             }
-            else if (SharedResources.Eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal)
+            else if (eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal)
             {
-                gfx = SharedResources.RenderDevice!.LoadImage("images/menus/compass_ortho.png", RenderDevice.ErrorNormal);
+                gfx = renderDevice.LoadImage("images/menus/compass_ortho.png", RenderDevice.ErrorNormal);
             }
             if (gfx != null)
             {
@@ -194,7 +199,7 @@ namespace FlareEngine
             }
 
             if (_buttonConfig != null)
-                _buttonConfig.Tooltip = SharedResources.Msg!.Get("Configuration");
+                _buttonConfig.Tooltip = msg.Get("Configuration");
 
             Align();
         }
@@ -265,7 +270,10 @@ namespace FlareEngine
 
         public void Logic()
         {
-            if (!SharedResources.Settings!.ShowHud)
+            var settings = SharedResources.Settings!;
+            var pc = SharedGameResources.Pc!;
+
+            if (!settings.ShowHud)
                 return;
 
             InputState inpt = SharedResources.Inpt!;
@@ -273,12 +281,12 @@ namespace FlareEngine
             if (inpt.Pressing[Input.MinimapMode] && !inpt.Lock[Input.MinimapMode])
             {
                 inpt.Lock[Input.MinimapMode] = true;
-                SharedResources.Settings.MinimapMode++;
-                if (SharedResources.Settings.MinimapMode > Settings.Minimap2x)
-                    SharedResources.Settings.MinimapMode = Settings.MinimapNormal;
+                settings.MinimapMode++;
+                if (settings.MinimapMode > Settings.Minimap2x)
+                    settings.MinimapMode = Settings.MinimapNormal;
             }
 
-            if (SharedResources.Settings.MinimapMode == Settings.MinimapHidden)
+            if (settings.MinimapMode == Settings.MinimapHidden)
                 return;
 
             if (inpt.UsingMouse())
@@ -293,17 +301,17 @@ namespace FlareEngine
                 if (isWithinMaparea && inpt.Pressing[Input.Main1] && !inpt.Lock[Input.Main1] && !_lockZoomChange)
                 {
                     inpt.Lock[Input.Main1] = true;
-                    if (SharedResources.Settings.MinimapMode == Settings.MinimapNormal)
-                        SharedResources.Settings.MinimapMode = Settings.Minimap2x;
-                    else if (SharedResources.Settings.MinimapMode == Settings.Minimap2x)
-                        SharedResources.Settings.MinimapMode = Settings.MinimapNormal;
+                    if (settings.MinimapMode == Settings.MinimapNormal)
+                        settings.MinimapMode = Settings.Minimap2x;
+                    else if (settings.MinimapMode == Settings.Minimap2x)
+                        settings.MinimapMode = Settings.MinimapNormal;
                 }
             }
 
             if (_buttonConfig != null)
             {
-                _buttonConfig.Enabled = !SharedGameResources.Pc!.Stats.Corpse;
-                if (!(SharedGameResources.Pc.UsingMain1 || SharedGameResources.Pc.UsingMain2) && _buttonConfig.CheckClick())
+                _buttonConfig.Enabled = !pc.Stats.Corpse;
+                if (!(pc.UsingMain1 || pc.UsingMain2) && _buttonConfig.CheckClick())
                 {
                     ClickedConfig = true;
                 }
@@ -316,23 +324,26 @@ namespace FlareEngine
 
         public void Render(Vector2 heroPos)
         {
-            if (!SharedResources.Settings!.ShowHud || SharedResources.Settings.MinimapMode == Settings.MinimapHidden)
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+
+            if (!settings.ShowHud || settings.MinimapMode == Settings.MinimapHidden)
                 return;
 
             base.Render();
 
             _label!.Render();
 
-            if (SharedResources.Settings.MinimapMode == Settings.MinimapNormal)
+            if (settings.MinimapMode == Settings.MinimapNormal)
                 _currentZoom = 1 * _baseZoom;
-            else if (SharedResources.Settings.MinimapMode == Settings.Minimap2x)
+            else if (settings.MinimapMode == Settings.Minimap2x)
                 _currentZoom = 2 * _baseZoom;
 
             RenderMapSurface(heroPos);
 
             if (_compass != null)
             {
-                SharedResources.RenderDevice!.Render(_compass);
+                renderDevice.Render(_compass);
             }
 
             if (_buttonConfig != null)
@@ -374,8 +385,12 @@ namespace FlareEngine
 
         private void RenderMapSurface(Vector2 heroPos)
         {
+            var eset = SharedResources.Eset!;
+            var settings = SharedResources.Settings!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             Int2 heroOffset;
-            if (SharedResources.Eset!.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetIsometric)
+            if (eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetIsometric)
             {
                 Int2 hPos = heroPos.ToInt2();
                 heroOffset.X = hPos.X - hPos.Y + Math.Max(_mapSize.X, _mapSize.Y);
@@ -405,12 +420,12 @@ namespace FlareEngine
 
             Sprite? targetSurface = null;
             Sprite? targetSurfaceEntities = null;
-            if (SharedResources.Settings!.MinimapMode == Settings.MinimapNormal && _mapSurface != null)
+            if (settings.MinimapMode == Settings.MinimapNormal && _mapSurface != null)
             {
                 targetSurface = _mapSurface;
                 targetSurfaceEntities = _mapSurfaceEntities;
             }
-            else if (SharedResources.Settings.MinimapMode == Settings.Minimap2x && _mapSurface2x != null)
+            else if (settings.MinimapMode == Settings.Minimap2x && _mapSurface2x != null)
             {
                 targetSurface = _mapSurface2x;
                 targetSurfaceEntities = _mapSurfaceEntities2x;
@@ -420,12 +435,12 @@ namespace FlareEngine
             {
                 targetSurface.SetClipFromRect(clip);
                 targetSurface.SetDestFromRect(_mapArea);
-                SharedResources.RenderDevice!.Render(targetSurface);
+                renderDevice.Render(targetSurface);
             }
 
             if (targetSurfaceEntities != null)
             {
-                if (SharedResources.Eset!.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetIsometric)
+                if (eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetIsometric)
                 {
                     RenderEntitiesIso(targetSurfaceEntities, _currentZoom, entityOffset);
                 }
@@ -437,7 +452,7 @@ namespace FlareEngine
 
                 targetSurfaceEntities.SetClipFromRect(clipEntities);
                 targetSurfaceEntities.SetDestFromRect(_mapArea);
-                SharedResources.RenderDevice!.Render(targetSurfaceEntities);
+                renderDevice.Render(targetSurfaceEntities);
             }
         }
 
@@ -460,6 +475,11 @@ namespace FlareEngine
 
         private void UpdateOrtho(MapCollision collider, ref Sprite? tileSurface, int zoom, ref Rectangle bounds)
         {
+            var pc = SharedGameResources.Pc!;
+            var eset = SharedResources.Eset!;
+            var mapr = SharedGameResources.Mapr!;
+            var fow = SharedGameResources.Fow!;
+
             if (tileSurface == null)
                 return;
 
@@ -473,7 +493,7 @@ namespace FlareEngine
             }
             else
             {
-                Int2 hero = SharedGameResources.Pc!.Stats.Pos.ToInt2();
+                Int2 hero = pc.Stats.Pos.ToInt2();
 
                 Rectangle clip = default;
                 clip.X = (zoom * hero.X) - _pos.Width / 2;
@@ -500,9 +520,9 @@ namespace FlareEngine
                     else if (tileType == 2 || tileType == 6) drawColor = _colorObst;
                     else drawTile = false;
 
-                    if (SharedResources.Eset!.Misc.Fogofwar > 0)
+                    if (eset.Misc.Fogofwar > 0)
                     {
-                        tileType = SharedGameResources.Mapr!.Layers[SharedGameResources.Fow!.DarkLayerId][i][j];
+                        tileType = mapr.Layers[fow.DarkLayerId][i][j];
                         if (tileType != 0) drawTile = false;
                     }
 
@@ -541,6 +561,11 @@ namespace FlareEngine
 
         private void UpdateIso(MapCollision collider, ref Sprite? tileSurface, int zoom, ref Rectangle bounds)
         {
+            var pc = SharedGameResources.Pc!;
+            var eset = SharedResources.Eset!;
+            var mapr = SharedGameResources.Mapr!;
+            var fow = SharedGameResources.Fow!;
+
             if (tileSurface == null)
                 return;
 
@@ -556,7 +581,7 @@ namespace FlareEngine
             }
             else
             {
-                Int2 hero = SharedGameResources.Pc!.Stats.Pos.ToInt2();
+                Int2 hero = pc.Stats.Pos.ToInt2();
                 Int2 heroOffset;
                 heroOffset.X = hero.X - hero.Y + Math.Max(_mapSize.X, _mapSize.Y);
                 heroOffset.Y = hero.X + hero.Y;
@@ -587,9 +612,9 @@ namespace FlareEngine
                     else drawTile = false;
 
                     // fog of war
-                    if (SharedResources.Eset!.Misc.Fogofwar > 0)
+                    if (eset.Misc.Fogofwar > 0)
                     {
-                        tileType = SharedGameResources.Mapr!.Layers[SharedGameResources.Fow!.DarkLayerId][i][j];
+                        tileType = mapr.Layers[fow.DarkLayerId][i][j];
                         if (tileType != 0) drawTile = false;
                     }
 
@@ -684,47 +709,53 @@ namespace FlareEngine
 
         private void FillEntities()
         {
-            Int2 hero = SharedGameResources.Pc!.Stats.Pos.ToInt2();
+            var pc = SharedGameResources.Pc!;
+            var mapr = SharedGameResources.Mapr!;
+            var fow = SharedGameResources.Fow!;
+            var eventm = SharedGameResources.Eventm!;
+            var entitym = SharedGameResources.Entitym!;
+
+            Int2 hero = pc.Stats.Pos.ToInt2();
 
             if (hero.X >= 0 && hero.Y >= 0 && hero.X < _mapSize.X && hero.Y < _mapSize.Y)
             {
                 _entities.Add(new PixelEntity(hero.X, hero.Y, ref _colorHero));
             }
 
-            for (int i = 0; i < SharedGameResources.Mapr!.Events.Count; ++i)
+            for (int i = 0; i < mapr.Events.Count; ++i)
             {
-                EventComponent? ecMinimap = SharedGameResources.Mapr.Events[i].GetComponent(EventComponent.ShowOnMinimap);
+                EventComponent? ecMinimap = mapr.Events[i].GetComponent(EventComponent.ShowOnMinimap);
                 if (ecMinimap != null && ecMinimap.Data[0].Int == 0)
                     continue;
 
-                if (SharedGameResources.Mapr.Events[i].GetComponent(EventComponent.NpcHotspot) != null && SharedGameResources.Eventm!.IsActive(SharedGameResources.Mapr.Events[i]))
+                if (mapr.Events[i].GetComponent(EventComponent.NpcHotspot) != null && eventm.IsActive(mapr.Events[i]))
                 {
-                    if (SharedGameResources.Mapr.Fogofwar != 0)
+                    if (mapr.Fogofwar != 0)
                     {
-                        float delta = Utils.CalcDist(SharedGameResources.Pc.Stats.Pos, SharedGameResources.Mapr.Events[i].Center);
-                        if (delta > SharedGameResources.Fow!.MaskRadius)
+                        float delta = Utils.CalcDist(pc.Stats.Pos, mapr.Events[i].Center);
+                        if (delta > fow.MaskRadius)
                         {
                             continue;
                         }
                     }
-                    if (Utils.CalcDist(SharedGameResources.Pc.Stats.Pos, new Vector2(SharedGameResources.Mapr.Events[i].Location.X, SharedGameResources.Mapr.Events[i].Location.Y)) <= _visibleRadius)
+                    if (Utils.CalcDist(pc.Stats.Pos, new Vector2(mapr.Events[i].Location.X, mapr.Events[i].Location.Y)) <= _visibleRadius)
                     {
-                        _entities.Add(new PixelEntity(SharedGameResources.Mapr.Events[i].Location.X, SharedGameResources.Mapr.Events[i].Location.Y, ref _colorNpc));
+                        _entities.Add(new PixelEntity(mapr.Events[i].Location.X, mapr.Events[i].Location.Y, ref _colorNpc));
                     }
                 }
-                else if ((SharedGameResources.Mapr.Events[i].ActivateType == Event.ActivateOnTrigger || SharedGameResources.Mapr.Events[i].ActivateType == Event.ActivateOnInteract) && SharedGameResources.Mapr.Events[i].GetComponent(EventComponent.Intermap) != null && SharedGameResources.Eventm.IsActive(SharedGameResources.Mapr.Events[i]))
+                else if ((mapr.Events[i].ActivateType == Event.ActivateOnTrigger || mapr.Events[i].ActivateType == Event.ActivateOnInteract) && mapr.Events[i].GetComponent(EventComponent.Intermap) != null && eventm.IsActive(mapr.Events[i]))
                 {
                     Int2 eventPos = default;
-                    eventPos.X = SharedGameResources.Mapr.Events[i].Location.X;
-                    eventPos.Y = SharedGameResources.Mapr.Events[i].Location.Y;
-                    for (int j = eventPos.X; j < eventPos.X + SharedGameResources.Mapr.Events[i].Location.Width; ++j)
+                    eventPos.X = mapr.Events[i].Location.X;
+                    eventPos.Y = mapr.Events[i].Location.Y;
+                    for (int j = eventPos.X; j < eventPos.X + mapr.Events[i].Location.Width; ++j)
                     {
-                        for (int k = eventPos.Y; k < eventPos.Y + SharedGameResources.Mapr.Events[i].Location.Height; ++k)
+                        for (int k = eventPos.Y; k < eventPos.Y + mapr.Events[i].Location.Height; ++k)
                         {
-                            if (SharedGameResources.Mapr.Fogofwar != 0)
-                                if (SharedGameResources.Mapr.Layers[SharedGameResources.Fow!.DarkLayerId][eventPos.X][eventPos.Y] == FogOfWar.TileHidden) continue;
+                            if (mapr.Fogofwar != 0)
+                                if (mapr.Layers[fow.DarkLayerId][eventPos.X][eventPos.Y] == FogOfWar.TileHidden) continue;
 
-                            if (Utils.CalcDist(SharedGameResources.Pc.Stats.Pos, new Vector2(j, k)) <= _visibleRadius)
+                            if (Utils.CalcDist(pc.Stats.Pos, new Vector2(j, k)) <= _visibleRadius)
                             {
                                 _entities.Add(new PixelEntity(j, k, ref _colorTeleport));
                             }
@@ -733,29 +764,29 @@ namespace FlareEngine
                 }
             }
 
-            for (int i = 0; i < SharedGameResources.Entitym!.Entities.Count; ++i)
+            for (int i = 0; i < entitym.Entities.Count; ++i)
             {
-                Entity e = SharedGameResources.Entitym.Entities[i];
+                Entity e = entitym.Entities[i];
                 if (e.Stats.Hp > 0)
                 {
-                    if (SharedGameResources.Mapr.Fogofwar != 0)
+                    if (mapr.Fogofwar != 0)
                     {
-                        float delta = Utils.CalcDist(SharedGameResources.Pc.Stats.Pos, e.Stats.Pos);
-                        if (delta > SharedGameResources.Fow!.MaskRadius)
+                        float delta = Utils.CalcDist(pc.Stats.Pos, e.Stats.Pos);
+                        if (delta > fow.MaskRadius)
                         {
                             continue;
                         }
                     }
                     if (e.Stats.HeroAlly)
                     {
-                        if (Utils.CalcDist(SharedGameResources.Pc.Stats.Pos, new Vector2(e.Stats.Pos.X, e.Stats.Pos.Y)) <= _visibleRadius)
+                        if (Utils.CalcDist(pc.Stats.Pos, new Vector2(e.Stats.Pos.X, e.Stats.Pos.Y)) <= _visibleRadius)
                         {
                             _entities.Add(new PixelEntity((int)e.Stats.Pos.X, (int)e.Stats.Pos.Y, ref _colorAlly));
                         }
                     }
                     else if (e.Stats.InCombat)
                     {
-                        if (Utils.CalcDist(SharedGameResources.Pc.Stats.Pos, new Vector2(e.Stats.Pos.X, e.Stats.Pos.Y)) <= _visibleRadius)
+                        if (Utils.CalcDist(pc.Stats.Pos, new Vector2(e.Stats.Pos.X, e.Stats.Pos.Y)) <= _visibleRadius)
                         {
                             _entities.Add(new PixelEntity((int)e.Stats.Pos.X, (int)e.Stats.Pos.Y, ref _colorEnemy));
                         }
@@ -763,7 +794,7 @@ namespace FlareEngine
                 }
                 else if (e.Stats.CorpseHasCollision)
                 {
-                    if (Utils.CalcDist(SharedGameResources.Pc.Stats.Pos, new Vector2(e.Stats.Pos.X, e.Stats.Pos.Y)) <= _visibleRadius)
+                    if (Utils.CalcDist(pc.Stats.Pos, new Vector2(e.Stats.Pos.X, e.Stats.Pos.Y)) <= _visibleRadius)
                     {
                         _entities.Add(new PixelEntity((int)e.Stats.Pos.X, (int)e.Stats.Pos.Y, ref _colorObst));
                     }

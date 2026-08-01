@@ -31,9 +31,11 @@ namespace FlareEngine
 
         public TooltipManager()
         {
+            var eset = SharedResources.Eset!;
+
             Context = ContextNone;
 
-            int visibleMax = SharedResources.Eset!.Tooltips.VisibleMax;
+            int visibleMax = eset.Tooltips.VisibleMax;
             _tip.Capacity = visibleMax;
             _tipData.Capacity = visibleMax;
             _pos.Capacity = visibleMax;
@@ -70,7 +72,8 @@ namespace FlareEngine
 
         public void Clear()
         {
-            for (int i = 0; i < SharedResources.Eset!.Tooltips.VisibleMax; ++i)
+            var eset = SharedResources.Eset!;
+            for (int i = 0; i < eset.Tooltips.VisibleMax; ++i)
             {
                 _tipData[i].Clear();
             }
@@ -78,7 +81,8 @@ namespace FlareEngine
 
         public bool IsEmpty()
         {
-            for (int i = 0; i < SharedResources.Eset!.Tooltips.VisibleMax; ++i)
+            var eset = SharedResources.Eset!;
+            for (int i = 0; i < eset.Tooltips.VisibleMax; ++i)
             {
                 if (!_tipData[i].IsEmpty())
                     return false;
@@ -110,7 +114,8 @@ namespace FlareEngine
                 Context = ContextNone;
             }
 
-            for (int i = 0; i < SharedResources.Eset!.Tooltips.VisibleMax; ++i)
+            var eset = SharedResources.Eset!;
+            for (int i = 0; i < eset.Tooltips.VisibleMax; ++i)
             {
                 _tip[i]!.Render(_tipData[i], _pos[i], _style[i]);
             }

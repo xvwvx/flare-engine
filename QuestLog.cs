@@ -70,6 +70,10 @@ namespace FlareEngine
             if (!infile.Open(filename, FileParser.ModFile, FileParser.ErrorNormal))
                 return;
 
+            var msg = SharedResources.Msg!;
+            var camp = SharedGameResources.Camp!;
+            var eventm = SharedGameResources.Eventm!;
+
             _quests.Add(new Quest());
 
             while (infile.Next())
@@ -87,12 +91,12 @@ namespace FlareEngine
                     if (infile.Key == "name")
                     {
                         // @ATTR name|string|A displayed name for this quest.
-                        _quests[^1].Name = SharedResources.Msg!.Get(infile.Val);
+                        _quests[^1].Name = msg.Get(infile.Val);
                     }
                     else if (infile.Key == "complete_status")
                     {
                         // @ATTR complete_status|string|If this status is set, the quest will be displayed as completed.
-                        _quests[^1].CompleteStatus = SharedGameResources.Camp!.RegisterStatus(infile.Val);
+                        _quests[^1].CompleteStatus = camp.RegisterStatus(infile.Val);
                     }
 
                     continue;
@@ -105,59 +109,59 @@ namespace FlareEngine
                 if (infile.Key == "requires_status")
                 {
                     // @ATTR quest.requires_status|list(string)|Quest requires this campaign status
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "requires_not_status")
                 {
                     // @ATTR quest.requires_not_status|list(string)|Quest requires not having this campaign status.
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "requires_level")
                 {
                     // @ATTR quest.requires_level|int|Quest requires hero level
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "requires_not_level")
                 {
                     // @ATTR quest.requires_not_level|int|Quest requires not hero level
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "requires_currency")
                 {
                     // @ATTR quest.requires_currency|int|Quest requires atleast this much currency
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "requires_not_currency")
                 {
                     // @ATTR quest.requires_not_currency|int|Quest requires no more than this much currency
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "requires_item")
                 {
                     // @ATTR quest.requires_item|list(item_id)|Quest requires specific item (not equipped)
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "requires_not_item")
                 {
                     // @ATTR quest.requires_not_item|list(item_id)|Quest requires not having a specific item (not equipped)
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "requires_class")
                 {
                     // @ATTR quest.requires_class|predefined_string|Quest requires this base class
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "requires_not_class")
                 {
                     // @ATTR quest.requires_not_class|predefined_string|Quest requires not this base class
-                    SharedGameResources.Eventm!.LoadEventComponent(infile, ev, null);
+                    eventm.LoadEventComponent(infile, ev, null);
                 }
                 else if (infile.Key == "quest_text")
                 {
                     // @ATTR quest.quest_text|string|Text that gets displayed in the Quest log when this quest is active.
                     EventComponent ec = new EventComponent();
                     ec.Type = EventComponent.QuestText;
-                    ec.S = SharedResources.Msg!.Get(infile.Val);
+                    ec.S = msg.Get(infile.Val);
 
                     // quest group id
                     ec.Data[0].Int = _quests.Count - 1;
@@ -188,13 +192,17 @@ namespace FlareEngine
         /// </summary>
         public void CreateQuestList()
         {
+            var camp = SharedGameResources.Camp!;
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+
             List<int> tempQuestIds = new List<int>();
             List<int> tempCompleteQuestIds = new List<int>();
 
             // check quest requirements
             for (int i = 0; i < _questSections.Count; i++)
             {
-                if (SharedGameResources.Camp!.CheckRequirementsInVector(_questSections[i]))
+                if (camp.CheckRequirementsInVector(_questSections[i]))
                 {
                     // passed requirement checks, add ID to active quest list
                     tempQuestIds.Add(i);
@@ -206,7 +214,7 @@ namespace FlareEngine
             {
                 if (!string.IsNullOrEmpty(_quests[i].Name) && _quests[i].CompleteStatus != 0)
                 {
-                    if (SharedGameResources.Camp!.CheckStatus(_quests[i].CompleteStatus))
+                    if (camp.CheckStatus(_quests[i].CompleteStatus))
                     {
                         tempCompleteQuestIds.Add(i);
                     }
@@ -236,19 +244,19 @@ namespace FlareEngine
                     {
                         completeHeader = true;
                     }
-                    _log.SetNextColor(SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled), MenuLog.TypeQuests);
+                    _log.SetNextColor(font.GetColor(FontEngine.ColorWidgetDisabled), MenuLog.TypeQuests);
                     _log.Add(_quests[_completeQuestIds[i - 1]].Name, MenuLog.TypeQuests, WidgetLog.MsgUnique);
                 }
 
                 if (completeHeader)
                 {
                     StringBuilder ss = new StringBuilder();
-                    ss.Append(SharedResources.Msg!.Get("Completed Quests"));
+                    ss.Append(msg.Get("Completed Quests"));
                     ss.Append(" (");
                     ss.Append(_completeQuestIds.Count);
                     ss.Append(")");
                     _log.SetNextStyle(WidgetLog.FontBold, MenuLog.TypeQuests);
-                    _log.SetNextColor(SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled), MenuLog.TypeQuests);
+                    _log.SetNextColor(font.GetColor(FontEngine.ColorWidgetDisabled), MenuLog.TypeQuests);
                     _log.Add(ss.ToString(), MenuLog.TypeQuests, WidgetLog.MsgUnique);
                     if (_activeQuestIds.Count != 0)
                         _log.AddSeparator(MenuLog.TypeQuests);

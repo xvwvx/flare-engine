@@ -6,13 +6,13 @@ namespace FlareEngine
     /// <summary>
     /// EntityBehavior
     ///
-    /// 实体行为组件：为 Entity 提供 AI 决策（移动、施法等）�?
+    /// 实体行为组件：为 Entity 提供 AI 决策（移动、施法等）�?
     /// 对应原始 <c>class EntityBehavior</c>；由 <see cref="Entity.Behavior"/> 持有并在
-    /// <see cref="Entity.Logic"/> 中逐帧调用 <see cref="Logic"/>�?
+    /// <see cref="Entity.Logic"/> 中逐帧调用 <see cref="Logic"/>�?
     ///
-    /// 前向引用（详�?EntityBehavior.report.txt）：<see cref="Avatar"/>�?see cref="NPC"/>�?
-    /// <see cref="Power"/>�?see cref="PowerManager"/>�?see cref="ChainPower"/>�?
-    /// <see cref="MapRenderer"/> 等尚未转换单元，按仓库既有约定前向引用�?
+    /// 前向引用（详�?EntityBehavior.report.txt）：<see cref="Avatar"/>�?see cref="NPC"/>�?
+    /// <see cref="Power"/>�?see cref="PowerManager"/>�?see cref="ChainPower"/>�?
+    /// <see cref="MapRenderer"/> 等尚未转换单元，按仓库既有约定前向引用�?
     /// </summary>
     public class EntityBehavior : IDisposable
     {
@@ -79,9 +79,13 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var eset = SharedResources.Eset!;
+            var pc = SharedGameResources.Pc!;
+            var settings = SharedResources.Settings!;
+
             if (E.Stats.Corpse)
             {
-                if (SharedResources.Eset!.Misc.CorpseTimeoutEnabled)
+                if (eset.Misc.CorpseTimeoutEnabled)
                     E.Stats.CorpseTimer.Tick();
 
                 return;
@@ -89,7 +93,7 @@ namespace FlareEngine
 
             if (!E.Stats.HeroAlly)
             {
-                if (Utils.CalcDist(E.Stats.Pos, SharedGameResources.Pc!.Stats.Pos) <= SharedResources.Settings!.EncounterDist)
+                if (Utils.CalcDist(E.Stats.Pos, pc.Stats.Pos) <= settings.EncounterDist)
                     E.Stats.Encountered = true;
 
                 if (!E.Stats.Encountered)
@@ -107,19 +111,22 @@ namespace FlareEngine
 
         private void DoUpkeep()
         {
+            var powers = SharedGameResources.Powers!;
+            var mapr = SharedGameResources.Mapr!;
+
             if (E.Stats.Hp > 0 || E.Stats.Effects.TriggeredDeath)
-                SharedGameResources.Powers!.ActivatePassives(E.Stats);
+                powers.ActivatePassives(E.Stats);
 
             E.Stats.Logic();
 
             if (E.Stats.Teleportation)
             {
-                SharedGameResources.Mapr!.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
+                mapr.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
 
                 E.Stats.Pos.X = E.Stats.TeleportDestination.X;
                 E.Stats.Pos.Y = E.Stats.TeleportDestination.Y;
 
-                SharedGameResources.Mapr!.Collider.Block(E.Stats.Pos.X, E.Stats.Pos.Y, E.Stats.HeroAlly);
+                mapr.Collider.Block(E.Stats.Pos.X, E.Stats.Pos.Y, E.Stats.HeroAlly);
 
                 E.Stats.Teleportation = false;
             }
@@ -127,6 +134,12 @@ namespace FlareEngine
 
         private void FindTarget()
         {
+            var pc = SharedGameResources.Pc!;
+            var mapr = SharedGameResources.Mapr!;
+            var entitym = SharedGameResources.Entitym!;
+            var powers = SharedGameResources.Powers!;
+            var eset = SharedResources.Eset!;
+
             if (E.Stats.CurState == StatBlock.EntityDead || E.Stats.CurState == StatBlock.EntityCritdead)
                 return;
 
@@ -142,10 +155,10 @@ namespace FlareEngine
             StatBlock? targetStats = null;
             float stealthThreatRange = (E.Stats.ThreatRange * (100 - (float)E.Stats.HeroStealth)) / 100;
 
-            if (SharedGameResources.Pc!.Stats.Alive)
+            if (pc.Stats.Alive)
             {
-                TargetDist = Utils.CalcDist(E.Stats.Pos, SharedGameResources.Pc!.Stats.Pos);
-                targetStats = SharedGameResources.Pc!.Stats;
+                TargetDist = Utils.CalcDist(E.Stats.Pos, pc.Stats.Pos);
+                targetStats = pc.Stats;
             }
             else
             {
@@ -155,17 +168,17 @@ namespace FlareEngine
 
             if (E.Stats.HeroAlly && E.Stats.Speed > 0 && (WarpToHero || HeroDist > AllyTeleportDistance) && !E.Stats.InCombat)
             {
-                SharedGameResources.Mapr!.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
-                E.Stats.Pos.X = SharedGameResources.Pc!.Stats.Pos.X;
-                E.Stats.Pos.Y = SharedGameResources.Pc!.Stats.Pos.Y;
-                SharedGameResources.Mapr!.Collider.Block(E.Stats.Pos.X, E.Stats.Pos.Y, MapCollision.IsAlly);
+                mapr.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
+                E.Stats.Pos.X = pc.Stats.Pos.X;
+                E.Stats.Pos.Y = pc.Stats.Pos.Y;
+                mapr.Collider.Block(E.Stats.Pos.X, E.Stats.Pos.Y, MapCollision.IsAlly);
                 HeroDist = 0;
                 WarpToHero = false;
             }
 
-            for (int i = 0; i < SharedGameResources.Entitym!.Entities.Count; ++i)
+            for (int i = 0; i < entitym.Entities.Count; ++i)
             {
-                Entity entity = SharedGameResources.Entitym!.Entities[i];
+                Entity entity = entitym.Entities[i];
                 if (!entity.Stats.Alive)
                     continue;
 
@@ -174,20 +187,20 @@ namespace FlareEngine
                     float entityDist = Utils.CalcDist(E.Stats.Pos, entity.Stats.Pos);
                     if (targetStats == null || (E.Stats.HeroAlly && targetStats.Hero))
                     {
-                        targetStats = SharedGameResources.Entitym!.Entities[i].Stats;
+                        targetStats = entitym.Entities[i].Stats;
                         TargetDist = entityDist;
                         E.Stats.InCombat = true;
                     }
                     else if (entityDist < TargetDist)
                     {
-                        targetStats = SharedGameResources.Entitym!.Entities[i].Stats;
+                        targetStats = entitym.Entities[i].Stats;
                         TargetDist = entityDist;
                     }
                 }
             }
 
-            if (targetStats != null && TargetDist < E.Stats.ThreatRange && SharedGameResources.Pc!.Stats.Alive)
-                Los = SharedGameResources.Mapr!.Collider.LineOfSight(E.Stats.Pos.X, E.Stats.Pos.Y, targetStats.Pos.X, targetStats.Pos.Y);
+            if (targetStats != null && TargetDist < E.Stats.ThreatRange && pc.Stats.Alive)
+                Los = mapr.Collider.LineOfSight(E.Stats.Pos.X, E.Stats.Pos.Y, targetStats.Pos.X, targetStats.Pos.Y);
             else
                 Los = false;
 
@@ -200,9 +213,9 @@ namespace FlareEngine
             }
 
             bool closeToTarget = false;
-            if (!E.Stats.HeroAlly && SharedGameResources.Pc!.Stats == targetStats)
+            if (!E.Stats.HeroAlly && pc.Stats == targetStats)
                 closeToTarget = TargetDist < stealthThreatRange;
-            else if (targetStats != null && SharedGameResources.Pc!.Stats != targetStats)
+            else if (targetStats != null && pc.Stats != targetStats)
                 closeToTarget = TargetDist < E.Stats.ThreatRange;
 
             if (E.Stats.Alive && !E.Stats.InCombat && Los && closeToTarget && E.Stats.CombatStyle != StatBlock.CombatPassive)
@@ -224,7 +237,7 @@ namespace FlareEngine
                     aiPower = E.Stats.GetAIPower(StatBlock.AiPowerBeacon);
                     if (aiPower != null)
                     {
-                        SharedGameResources.Powers!.Activate(aiPower.Id, E.Stats, E.Stats.Pos, E.Stats.Pos);
+                        powers.Activate(aiPower.Id, E.Stats, E.Stats.Pos, E.Stats.Pos);
                     }
                 }
 
@@ -233,7 +246,7 @@ namespace FlareEngine
                 {
                     E.Stats.CurState = StatBlock.EntityPower;
                     E.Stats.ActivatedPower = aiPower;
-                    ReplacedPowerId = SharedGameResources.Powers!.CheckReplaceByEffect(aiPower.Id, E.Stats);
+                    ReplacedPowerId = powers.CheckReplaceByEffect(aiPower.Id, E.Stats);
                 }
 
                 E.Stats.JoinCombat = false;
@@ -248,10 +261,10 @@ namespace FlareEngine
                     E.Stats.InCombat = false;
             }
 
-            if (!E.Stats.Alive || !SharedGameResources.Pc!.Stats.Alive || (targetStats != null && !targetStats.Alive))
+            if (!E.Stats.Alive || !pc.Stats.Alive || (targetStats != null && !targetStats.Alive))
                 E.Stats.InCombat = false;
 
-            if (E.Stats.HeroAlly && targetStats == SharedGameResources.Pc!.Stats)
+            if (E.Stats.HeroAlly && targetStats == pc.Stats)
                 E.Stats.InCombat = false;
 
             if (targetStats != null)
@@ -270,22 +283,22 @@ namespace FlareEngine
                 PursuePos = waypoint;
             }
 
-            if (E.Stats.HeroAlly && SharedResources.Eset!.Misc.EnableAllyCollisionAi)
+            if (E.Stats.HeroAlly && eset.Misc.EnableAllyCollisionAi)
             {
-                if (!SharedGameResources.Entitym!.PlayerBlocked && HeroDist < AllyFleeDistance
-                        && SharedGameResources.Mapr!.Collider.IsFacing(SharedGameResources.Pc!.Stats.Pos.X, SharedGameResources.Pc!.Stats.Pos.Y, (char)SharedGameResources.Pc!.Stats.Direction, E.Stats.Pos.X, E.Stats.Pos.Y))
+                if (!entitym.PlayerBlocked && HeroDist < AllyFleeDistance
+                        && mapr.Collider.IsFacing(pc.Stats.Pos.X, pc.Stats.Pos.Y, (char)pc.Stats.Direction, E.Stats.Pos.X, E.Stats.Pos.Y))
                 {
-                    SharedGameResources.Entitym!.PlayerBlocked = true;
-                    SharedGameResources.Entitym!.PlayerBlockedTimer.Reset(Timer.Begin);
+                    entitym.PlayerBlocked = true;
+                    entitym.PlayerBlockedTimer.Reset(Timer.Begin);
                 }
 
-                bool playerCloserThanTarget = Utils.CalcDist(E.Stats.Pos, PursuePos) > Utils.CalcDist(E.Stats.Pos, SharedGameResources.Pc!.Stats.Pos);
+                bool playerCloserThanTarget = Utils.CalcDist(E.Stats.Pos, PursuePos) > Utils.CalcDist(E.Stats.Pos, pc.Stats.Pos);
 
-                if (SharedGameResources.Entitym!.PlayerBlocked && (!E.Stats.InCombat || playerCloserThanTarget)
-                        && SharedGameResources.Mapr!.Collider.IsFacing(SharedGameResources.Pc!.Stats.Pos.X, SharedGameResources.Pc!.Stats.Pos.Y, (char)SharedGameResources.Pc!.Stats.Direction, E.Stats.Pos.X, E.Stats.Pos.Y))
+                if (entitym.PlayerBlocked && (!E.Stats.InCombat || playerCloserThanTarget)
+                        && mapr.Collider.IsFacing(pc.Stats.Pos.X, pc.Stats.Pos.Y, (char)pc.Stats.Direction, E.Stats.Pos.X, E.Stats.Pos.Y))
                 {
                     Fleeing = true;
-                    PursuePos = SharedGameResources.Pc!.Stats.Pos;
+                    PursuePos = pc.Stats.Pos;
                 }
             }
 
@@ -317,7 +330,7 @@ namespace FlareEngine
                     int testDir = Utils.RotateDirection(middleDir, i);
 
                     Vector2 testPos = Utils.CalcVector(E.Stats.Pos, testDir, 1);
-                    if (SharedGameResources.Mapr!.Collider.IsValidPosition(testPos.X, testPos.Y, E.Stats.MovementType, MapCollision.CollideTypeAllEntities))
+                    if (mapr.Collider.IsValidPosition(testPos.X, testPos.Y, E.Stats.MovementType, MapCollision.CollideTypeAllEntities))
                     {
                         if (testDir == E.Stats.Direction)
                         {
@@ -352,6 +365,8 @@ namespace FlareEngine
 
         private void CheckPower()
         {
+            var powers = SharedGameResources.Powers!;
+
             if (E.Stats.Effects.Stun || E.Stats.Effects.Fear || Fleeing) return;
 
             if (!E.Stats.InCombat) return;
@@ -378,16 +393,16 @@ namespace FlareEngine
                     aiPower = E.Stats.GetAIPower(StatBlock.AiPowerMelee);
                 }
 
-                if (aiPower != null && SharedGameResources.Powers!.IsValid(aiPower.Id))
+                if (aiPower != null && powers.IsValid(aiPower.Id))
                 {
-                    PowerID replacedId = SharedGameResources.Powers!.CheckReplaceByEffect(aiPower.Id, E.Stats);
+                    PowerID replacedId = powers.CheckReplaceByEffect(aiPower.Id, E.Stats);
                     if (replacedId == 0)
                     {
                         aiPower = null;
                     }
                     else
                     {
-                        Power pwr = SharedGameResources.Powers!.Powers[replacedId];
+                        Power pwr = powers.Powers[replacedId];
                         if (!Los && (pwr.RequiresLos || pwr.RequiresLosDefault))
                         {
                             aiPower = null;
@@ -415,6 +430,9 @@ namespace FlareEngine
 
         private void CheckMove()
         {
+            var mapr = SharedGameResources.Mapr!;
+            var pc = SharedGameResources.Pc!;
+
             if (E.Stats.CurState == StatBlock.EntityDead || E.Stats.CurState == StatBlock.EntityCritdead) return;
 
             if (E.Stats.Effects.Stun) return;
@@ -450,7 +468,7 @@ namespace FlareEngine
             }
             TurnTimer.Current = turnTicks;
 
-            SharedGameResources.Mapr!.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
+            mapr.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
 
             PathFoundFailTimer.Tick();
 
@@ -459,7 +477,7 @@ namespace FlareEngine
                 TurnTimer.Tick();
                 if (TurnTimer.IsEnd())
                 {
-                    if (!SharedGameResources.Mapr!.Collider.LineOfMovement(E.Stats.Pos.X, E.Stats.Pos.Y, PursuePos.X, PursuePos.Y, E.Stats.MovementType))
+                    if (!mapr.Collider.LineOfMovement(E.Stats.Pos.X, E.Stats.Pos.Y, PursuePos.X, PursuePos.Y, E.Stats.MovementType))
                     {
                         bool recalculatePath = false;
 
@@ -499,7 +517,7 @@ namespace FlareEngine
                         {
                             ChanceCalcPath = -100;
                             Path.Clear();
-                            PathFound = SharedGameResources.Mapr!.Collider.ComputePath(E.Stats.Pos, PursuePos, Path, E.Stats.MovementType, (uint)MapCollision.DefaultPathLimit);
+                            PathFound = mapr.Collider.ComputePath(E.Stats.Pos, PursuePos, Path, E.Stats.MovementType, (uint)MapCollision.DefaultPathLimit);
 
                             if (!PathFound)
                             {
@@ -523,7 +541,7 @@ namespace FlareEngine
                             if (Utils.CalcDist(E.Stats.Pos, PursuePos) <= 1f)
                                 Path.RemoveAt(Path.Count - 1);
                         }
-                        else if (E.Stats.HeroAlly && PursuePos == SharedGameResources.Pc!.Stats.Pos)
+                        else if (E.Stats.HeroAlly && PursuePos == pc.Stats.Pos)
                         {
                             WarpToHero = true;
                         }
@@ -577,7 +595,7 @@ namespace FlareEngine
                 }
             }
 
-            SharedGameResources.Mapr!.Collider.Block(E.Stats.Pos.X, E.Stats.Pos.Y, E.Stats.HeroAlly);
+            mapr.Collider.Block(E.Stats.Pos.X, E.Stats.Pos.Y, E.Stats.HeroAlly);
         }
 
         private void CheckMoveStateStance()
@@ -611,6 +629,9 @@ namespace FlareEngine
 
         private void CheckMoveStateMove()
         {
+            var pc = SharedGameResources.Pc!;
+            var entitym = SharedGameResources.Entitym!;
+
             bool canAttack = true;
 
             if (!E.Stats.Cooldown.IsEnd())
@@ -638,7 +659,7 @@ namespace FlareEngine
             }
 
             bool allyTargetingHero = E.Stats.HeroAlly && !E.Stats.InCombat && !Fleeing && HeroDist < AllyFollowDistanceStop;
-            if (SharedGameResources.Pc!.Stats.Alive && ((TargetDist < E.Stats.MeleeRange && !Fleeing) || (MoveToSafeDist && TargetDist >= E.Stats.FleeRange) || stopFleeing || allyTargetingHero))
+            if (pc.Stats.Alive && ((TargetDist < E.Stats.MeleeRange && !Fleeing) || (MoveToSafeDist && TargetDist >= E.Stats.FleeRange) || stopFleeing || allyTargetingHero))
             {
                 if (stopFleeing)
                 {
@@ -655,9 +676,9 @@ namespace FlareEngine
                 E.Stats.Direction = E.FaceNextBest(PursuePos.X, PursuePos.Y);
                 if (!E.Move())
                 {
-                    if (E.Stats.HeroAlly && SharedGameResources.Entitym!.PlayerBlocked && !E.Stats.InCombat)
+                    if (E.Stats.HeroAlly && entitym.PlayerBlocked && !E.Stats.InCombat)
                     {
-                        E.Stats.Direction = SharedGameResources.Pc!.Stats.Direction;
+                        E.Stats.Direction = pc.Stats.Direction;
                         if (!E.Move())
                         {
                             E.Stats.CurState = StatBlock.EntityStance;
@@ -675,18 +696,20 @@ namespace FlareEngine
 
         private void CheckOnStatePower(ref StatBlock.AIPower? onStatePower)
         {
+            var powers = SharedGameResources.Powers!;
+
             if (onStatePower == null)
                 return;
 
             StatBlock.AIPower aiPower = onStatePower;
-            PowerID replacedId = SharedGameResources.Powers!.CheckReplaceByEffect(aiPower.Id, E.Stats);
+            PowerID replacedId = powers.CheckReplaceByEffect(aiPower.Id, E.Stats);
 
             if (replacedId != 0)
             {
-                Power pwr = SharedGameResources.Powers!.Powers[replacedId];
+                Power pwr = powers.Powers[replacedId];
                 if (pwr.NewState == Power.StateInstant)
                 {
-                    SharedGameResources.Powers!.Activate(replacedId, E.Stats, E.Stats.Pos, PursuePos);
+                    powers.Activate(replacedId, E.Stats, E.Stats.Pos, PursuePos);
                 }
                 else if (E.Stats.CurState == StatBlock.EntityPower)
                 {
@@ -715,6 +738,10 @@ namespace FlareEngine
 
         private void UpdateState()
         {
+            var powers = SharedGameResources.Powers!;
+            var eset = SharedResources.Eset!;
+            var mapr = SharedGameResources.Mapr!;
+
             if (E.Stats.Effects.Stun) return;
 
             CheckOnStatePower(ref E.Stats.AiDebuffPower);
@@ -756,13 +783,13 @@ namespace FlareEngine
                     powerId = ReplacedPowerId;
                     powerIdBase = E.Stats.ActivatedPower.Id;
 
-                    if (!SharedGameResources.Powers!.IsValid(powerId) || !SharedGameResources.Powers!.IsValid(powerIdBase))
+                    if (!powers.IsValid(powerId) || !powers.IsValid(powerIdBase))
                     {
                         E.Stats.CurState = StatBlock.EntityStance;
                         break;
                     }
 
-                    epower = SharedGameResources.Powers!.Powers[powerId];
+                    epower = powers.Powers[powerId];
                     powerState = epower.NewState;
                     E.Stats.PreventInterrupt = epower.PreventInterrupt;
 
@@ -778,7 +805,7 @@ namespace FlareEngine
                             ChainPower chainPower = epower.ChainPowers[i];
                             if (chainPower.Type == ChainPower.TypePre && MathUtils.PercentChanceF(chainPower.Chance))
                             {
-                                SharedGameResources.Powers!.Activate(chainPower.Id, E.Stats, E.Stats.Pos, PursuePos);
+                                powers.Activate(chainPower.Id, E.Stats, E.Stats.Pos, PursuePos);
                             }
                         }
 
@@ -806,7 +833,7 @@ namespace FlareEngine
 
                     if ((E.ActiveAnimation.IsActiveFrame() || InstantPower) && !E.Stats.HoldState)
                     {
-                        SharedGameResources.Powers!.Activate(powerId, E.Stats, E.Stats.Pos, PursuePos);
+                        powers.Activate(powerId, E.Stats, E.Stats.Pos, PursuePos);
 
                         for (int i = 0; i < E.Stats.PowersAi.Count; ++i)
                         {
@@ -873,13 +900,13 @@ namespace FlareEngine
                     if (E.ActiveAnimation!.IsFirstFrame())
                     {
                         E.PlaySound(Entity.SoundDie);
-                        E.Stats.CorpseTimer.Duration = (uint)SharedResources.Eset!.Misc.CorpseTimeout;
+                        E.Stats.CorpseTimer.Duration = (uint)eset.Misc.CorpseTimeout;
                     }
                     if ((E.ActiveAnimation.DefaultActiveFrames && E.ActiveAnimation.IsSecondLastFrame()) || (!E.ActiveAnimation.DefaultActiveFrames && E.ActiveAnimation.IsActiveFrame()))
                     {
                         StatBlock.AIPower? aiPower = E.Stats.GetAIPower(StatBlock.AiPowerDeath);
                         if (aiPower != null)
-                            SharedGameResources.Powers!.Activate(aiPower.Id, E.Stats, E.Stats.Pos, E.Stats.Pos);
+                            powers.Activate(aiPower.Id, E.Stats, E.Stats.Pos, E.Stats.Pos);
 
                         E.Stats.Effects.ClearEffects();
                     }
@@ -889,10 +916,10 @@ namespace FlareEngine
 
                         if (!E.Stats.CorpseHasCollision)
                         {
-                            SharedGameResources.Mapr!.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
+                            mapr.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
                         }
 
-                        if (!SharedGameResources.Mapr!.Collider.IsValidPosition(E.Stats.Pos.X, E.Stats.Pos.Y, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities))
+                        if (!mapr.Collider.IsValidPosition(E.Stats.Pos.X, E.Stats.Pos.Y, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities))
                         {
                             E.Stats.CorpseTimer.Reset(Timer.End);
                         }
@@ -909,13 +936,13 @@ namespace FlareEngine
                     if (E.ActiveAnimation!.IsFirstFrame())
                     {
                         E.PlaySound(Entity.SoundCritdie);
-                        E.Stats.CorpseTimer.Duration = (uint)SharedResources.Eset!.Misc.CorpseTimeout;
+                        E.Stats.CorpseTimer.Duration = (uint)eset.Misc.CorpseTimeout;
                     }
                     if ((E.ActiveAnimation.DefaultActiveFrames && E.ActiveAnimation.IsSecondLastFrame()) || (!E.ActiveAnimation.DefaultActiveFrames && E.ActiveAnimation.IsActiveFrame()))
                     {
                         StatBlock.AIPower? aiPower = E.Stats.GetAIPower(StatBlock.AiPowerDeath);
                         if (aiPower != null)
-                            SharedGameResources.Powers!.Activate(aiPower.Id, E.Stats, E.Stats.Pos, E.Stats.Pos);
+                            powers.Activate(aiPower.Id, E.Stats, E.Stats.Pos, E.Stats.Pos);
 
                         E.Stats.Effects.ClearEffects();
                     }
@@ -925,10 +952,10 @@ namespace FlareEngine
 
                         if (!E.Stats.CorpseHasCollision)
                         {
-                            SharedGameResources.Mapr!.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
+                            mapr.Collider.Unblock(E.Stats.Pos.X, E.Stats.Pos.Y);
                         }
 
-                        if (!SharedGameResources.Mapr!.Collider.IsValidPosition(E.Stats.Pos.X, E.Stats.Pos.Y, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities))
+                        if (!mapr.Collider.IsValidPosition(E.Stats.Pos.X, E.Stats.Pos.Y, MapCollision.MoveNormal, MapCollision.CollideTypeAllEntities))
                         {
                             E.Stats.CorpseTimer.Reset(Timer.End);
                         }
@@ -951,12 +978,13 @@ namespace FlareEngine
 
         private Vector2 GetWanderPoint()
         {
+            var mapr = SharedGameResources.Mapr!;
             Vector2 waypoint;
             waypoint.X = (float)E.Stats.WanderArea.X + (float)MathUtils.RandBetween(0, E.Stats.WanderArea.Width - 1) + 0.5f;
             waypoint.Y = (float)E.Stats.WanderArea.Y + (float)MathUtils.RandBetween(0, E.Stats.WanderArea.Height - 1) + 0.5f;
 
-            if (SharedGameResources.Mapr!.Collider.IsValidPosition(waypoint.X, waypoint.Y, E.Stats.MovementType, SharedGameResources.Mapr!.Collider.GetCollideType(E.Stats.Hero)) &&
-                SharedGameResources.Mapr!.Collider.LineOfMovement(E.Stats.Pos.X, E.Stats.Pos.Y, waypoint.X, waypoint.Y, E.Stats.MovementType))
+            if (mapr.Collider.IsValidPosition(waypoint.X, waypoint.Y, E.Stats.MovementType, mapr.Collider.GetCollideType(E.Stats.Hero)) &&
+                mapr.Collider.LineOfMovement(E.Stats.Pos.X, E.Stats.Pos.Y, waypoint.X, waypoint.Y, E.Stats.MovementType))
             {
                 return waypoint;
             }

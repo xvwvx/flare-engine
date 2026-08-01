@@ -160,10 +160,13 @@ namespace FlareEngine
                 infile.Close();
             }
 
-            _labelVendor.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+            
+            var eset = SharedResources.Eset!;
+            var font = SharedResources.Font!;
+
+            _labelVendor.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
             _vendorSlots = _slotsCols * _slotsRows;
-            EngineSettings eset = SharedResources.Eset!;
             SlotsArea.Width = _slotsCols * eset.Resolutions.IconSize;
             SlotsArea.Height = _slotsRows * eset.Resolutions.IconSize;
 
@@ -233,6 +236,9 @@ namespace FlareEngine
 
         public void Logic()
         {
+            var inpt = SharedResources.Inpt!;
+            var snd = SharedResources.Snd!;
+
             if (!Visible) return;
 
             Tablist.Logic();
@@ -244,7 +250,7 @@ namespace FlareEngine
             if (Stock[ItemManager.VendorBuy].DragPrevSlot == -1 && Stock[ItemManager.VendorSell].DragPrevSlot == -1 && Stock[ItemManager.VendorCraft].DragPrevSlot == -1)
                 _tabControl!.Logic();
 
-            if (SharedResources.Inpt!.UsingTouchscreen() && _activetab != _tabControl!.GetActiveTab())
+            if (inpt.UsingTouchscreen() && _activetab != _tabControl!.GetActiveTab())
             {
                 for (int i = 0; i < TabCount; ++i)
                 {
@@ -266,7 +272,7 @@ namespace FlareEngine
                 }
             }
 
-            if (SharedResources.Inpt!.UsingTouchscreen())
+            if (inpt.UsingTouchscreen())
             {
                 for (int i = 0; i < TabCount; ++i)
                 {
@@ -280,7 +286,7 @@ namespace FlareEngine
             if (_closeButton!.CheckClick())
             {
                 SetNPC(null);
-                SharedResources.Snd!.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(SfxClose, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
             }
         }
 
@@ -370,11 +376,14 @@ namespace FlareEngine
 
         public void RenderTooltips(Int2 position)
         {
+            var pc = SharedGameResources.Pc!;
+            var tooltipm = SharedResources.Tooltipm!;
+
             if (!Visible || !Utils.IsWithinRect(WindowArea, position))
                 return;
 
-            TooltipData tipData = Stock[_activetab].CheckTooltip(position, SharedGameResources.Pc!.Stats, _activetab, ItemManager.TooltipInputHint);
-            SharedResources.Tooltipm!.Push(tipData, position, TooltipData.StyleFloat);
+            TooltipData tipData = Stock[_activetab].CheckTooltip(position, pc.Stats, _activetab, ItemManager.TooltipInputHint);
+            tooltipm.Push(tipData, position, TooltipData.StyleFloat);
         }
 
         /// <summary>
@@ -419,6 +428,10 @@ namespace FlareEngine
 
         public void SetNPC(NPC? npc)
         {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
             Npc = npc;
 
             if (npc == null)
@@ -427,7 +440,7 @@ namespace FlareEngine
                 return;
             }
 
-            _labelVendor.SetText(SharedResources.Msg!.Get("Vendor") + " - " + npc.Name);
+            _labelVendor.SetText(msg.Get("Vendor") + " - " + npc.Name);
 
             if (!BuybackStock.ContainsKey(npc.Filename))
                 BuybackStock[npc.Filename] = new ItemStorage();
@@ -441,7 +454,7 @@ namespace FlareEngine
                 if (npc.ResetBuyback)
                 {
                     // this occurs on the first interaction with an NPC after map load
-                    if (SharedResources.Eset!.Misc.KeepBuybackOnMapChange)
+                    if (eset.Misc.KeepBuybackOnMapChange)
                         BuybackStock[npc.Filename][i].CanBuyback = false;
                     else
                         BuybackStock[npc.Filename][i].Clear();
@@ -476,7 +489,7 @@ namespace FlareEngine
             if (!Visible)
             {
                 Visible = true;
-                SharedResources.Snd!.Play(SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(SfxOpen, SoundManager.DefaultChannel, SoundManager.NoPos, !SoundManager.Loop);
                 npc.PlaySoundIntro();
             }
 

@@ -208,6 +208,8 @@ namespace FlareEngine
             string maxVersion = (v2 == Max) ? "" : v2.GetString();
             string ret = "";
 
+            var msg = SharedResources.Msg;
+
             if (minVersion != "" || maxVersion != "")
             {
                 if (minVersion == maxVersion)
@@ -220,11 +222,11 @@ namespace FlareEngine
                 }
                 else if (minVersion != "")
                 {
-                    ret += minVersion + ' ' + (SharedResources.Msg != null ? SharedResources.Msg.Get("or newer") : "or newer");
+                    ret += minVersion + ' ' + (msg != null ? msg.Get("or newer") : "or newer");
                 }
                 else if (maxVersion != "")
                 {
-                    ret += maxVersion + ' ' + (SharedResources.Msg != null ? SharedResources.Msg.Get("or older") : "or older");
+                    ret += maxVersion + ' ' + (msg != null ? msg.Get("or older") : "or older");
                 }
             }
 

@@ -137,6 +137,11 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var msg = SharedResources.Msg!;
+            var font = SharedResources.Font!;
+            var eset = SharedResources.Eset!;
+            var renderDevice = SharedResources.RenderDevice!;
+
             if (Enemy == null) return;
 
             Rectangle src = default;
@@ -178,14 +183,14 @@ namespace FlareEngine
                 _barHp.SetClipFromRect(src);
                 _barHp.SetDestFromRect(dest);
 
-                SharedResources.RenderDevice!.Render(_barHp);
+                renderDevice.Render(_barHp);
             }
 
             if (!_textPos.Hidden)
             {
                 // enemy name display
-                _labelText.SetText(SharedResources.Msg!.GetV("%s level %d", Enemy.Stats.Name, Enemy.Stats.Level));
-                _labelText.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorMenuNormal));
+                _labelText.SetText(msg.GetV("%s level %d", Enemy.Stats.Name, Enemy.Stats.Level));
+                _labelText.SetColor(font.GetColor(FontEngine.ColorMenuNormal));
 
                 if (_customTextPos)
                 {
@@ -207,14 +212,14 @@ namespace FlareEngine
                 ss.Clear();
                 if (Enemy.Stats.Hp > 0)
                 {
-                    ss.Append(Utils.FloatToString(Enemy.Stats.Hp, SharedResources.Eset!.NumberFormat.EnemyStatbar)).Append('/').Append(Utils.FloatToString(Enemy.Stats.Get(global::FlareEngine.Stats.HpMax), SharedResources.Eset!.NumberFormat.EnemyStatbar));
+                    ss.Append(Utils.FloatToString(Enemy.Stats.Hp, eset.NumberFormat.EnemyStatbar)).Append('/').Append(Utils.FloatToString(Enemy.Stats.Get(global::FlareEngine.Stats.HpMax), eset.NumberFormat.EnemyStatbar));
                 }
                 else
                 {
                     if (Enemy.Stats.Lifeform)
-                        ss.Append(SharedResources.Msg!.Get("Dead"));
+                        ss.Append(msg.Get("Dead"));
                     else
-                        ss.Append(SharedResources.Msg!.Get("Destroyed"));
+                        ss.Append(msg.Get("Destroyed"));
                 }
                 _labelStats.SetText(ss.ToString());
 

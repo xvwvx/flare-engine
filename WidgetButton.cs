@@ -62,13 +62,17 @@ namespace FlareEngine
 
             LoadArt();
 
-            _textColorNormal = SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal);
+            var font = SharedResources.Font!;
+            var eset = SharedResources.Eset!;
+            var snd = SharedResources.Snd!;
+
+            _textColorNormal = font.GetColor(FontEngine.ColorWidgetNormal);
             _textColorPressed = _textColorNormal;
             _textColorHover = _textColorNormal;
-            _textColorDisabled = SharedResources.Font.GetColor(FontEngine.ColorWidgetDisabled);
+            _textColorDisabled = font.GetColor(FontEngine.ColorWidgetDisabled);
 
-            if (SharedResources.Eset!.Widgets.SoundActivate.Length != 0)
-                _soundActivate = SharedResources.Snd!.Load(SharedResources.Eset.Widgets.SoundActivate, "Widget activate");
+            if (eset.Widgets.SoundActivate.Length != 0)
+                _soundActivate = snd.Load(eset.Widgets.SoundActivate, "Widget activate");
         }
 
         /// <summary>
@@ -131,16 +135,18 @@ namespace FlareEngine
         {
             if (_fileName == NoFile)
                 return;
+            
+            var renderDevice =  SharedResources.RenderDevice!;
 
             // load button images
             Image? graphics = null;
             if (_fileName != DefaultFile)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(_fileName, RenderDevice.ErrorNormal);
+                graphics = renderDevice.LoadImage(_fileName, RenderDevice.ErrorNormal);
             }
             if (graphics == null)
             {
-                graphics = SharedResources.RenderDevice!.LoadImage(DefaultFile, RenderDevice.ErrorExit);
+                graphics = renderDevice.LoadImage(DefaultFile, RenderDevice.ErrorExit);
             }
             if (graphics != null)
             {
@@ -170,13 +176,15 @@ namespace FlareEngine
 
             CheckTooltip(mouse);
 
+            var inpt = SharedResources.Inpt!;
+
             // Change the hover state
-            Hover = Utils.IsWithinRect(Pos, mouse) && SharedResources.Inpt!.UsingMouse();
+            Hover = Utils.IsWithinRect(Pos, mouse) && inpt.UsingMouse();
 
             // disabled buttons can't be clicked;
             if (!Enabled) return false;
 
-            InputState inpt = SharedResources.Inpt!;
+            var snd = SharedResources.Snd!;
 
             // main button already in use, new click not allowed
             if (inpt.Lock[Input.Main1]) return false;
@@ -187,7 +195,7 @@ namespace FlareEngine
             {
                 _activated = false;
                 Pressed = false;
-                SharedResources.Snd!.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
+                snd.Play(_soundActivate, "widget_activate", SoundManager.NoPos, !SoundManager.Loop);
                 return true;
             }
 
@@ -272,22 +280,25 @@ namespace FlareEngine
                 }
                 _wlabel.SetText(_label);
 
+                var font = SharedResources.Font!;
                 if (Enabled)
-                    _wlabel.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal));
+                    _wlabel.SetColor(font.GetColor(FontEngine.ColorWidgetNormal));
                 else
-                    _wlabel.SetColor(SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled));
+                    _wlabel.SetColor(font.GetColor(FontEngine.ColorWidgetDisabled));
             }
         }
 
         private void CheckTooltip(Int2 mouse)
         {
-            InputState inpt = SharedResources.Inpt!;
+            var inpt = SharedResources.Inpt!;
+            var tooltipm = SharedResources.Tooltipm!;
+            
             if (inpt.UsingMouse() && Utils.IsWithinRect(Pos, mouse) && Tooltip != "")
             {
                 TooltipData tipData = new TooltipData();
                 tipData.AddText(Tooltip);
                 Int2 newMouse = new Int2(mouse.X + LocalFrame.X - LocalOffset.X, mouse.Y + LocalFrame.Y - LocalOffset.Y);
-                SharedResources.Tooltipm!.Push(tipData, newMouse, TooltipData.StyleFloat);
+                tooltipm.Push(tipData, newMouse, TooltipData.StyleFloat);
             }
         }
     }

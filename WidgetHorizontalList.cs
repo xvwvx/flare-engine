@@ -162,6 +162,9 @@ namespace FlareEngine
 
         public override void Render()
         {
+            var renderDevice = SharedResources.RenderDevice!;
+            var eset = SharedResources.Eset!;
+
             _buttonLeft!.LocalFrame = LocalFrame;
             _buttonLeft.LocalOffset = LocalOffset;
 
@@ -218,7 +221,7 @@ namespace FlareEngine
                 }
                 if (draw)
                 {
-                    SharedResources.RenderDevice!.DrawRectangleCorners(SharedResources.Eset!.Widgets.SelectionRectCornerSize, topLeft, bottomRight, SharedResources.Eset.Widgets.SelectionRectColor);
+                    renderDevice.DrawRectangleCorners(eset.Widgets.SelectionRectCornerSize, topLeft, bottomRight, eset.Widgets.SelectionRectColor);
                 }
             }
             else if (InFocus && HasAction && Enabled)
@@ -242,9 +245,12 @@ namespace FlareEngine
 
         public void Refresh()
         {
+            var eset = SharedResources.Eset!;
+            var font = SharedResources.Font!;
+
             ScrollType = (byte)(MultipleActionsVisible() ? ScrollVertical : ScrollHorizontal);
 
-            int contentWidth = SharedResources.Eset!.Widgets.HorizontalListTextWidth;
+            int contentWidth = eset.Widgets.HorizontalListTextWidth;
             bool isEnabled = !IsEmpty() && Enabled;
 
             _buttonLeft!.Enabled = isEnabled && !MultipleActionsVisible();
@@ -289,7 +295,7 @@ namespace FlareEngine
                 _label.SetMaxWidth(contentWidth);
                 _label.SetJustify(FontEngine.JustifyCenter);
                 _label.SetVAlign(LabelInfo.ValignCenter);
-                _label.SetColor(isEnabled ? SharedResources.Font!.GetColor(FontEngine.ColorWidgetNormal) : SharedResources.Font!.GetColor(FontEngine.ColorWidgetDisabled));
+                _label.SetColor(isEnabled ? font.GetColor(FontEngine.ColorWidgetNormal) : font.GetColor(FontEngine.ColorWidgetDisabled));
 
                 Pos.Height = Math.Max(_buttonLeft.Pos.Height, _label.GetBounds().Height);
 
@@ -312,13 +318,15 @@ namespace FlareEngine
             if (IsEmpty())
                 return;
 
-            InputState inpt = SharedResources.Inpt!;
+            var inpt = SharedResources.Inpt!;
+            var tooltipm = SharedResources.Tooltipm!;
+
             if (inpt.UsingMouse() && Utils.IsWithinRect(_tooltipArea, mouse) && _listItems[(int)_cursor].Tooltip.Length != 0)
             {
                 TooltipData tipData = new TooltipData();
                 tipData.AddText(_listItems[(int)_cursor].Tooltip);
                 Int2 newMouse = new Int2(mouse.X + LocalFrame.X - LocalOffset.X, mouse.Y + LocalFrame.Y - LocalOffset.Y);
-                SharedResources.Tooltipm!.Push(tipData, newMouse, TooltipData.StyleFloat);
+                tooltipm.Push(tipData, newMouse, TooltipData.StyleFloat);
             }
         }
 
