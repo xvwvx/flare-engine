@@ -567,16 +567,17 @@ namespace FlareEngine
                     }
 
                     //see if the slot should be greyed out
+                    var canUsePower = pc.Stats.CanUsePower(HotkeysMod[(int)i], !StatBlock.CanUsePassive);
                     Slots[(int)i]!.Enabled = pc.PowerCooldownTimers[HotkeysMod[(int)i]]!.IsEnd()
                                           && pc.PowerCastTimers[HotkeysMod[(int)i]]!.IsEnd()
-                                          && pc.Stats.CanUsePower(HotkeysMod[(int)i], !StatBlock.CanUsePassive)
+                                          && canUsePower
                                           && (TwostepSlot == -1 || TwostepSlot == i);
 
                     Slots[(int)i]!.SetIcon(power.Icon, WidgetSlot.NoOverlay);
 
-                    if (!pc.PowerCastTimers[HotkeysMod[(int)i]]!.IsEnd() && pc.PowerCastTimers[HotkeysMod[(int)i]]!.Duration > 0)
+                    if (canUsePower)
                     {
-                        Slots[(int)i]!.Cooldown = (float)pc.PowerCastTimers[HotkeysMod[(int)i]]!.Current / (float)pc.PowerCastTimers[HotkeysMod[(int)i]]!.Duration;
+                        Slots[(int)i]!.Cooldown = 1;
                     }
                     else if (!pc.PowerCooldownTimers[HotkeysMod[(int)i]]!.IsEnd() && pc.PowerCooldownTimers[HotkeysMod[(int)i]]!.Duration > 0)
                     {
