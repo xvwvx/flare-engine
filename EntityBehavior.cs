@@ -213,6 +213,10 @@ namespace FlareEngine
             if (E.Stats.JoinCombat)
             {
                 E.Stats.InCombat = true;
+                
+                // we need to reset the los cooldown here to prevent getting stuck in the join_combat state
+                // this happens when the entity doesn't have los, but enters combat due to being hit (by a beacon or otherwise)
+                E.Stats.CooldownLos.Reset(Timer.Begin);
 
                 StatBlock.AIPower? aiPower;
                 if (!E.Stats.HeroAlly)
