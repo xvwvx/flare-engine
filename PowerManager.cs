@@ -2136,7 +2136,7 @@ namespace FlareEngine
         {
             Power power = Powers[powerIndex]!;
 
-            Vector2 locationIterator;
+            Vector2 locationIterator = default;
             Vector2 speed;
             int delayIterator = 0;
 

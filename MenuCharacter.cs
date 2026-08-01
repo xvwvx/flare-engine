@@ -973,7 +973,7 @@ namespace FlareEngine
                     if (SharedGameResources.Pc!.Stats.Primary[i] < SharedGameResources.Pc!.Stats.MaxPointsPerStat && !_cstat[i + 2].Label!.IsHidden())
                     {
                         _upgradeButton[i]!.Enabled = true;
-                        _upgradeButton[i]!.Tooltip = SharedResources.Msg!.GetV("Upgrade Stat: %s\nUses 1 Stat Point", SharedResources.Eset!.PrimaryStats.Stats[i].Name);
+                        _upgradeButton[i]!.Tooltip = GetUpgradeButtonTooltip(i);
                         Tablist.Add(_upgradeButton[i]!);
                     }
                     else
@@ -1010,7 +1010,124 @@ namespace FlareEngine
 
             if (SharedGameResources.Pc!.Stats.RefreshStats) RefreshStats();
         }
+        
+        public string GetUpgradeButtonTooltip(int primaryIndex)
+        {
+            var msg = SharedResources.Msg!;
+            var eset = SharedResources.Eset!;
+            var pc = SharedGameResources.Pc!;
+            string tooltip = msg.GetV("Upgrade Stat: %s\nUses 1 Stat Point", eset.PrimaryStats.Stats[primaryIndex].Name);
+            bool haveBonus = false;
+            int resourceStatOffset = Stats.Count + eset.DamageTypes.Count;
 
+            for (int i = 0; i < Stats.Count; ++i)
+            {
+                // insert resource stats (except stealing) before accuracy
+                if (i == Stats.Accuracy)
+                {
+                    for (int k = 0; k < eset.ResourceStats.Stats.Count; ++k)
+                    {
+                        for (int l = 0; l < EngineSettings.ResourceStatsSettings.StatSteal; ++l)
+                        {
+                            int resourceIndex = resourceStatOffset + (k * EngineSettings.ResourceStatsSettings.StatCount) + l;
+                            if (_baseBonus[primaryIndex]![resourceIndex] > 0 && _showStat[resourceIndex])
+                            {
+                                if (!haveBonus)
+                                {
+                                    tooltip += "\n";
+                                    haveBonus = true;
+                                }
+                                tooltip += "\n+" + Utils.FloatToString(pc.Stats.PerPrimary[primaryIndex][resourceIndex], eset.NumberFormat.CharacterMenu);
+                                tooltip += " " + eset.ResourceStats.Stats[k].Text[l];
+                            }
+                        }
+                    }
+                }
+
+                // damage types are displayed before absorb
+                if (i == Stats.AbsMin)
+                {
+                    for (int k = 0; k < eset.DamageTypes.Types.Count; ++k)
+                    {
+                        // damage min
+                        int damageMinIndex = Stats.Count + EngineSettings.DamageTypesSettings.IndexToMin(k);
+                        if (_baseBonus[primaryIndex]![damageMinIndex] > 0 && _showStat[damageMinIndex])
+                        {
+                            if (!haveBonus)
+                            {
+                                tooltip += "\n";
+                                haveBonus = true;
+                            }
+                            tooltip += "\n+" + Utils.FloatToString(pc.Stats.PerPrimary[primaryIndex][damageMinIndex], eset.NumberFormat.CharacterMenu);
+                            tooltip += " " + eset.DamageTypes.Types[k].NameMin;
+                        }
+
+                        // damage max
+                        int damageMaxIndex = Stats.Count + EngineSettings.DamageTypesSettings.IndexToMax(k);
+                        if (_baseBonus[primaryIndex]![damageMaxIndex] > 0 && _showStat[damageMaxIndex])
+                        {
+                            if (!haveBonus)
+                            {
+                                tooltip += "\n";
+                                haveBonus = true;
+                            }
+                            tooltip += "\n+" + Utils.FloatToString(pc.Stats.PerPrimary[primaryIndex][damageMaxIndex], eset.NumberFormat.CharacterMenu);
+                            tooltip += " " + eset.DamageTypes.Types[k].NameMax;
+                        }
+                    }
+                }
+
+                // non-damage bonuses
+                if (_baseBonus[primaryIndex]![i] > 0 && _showStat[i])
+                {
+                    if (!haveBonus)
+                    {
+                        tooltip += "\n";
+                        haveBonus = true;
+                    }
+                    tooltip += "\n+" + Utils.FloatToString(pc.Stats.PerPrimary[primaryIndex][i], eset.NumberFormat.CharacterMenu);
+                    tooltip += " " + Stats.Name[i];
+                }
+            }
+
+            // insert resource stealing stats after MP steal
+            for (int i = 0; i < eset.ResourceStats.Stats.Count; ++i)
+            {
+                for (int k = EngineSettings.ResourceStatsSettings.StatSteal; k < EngineSettings.ResourceStatsSettings.StatCount; ++k)
+                {
+                    int resourceIndex = resourceStatOffset + (i * EngineSettings.ResourceStatsSettings.StatCount) + k;
+                    if (_baseBonus[primaryIndex]![resourceIndex] > 0 && _showStat[resourceIndex])
+                    {
+                        if (!haveBonus)
+                        {
+                            tooltip += "\n";
+                            haveBonus = true;
+                        }
+                        tooltip += "\n+" + Utils.FloatToString(pc.Stats.PerPrimary[primaryIndex][resourceIndex], eset.NumberFormat.CharacterMenu);
+                        tooltip += " " + eset.ResourceStats.Stats[i].Text[k];
+                    }
+                }
+            }
+
+            // resistances
+            for (int i = 0; i < eset.DamageTypes.Types.Count; ++i)
+            {
+                int resistIndex = Stats.Count + EngineSettings.DamageTypesSettings.IndexToResist(i);
+                if (_baseBonus[primaryIndex]![resistIndex] > 0 && _showStat[resistIndex])
+                {
+                    if (!haveBonus)
+                    {
+                        tooltip += "\n";
+                        haveBonus = true;
+                    }
+                    tooltip += "\n+" + Utils.FloatToString(pc.Stats.PerPrimary[primaryIndex][resistIndex], eset.NumberFormat.CharacterMenu);
+                    tooltip += " " + eset.DamageTypes.Types[i].NameResist;
+                }
+            }
+
+            return tooltip;
+        }
+        
         public override void Render()
         {
             if (!Visible) return;
