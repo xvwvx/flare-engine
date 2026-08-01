@@ -1739,6 +1739,33 @@ namespace FlareEngine
 
             int distort = SharedResources.Eset.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal ? 1 : 2;
 
+            // 绘制碰撞层（仅遍历当前可视区域，碰撞瓦片按类型着色）
+            {
+                Int2 upperleft = Utils.ScreenToMap(0, 0, Cam.Shake.X, Cam.Shake.Y).ToInt2();
+                Int2 lowerright = Utils.ScreenToMap(SharedResources.Settings.ViewW, SharedResources.Settings.ViewH, Cam.Shake.X, Cam.Shake.Y).ToInt2();
+
+                int margin = _tset.MaxSizeX + _tset.MaxSizeY + 2;
+                int startX = Math.Max(0, Math.Min(upperleft.X, lowerright.X) - margin);
+                int startY = Math.Max(0, Math.Min(upperleft.Y, lowerright.Y) - margin);
+                int endX = Math.Min(W - 1, Math.Max(upperleft.X, lowerright.X) + margin);
+                int endY = Math.Min(H - 1, Math.Max(upperleft.Y, lowerright.Y) + margin);
+
+                // 绘制枚举文本前重置为默认字体，避免上一帧其它界面（菜单/提示等）切换字体后
+                // 用错误的字体渲染数字（与本工程其它文本绘制处的 font_regular 重置习惯一致）。
+                SharedResources.Font!.SetFont("font_regular");
+                for (int j = startY; j <= endY; ++j)
+                {
+                    for (int i = startX; i <= endX; ++i)
+                    {
+                        ushort tile = Collider.Colmap[i][j];
+                        if (tile == MapCollision.BlocksNone)
+                            continue;
+                        DrawDevCollisionTile(i, j, GetCollisionColor(tile));
+                        DrawDevCollisionValue(i, j, tile);
+                    }
+                }
+            }
+
             {
                 Int2 p0 = Utils.MapToScreen(Cam.Pos.X, Cam.Pos.Y, Cam.Shake.X, Cam.Shake.Y);
                 SharedResources.RenderDevice!.DrawLine(p0.X - crossSize, p0.Y, p0.X + crossSize, p0.Y, colorCam);
@@ -1824,6 +1851,74 @@ namespace FlareEngine
 
                 SharedResources.RenderDevice!.DrawEllipse(p0.X - radius, p0.Y - radius / distort, p0.X + radius, p0.Y + radius / distort, colorHazard, 15);
             }
+        }
+
+        /// <summary>根据碰撞瓦片类型返回 dev HUD 使用的颜色。</summary>
+        private static Color GetCollisionColor(ushort tile)
+        {
+            switch (tile)
+            {
+                case MapCollision.BlocksAll:
+                case MapCollision.BlocksAllHidden:
+                    return new Color(255, 0, 0, 255);   // 完全阻挡（墙）
+                case MapCollision.BlocksMovement:
+                case MapCollision.BlocksMovementHidden:
+                    return new Color(255, 128, 0, 255); // 阻挡移动
+                case MapCollision.MapOnly:
+                case MapCollision.MapOnlyAlt:
+                    return new Color(0, 200, 0, 255);   // 仅地图（可穿越）
+                case MapCollision.BlocksEntities:
+                    return new Color(0, 128, 255, 255); // 阻挡实体
+                case MapCollision.BlocksEnemies:
+                    return new Color(255, 0, 255, 255); // 阻挡敌人
+                default:
+                    return new Color(255, 255, 255, 255);
+            }
+        }
+
+        /// <summary>绘制单个碰撞瓦片（正交地图为矩形，等距地图为菱形）。</summary>
+        private void DrawDevCollisionTile(int x, int y, Color color)
+        {
+            if (SharedResources.Eset!.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal)
+            {
+                Int2 p0 = Utils.MapToScreen(x, y, Cam.Shake.X, Cam.Shake.Y);
+                Int2 p1 = new Int2(p0.X + SharedResources.Eset.Tileset.TileW, p0.Y + SharedResources.Eset.Tileset.TileH);
+                SharedResources.RenderDevice!.DrawRectangle(p0, p1, color);
+            }
+            else
+            {
+                Int2 pLeft = Utils.MapToScreen(x, y + 1, Cam.Shake.X, Cam.Shake.Y);
+                Int2 pTop = new Int2(pLeft.X + SharedResources.Eset.Tileset.TileWHalf, pLeft.Y - SharedResources.Eset.Tileset.TileHHalf);
+                Int2 pRight = new Int2(pLeft.X + SharedResources.Eset.Tileset.TileW, pLeft.Y);
+                Int2 pBottom = new Int2(pLeft.X + SharedResources.Eset.Tileset.TileWHalf, pLeft.Y + SharedResources.Eset.Tileset.TileHHalf);
+
+                SharedResources.RenderDevice!.DrawLine(pLeft.X, pLeft.Y, pTop.X, pTop.Y, color);
+                SharedResources.RenderDevice!.DrawLine(pTop.X, pTop.Y, pRight.X, pRight.Y, color);
+                SharedResources.RenderDevice!.DrawLine(pRight.X, pRight.Y, pBottom.X, pBottom.Y, color);
+                SharedResources.RenderDevice!.DrawLine(pBottom.X, pBottom.Y, pLeft.X, pLeft.Y, color);
+            }
+        }
+
+        /// <summary>在碰撞瓦片中心绘制其实际碰撞枚举值编号（便于核对碰撞数据）。</summary>
+        private void DrawDevCollisionValue(int x, int y, ushort tile)
+        {
+            Int2 center;
+            if (SharedResources.Eset!.Tileset.Orientation == EngineSettings.TilesetSettings.TilesetOrthogonal)
+            {
+                Int2 p0 = Utils.MapToScreen(x, y, Cam.Shake.X, Cam.Shake.Y);
+                center.X = p0.X + SharedResources.Eset.Tileset.TileWHalf;
+                center.Y = p0.Y + SharedResources.Eset.Tileset.TileHHalf;
+            }
+            else
+            {
+                Int2 pLeft = Utils.MapToScreen(x, y + 1, Cam.Shake.X, Cam.Shake.Y);
+                center.X = pLeft.X + SharedResources.Eset.Tileset.TileWHalf;
+                center.Y = pLeft.Y;
+            }
+
+            string text = tile.ToString();
+            int fontHeight = SharedResources.Font!.GetLineHeight();
+            SharedResources.Font.RenderShadowed(text, center.X, center.Y - fontHeight / 2, FontEngine.JustifyCenter, null, 0, new Color(255, 255, 255, 255));
         }
 
         public void SetMapParallax(string mpFilename)
